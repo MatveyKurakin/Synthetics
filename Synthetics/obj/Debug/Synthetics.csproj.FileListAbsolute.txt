@@ -1,0 +1,9 @@
+E:\Dissertation\Synthetic\Synthetics\Synthetics\bin\Debug\Synthetics.exe.config
+E:\Dissertation\Synthetic\Synthetics\Synthetics\bin\Debug\Synthetics.exe
+E:\Dissertation\Synthetic\Synthetics\Synthetics\bin\Debug\Synthetics.pdb
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.csprojResolveAssemblyReference.cache
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.Form1.resources
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.Properties.Resources.resources
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.csproj.GenerateResource.Cache
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.exe
+E:\Dissertation\Synthetic\Synthetics\Synthetics\obj\Debug\Synthetics.pdb
