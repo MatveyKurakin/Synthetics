@@ -7,40 +7,28 @@ using System.Threading.Tasks;
 
 namespace Synthetics
 {
-    class Acson : ICompartment
-    {
-        public Acson()
+    class Mitohondrion : ICompartment
+    { 
+        public Mitohondrion()
         {
             center_point = new Point(0, 0);
-            size_point = 0;
             Points = new List<Point>();
             pen = new Pen(Color.Black, 6);
 
             ListPointWithOffset = new List<Point>();
-
             Create();
         }
-        public Acson(int min_r, int max_r, int size_angle)
+
+        public Mitohondrion(int l)
         {
-            center_point = new Point(0, 0);
-            size_point = size_angle;
-            Points = new List<Point>();
-            pen = new Pen(Color.Black, 6);
 
-            ListPointWithOffset = new List<Point>();
-
-            Create(min_r, max_r);
         }
         public void Create(int min_r = 0, int max_r = 0)
         {
-            Points.Clear();
-            
-            Random rnd_size = new Random();
 
-            if (size_point == 0)
-            { 
-                size_point = rnd_size.Next(5, 10);
-            }
+            Random rnd_size = new Random();
+            size_point = 10;
+            double step_angle = 2.0 * Math.PI / size_point;
 
             if (min_r == 0)
             {
@@ -51,9 +39,6 @@ namespace Synthetics
             {
                 max_r = rnd_size.Next(35, 65);
             }
-
-
-            double step_angle = 2.0 * Math.PI / size_point;
 
             for (int i = 0; i < size_point; ++i)
             {
@@ -66,16 +51,8 @@ namespace Synthetics
             ChangePositionPoints();
         }
 
-        public void NewPosition(int x, int y)
-        {
-            center_point.X = x;
-            center_point.Y = y;
-
-            ChangePositionPoints();
-        }
-
         private void ChangePositionPoints()
-        { 
+        {
             ListPointWithOffset.Clear();
             
             foreach (Point point in Points)
@@ -85,31 +62,31 @@ namespace Synthetics
 
         }
 
-        private void DrawLine(Graphics g, Pen p)
+        private void DrawSpline(Graphics g, Pen p, Brush br)
         {
-            for (int i = 1; i < size_point; ++i)
-            {
-                g.DrawLine(p, ListPointWithOffset[i - 1].X, ListPointWithOffset[i - 1].Y,
-                                ListPointWithOffset[i].X, ListPointWithOffset[i].Y);
-            }
-            g.DrawLine(p, ListPointWithOffset[0].X, ListPointWithOffset[0].Y,
-                          ListPointWithOffset[size_point - 1].X, ListPointWithOffset[size_point - 1].Y);
-        }
-        private void DrawSpline(Graphics g, Pen p)
-        {
+            g.FillClosedCurve(br, ListPointWithOffset.ToArray());
             g.DrawClosedCurve(p, ListPointWithOffset.ToArray());
         }
+        public void Draw(Graphics g)
+        {
+            SolidBrush brush = new SolidBrush(Color.Red);
+            DrawSpline(g, pen, brush);
+        }
+        public void NewPosition(int x, int y)
+        {
+            center_point.X = x;
+            center_point.Y = y;
 
-        public void Draw(Graphics g) {
-            //DrawLine(g, pen);
-            DrawSpline(g, pen);
+            ChangePositionPoints();
         }
         public void DrawMask(Graphics g)
         {
+            SolidBrush brush = new SolidBrush(Color.White);
             Pen mask_pen = (Pen)pen.Clone();
             mask_pen.Color = Color.White;
 
-            DrawLine(g, mask_pen);
+            DrawSpline(g, mask_pen, brush);
+
         }
 
         public Pen pen;
