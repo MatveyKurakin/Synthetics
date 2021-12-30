@@ -63,13 +63,15 @@ namespace Synthetics
         SolidBrush brush = new SolidBrush(Color.Red);
         private Color mPenColor = Color.Red;
         protected override void setMaskParam()
-        {   
+        {
+            mPenColor = mPen.Color;
+            brush = new SolidBrush(Color.White);
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            brush = new SolidBrush(Color.White);
+            brush = new SolidBrush(Color.Red);
             mPen.Color = mPenColor;
         }
 
