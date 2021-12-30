@@ -99,7 +99,8 @@ namespace Synthetics
                 {
                     now_view.SetPixel(x, y, colorBackground);
                 }
-            Graphics g = Graphics.FromImage(now_view);
+
+            g = Graphics.FromImage(now_view);
 
             // добавление нового изображения если есть                                                  /// переделать в отдельную функцию и сделать нормальное добавление а не по случайныи координатам
             if (LastRemember != null)
