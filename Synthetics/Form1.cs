@@ -60,7 +60,7 @@ namespace Synthetics
 
         private void addNewElementIntoImage(Graphics g)                        /// нормальное добавление а не по случайныи координатам
         {
-            // добавление нового изображения если есть                                                  /// переделать в отдельную функцию и сделать нормальное добавление а не по случайныи координатам
+            // добавление нового изображения если есть
             if (LastRemember != null)
             {
                 Random rnd_coord = new Random();
@@ -77,7 +77,10 @@ namespace Synthetics
         {
             try
             {
+
                 Bitmap now_view; // выбор маски или изображения для рисования в зависимости от ситуации
+                Type TypeMask = typeof(ICompartment);
+
                 switch (nowViewType)
                 {
                     case TypeView.image:
@@ -86,14 +89,17 @@ namespace Synthetics
 
                     case TypeView.maskAxon:
                         now_view = maskAxon;
+                        TypeMask = typeof(Acson);
                         break;
-
                     case TypeView.maskMitoxondrion:
                         now_view = maskMitoxondrion;
+                        TypeMask = typeof(Mitohondrion);
                         break;
                     case TypeView.maskVesicules:
                         now_view = maskVesicules;
+                        TypeMask = typeof(Vesicules);
                         break;
+
                     default:
                         throw new Exception("Неизвестный тип отображения в Draw или ошибка в масках");
                 }
@@ -124,27 +130,6 @@ namespace Synthetics
 
                 // добавление нового изображения если есть
                 addNewElementIntoImage(g);
-
-
-                Type TypeMask = typeof(ICompartment);
-
-                switch (nowViewType)                                                                        /// доделать....
-                {
-                    case TypeView.image:
-                        break;
-                    case TypeView.maskAxon:
-                        TypeMask = typeof(Acson);
-                        break;
-                    case TypeView.maskMitoxondrion:
-                        TypeMask = typeof(Mitohondrion);
-                        break;
-                    case TypeView.maskVesicules:
-                        TypeMask = typeof(Vesicules);
-                        break;
-                    default:
-                        throw new Exception("Неизвестный тип отображения в Draw. неизвестен тип nowViewType");
-                }
-
 
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)
