@@ -203,6 +203,7 @@
             this.listElements.Name = "listElements";
             this.listElements.Size = new System.Drawing.Size(179, 164);
             this.listElements.TabIndex = 14;
+            this.listElements.SelectedIndexChanged += new System.EventHandler(this.listElements_SelectedIndexChanged);
             // 
             // Form1
             // 

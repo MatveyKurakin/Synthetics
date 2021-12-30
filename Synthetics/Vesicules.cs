@@ -16,18 +16,24 @@ namespace Synthetics
             pen = new Pen(Color.Black, 2);
             sizeCycle = new Size(5, 5);
             ListPointWithOffset = new List<Point>();
+            size_point = 20;
             Create();
         }
 
-        public Vesicules(int l)
+        public Vesicules(int l)                             /// добавить параметров
         {
-
+            center_point = new Point(0, 0);
+            Points = new List<Point>();
+            pen = new Pen(Color.Black, 2);
+            sizeCycle = new Size(5, 5);
+            ListPointWithOffset = new List<Point>();
+            size_point = l;
+            Create();
         }
         public void Create(int min_r = 0, int max_r = 0)
         {
 
             Random rnd_size = new Random();
-            size_point = 20;
 
             if (min_r == 0)
             {
