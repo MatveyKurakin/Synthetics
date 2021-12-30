@@ -60,48 +60,6 @@ namespace Synthetics
 
         private void addNewElementIntoImage(Graphics g)                        /// нормальное добавление а не по случайныи координатам
         {
-            Bitmap now_view; // выбор маски или изображения для рисования в зависимости от ситуации
-            switch (nowViewType)
-            {
-                case TypeView.image:
-                    now_view = image;
-                    break;
-
-                case TypeView.maskAxon:
-                    now_view = maskAxon;
-                    break;
-
-                case TypeView.maskMitoxondrion:
-                    now_view = maskMitoxondrion;
-                    break;
-                case TypeView.maskVesicules:
-                    now_view = maskVesicules;
-                    break;
-                default:
-                    Console.WriteLine("Неизвестный тип отображения");
-                    throw new Exception("Неизвестный тип отображения в generate_Click");
-            }
-
-            if (now_view == null) // создать поле если не создано
-            {
-                now_view = new Bitmap(image_size.Width, image_size.Height);
-            }
-
-            Color colorBackground = Color.Black; // выбор цвета фона в зависимости маска или изображение
-            if (nowViewType == TypeView.image)
-            {
-                colorBackground = backgroundСolor;
-            }
-
-            // чистка изображения
-            for (int x = 0; x < now_view.Width; x++)
-                for (int y = 0; y < now_view.Height; y++)
-                {
-                    now_view.SetPixel(x, y, colorBackground);
-                }
-
-            g = Graphics.FromImage(now_view);
-
             // добавление нового изображения если есть                                                  /// переделать в отдельную функцию и сделать нормальное добавление а не по случайныи координатам
             if (LastRemember != null)
             {

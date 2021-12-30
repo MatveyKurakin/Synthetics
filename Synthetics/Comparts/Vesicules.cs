@@ -62,6 +62,7 @@ namespace Synthetics
             }
         }
 
+        Color brushColor = Color.Gray;
         SolidBrush brush = new SolidBrush(Color.Gray);
 
         public override void Draw(Graphics g)
@@ -72,13 +73,14 @@ namespace Synthetics
 
         protected override void setMaskParam()
         {
-            brush = new SolidBrush(Color.White);
+            brushColor = brush.Color;
+            brush.Color = Color.White;
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            brush = new SolidBrush(Color.White);
+            brush.Color = brushColor;
             mPen.Color = mPenColor;
         }
 
