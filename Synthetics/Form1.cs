@@ -340,5 +340,10 @@ namespace Synthetics
                 Console.WriteLine(ex.Message);
             }
         }
+
+        private void pictureOrganelsBox_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
