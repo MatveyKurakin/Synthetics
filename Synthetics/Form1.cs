@@ -34,7 +34,8 @@ namespace Synthetics
             image,
             maskAxon,
             maskMitoxondrion,
-            maskVesicules
+            maskVesicules,
+            maskPSD
         }
         enum TypeCreate                                              /// проверить имена типов
         {
@@ -109,22 +110,17 @@ namespace Synthetics
                     now_view = new Bitmap(image_size.Width, image_size.Height);
                 }
 
-                Color colorPhone; // выбор цвета фона в зависимости маска или изображение
-                if (nowViewType != TypeView.image)
+                Color background = Color.Black; // выбор цвета фона в зависимости маска или изображение
+                if (nowViewType == TypeView.image)
                 {
-                    colorPhone = Color.Black;
+                    background = backgroundСolor;
                 }
-                else
-                {
-                    colorPhone = backgroundСolor;
-                }
-
 
                 // чистка изображения
                 for (int x = 0; x < now_view.Width; x++)
                     for (int y = 0; y < now_view.Height; y++)
                     {
-                        now_view.SetPixel(x, y, colorPhone);
+                        now_view.SetPixel(x, y, background);
                     }
                 Graphics g = Graphics.FromImage(now_view);
 
@@ -228,6 +224,9 @@ namespace Synthetics
                         break;
                     case TypeCreate.vesicules:
                         LastRemember = new Vesicules();
+                        break;
+                    case TypeCreate.PSD:
+                        LastRemember = new PSD();
                         break;
 
                     default:

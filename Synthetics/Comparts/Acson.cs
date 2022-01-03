@@ -31,8 +31,6 @@ namespace Synthetics
         public void Create(int min_r = 0, int max_r = 0)
         {
             mPoints.Clear();
-            
-            Random rnd_size = new Random();
 
             if (mSizePoint == 0)
             { 

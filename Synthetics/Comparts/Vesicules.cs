@@ -25,10 +25,9 @@ namespace Synthetics
         {
 
         }
+
         public void Create(int min_r = 0, int max_r = 0)
         {
-
-            Random rnd_size = new Random();
             mSizePoint = 20;
 
             if (min_r == 0)

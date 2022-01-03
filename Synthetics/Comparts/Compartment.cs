@@ -15,6 +15,8 @@ namespace Synthetics
         protected List<Point> mListPointWithOffset;
         public List<Point> mPoints;
 
+        protected static Random rnd_size = new Random();
+
         public abstract void Draw(Graphics g);
         protected abstract void setMaskParam();
         protected abstract void setDrawParam();

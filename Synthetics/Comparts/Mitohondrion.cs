@@ -24,8 +24,6 @@ namespace Synthetics
         }
         public void Create(int min_r = 0, int max_r = 0)
         {
-
-            Random rnd_size = new Random();
             mSizePoint = 10;
             double step_angle = 2.0 * Math.PI / mSizePoint;
 
