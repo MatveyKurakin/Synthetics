@@ -118,14 +118,8 @@ namespace Synthetics
                     background = backgroundСolor;
                 }
 
-                // чистка изображения
-                for (int x = 0; x < currView.Width; x++)
-                    for (int y = 0; y < currView.Height; y++)
-                    {
-                        currView.SetPixel(x, y, background);
-                    }
-
                 Graphics g = Graphics.FromImage(currView);
+                g.Clear(background);
 
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)
