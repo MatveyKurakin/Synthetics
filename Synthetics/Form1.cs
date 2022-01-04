@@ -21,6 +21,7 @@ namespace Synthetics
             currImageViewType = TypeView.layer;
             currCreateType = TypeOrganelle.axon;
             imageSize = new Size(512, 512);
+            currView = new Bitmap(imageSize.Width, imageSize.Height);
         }
 
         /// <summary>
@@ -61,6 +62,8 @@ namespace Synthetics
         /// </summary>
         TypeView currImageViewType;
 
+        Bitmap currView;
+
         /// <summary>
         /// The current object being created type
         /// </summary>                                            
@@ -68,11 +71,6 @@ namespace Synthetics
                                         
         Color backgroundСolor;                                       /// добавить в форму для изменения пользователем
         Size imageSize;                                             /// добавить в форму для изменения пользователем через функцию с изменением image
-
-        Bitmap image;                                                // Хранение основного изображение
-        Bitmap maskAxon;                                             // Хранение маски Аксонов
-        Bitmap maskMitoxondrion;                                     // Хранение маски Митохондоий
-        Bitmap maskVesicules;                                        // Хранение маски Везикул
 
         Random random = new Random();
 
@@ -91,34 +89,27 @@ namespace Synthetics
         {
             try
             {
-                Bitmap now_view; // выбор маски или изображения для рисования в зависимости от ситуации
                 Type TypeMask = typeof(ICompartment);
 
                 switch (currImageViewType)
                 {
                     case TypeView.layer:
-                        now_view = image;
                         break;
                     case TypeView.maskAxon:
-                        now_view = maskAxon;
                         TypeMask = typeof(Acson);
                         break;
-                    case TypeView.maskMitoxondrion:
-                        now_view = maskMitoxondrion;
+                    case TypeView.maskMitoxondrion:;
                         TypeMask = typeof(Mitohondrion);
                         break;
                     case TypeView.maskVesicules:
-                        now_view = maskVesicules;
                         TypeMask = typeof(Vesicules);
+                        break;
+                    case TypeView.maskPSD:
+                        TypeMask = typeof(PSD);
                         break;
 
                     default:
                         throw new Exception("Неизвестный тип отображения в Draw или ошибка в масках");
-                }
-
-                if (now_view == null) // создать поле если не создано
-                {
-                    now_view = new Bitmap(imageSize.Width, imageSize.Height);
                 }
 
                 Color background = Color.Black; // выбор цвета фона в зависимости маска или изображение
@@ -128,13 +119,14 @@ namespace Synthetics
                 }
 
                 // чистка изображения
-                for (int x = 0; x < now_view.Width; x++)
-                    for (int y = 0; y < now_view.Height; y++)
+                for (int x = 0; x < currView.Width; x++)
+                    for (int y = 0; y < currView.Height; y++)
                     {
-                        now_view.SetPixel(x, y, background);
+                        currView.SetPixel(x, y, background);
                     }
 
-                Graphics g = Graphics.FromImage(now_view);
+                Graphics g = Graphics.FromImage(currView);
+
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)
                 {
@@ -151,7 +143,7 @@ namespace Synthetics
                     }
                 }
 
-                pictureGeneralBox.Image = now_view;
+                pictureGeneralBox.Image = currView;
                 pictureGeneralBox.Refresh();
 
             }
@@ -254,6 +246,9 @@ namespace Synthetics
                     case "mask vesicules":
                         currImageViewType = TypeView.maskVesicules;
                         break;
+                    case "mask PSD":
+                        currImageViewType = TypeView.maskPSD;
+                        break;
                     default:
                         throw new Exception("Неизвестный тип отображения в comboBoxViewType_SelectedIndexChanged");
                 }
@@ -300,11 +295,6 @@ namespace Synthetics
             {
                 Console.WriteLine(ex.Message);
             }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-           
         }
 
         private void listElements_SelectedIndexChanged(object sender, EventArgs e)                           /// исправить удаление на 2 клик
