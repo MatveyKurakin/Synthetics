@@ -28,15 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("dsad");
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("sadsad");
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("dsad");
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("sadsad");
+            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("dsad");
+            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem("sadsad");
+            System.Windows.Forms.ListViewItem listViewItem7 = new System.Windows.Forms.ListViewItem("dsad");
+            System.Windows.Forms.ListViewItem listViewItem8 = new System.Windows.Forms.ListViewItem("sadsad");
             this.pictureGeneralBox = new System.Windows.Forms.PictureBox();
             this.generate = new System.Windows.Forms.Button();
             this.ComboBoxOrganelsCreate = new System.Windows.Forms.ComboBox();
             this.pictureOrganelsBox = new System.Windows.Forms.PictureBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.create = new System.Windows.Forms.Button();
             this.listView1 = new System.Windows.Forms.ListView();
             this.comboBoxViewType = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -107,28 +107,27 @@
             this.pictureOrganelsBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureOrganelsBox.TabIndex = 4;
             this.pictureOrganelsBox.TabStop = false;
-            this.pictureOrganelsBox.Click += new System.EventHandler(this.pictureOrganelsBox_Click);
             // 
-            // button1
+            // create
             // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(6, 466);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(254, 54);
-            this.button1.TabIndex = 5;
-            this.button1.Text = "create organels";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.create_organel_Click);
+            this.create.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.create.Location = new System.Drawing.Point(6, 466);
+            this.create.Name = "create";
+            this.create.Size = new System.Drawing.Size(254, 54);
+            this.create.TabIndex = 5;
+            this.create.Text = "create organels";
+            this.create.UseVisualStyleBackColor = true;
+            this.create.Click += new System.EventHandler(this.create_organel_Click);
             // 
             // listView1
             // 
             this.listView1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.listView1.HideSelection = false;
-            listViewItem1.ToolTipText = "wad";
-            listViewItem2.ToolTipText = "wdaw";
+            listViewItem5.ToolTipText = "wad";
+            listViewItem6.ToolTipText = "wdaw";
             this.listView1.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2});
+            listViewItem5,
+            listViewItem6});
             this.listView1.Location = new System.Drawing.Point(6, 51);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(254, 191);
@@ -172,11 +171,11 @@
             // listView3
             // 
             this.listView3.HideSelection = false;
-            listViewItem3.ToolTipText = "wad";
-            listViewItem4.ToolTipText = "wdaw";
+            listViewItem7.ToolTipText = "wad";
+            listViewItem8.ToolTipText = "wdaw";
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3,
-            listViewItem4});
+            listViewItem7,
+            listViewItem8});
             this.listView3.Location = new System.Drawing.Point(10, 255);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(180, 193);
@@ -209,7 +208,7 @@
             this.groupBox1.Controls.Add(this.ComboBoxOrganelsCreate);
             this.groupBox1.Controls.Add(this.listView1);
             this.groupBox1.Controls.Add(this.pictureOrganelsBox);
-            this.groupBox1.Controls.Add(this.button1);
+            this.groupBox1.Controls.Add(this.create);
             this.groupBox1.Controls.Add(this.generate);
             this.groupBox1.Dock = System.Windows.Forms.DockStyle.Right;
             this.groupBox1.Location = new System.Drawing.Point(1056, 0);
@@ -253,7 +252,7 @@
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(848, 619);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.Text = "Layer";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabPage2
@@ -261,7 +260,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(194, 71);
+            this.tabPage2.Size = new System.Drawing.Size(848, 619);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -294,7 +293,7 @@
         private System.Windows.Forms.Button generate;
         private System.Windows.Forms.ComboBox ComboBoxOrganelsCreate;
         private System.Windows.Forms.PictureBox pictureOrganelsBox;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button create;
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ComboBox comboBoxViewType;
         private System.Windows.Forms.Label label2;

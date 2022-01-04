@@ -19,15 +19,26 @@ namespace Synthetics
             Random rd = new Random();
             int color = rd.Next(182, 200);                           // выбор цвета фона
             backgroundСolor = Color.FromArgb(color, color, color);
-            nowViewType = TypeView.image;
-            nowCreateType = TypeCreate.axon;
+            currImageViewType = TypeView.image;
+            currCreateType = TypeCreate.axon;
 
             image_size = new Size(512, 512);
         }
 
-        Bitmap imagePrew;                                            // изображения для предпросмотра объекта создания
-        ICompartment LastRemember;                                   // Последний созданный объект, который не был добавлен в форму 
-        List<ICompartment> compartments = new List<ICompartment>();  // список элементов ///  добавить в форму для отображения и изменения параметров 
+        /// <summary>
+        /// Preview organelles image
+        /// </summary>
+        Bitmap imagePrew;  
+          
+        /// <summary>
+        /// Last created object which doesn't added to result image
+        /// </summary>                                               
+        ICompartment LastRemember;    
+        
+        /// <summary>
+        /// Element list
+        /// </summary>                                    
+        List<ICompartment> compartments = new List<ICompartment>();  ///  добавить в форму для отображения и изменения параметров 
 
         enum TypeView                                                /// сделаны не все типы
         {
@@ -37,20 +48,27 @@ namespace Synthetics
             maskVesicules,
             maskPSD
         }
-        enum TypeCreate                                              /// проверить имена типов
+
+        enum TypeCreate                                              
         {
             axon,
             mitoxondrion,
             PSD,
-            membrans,
-            vesicules
+            membranes,
+            vesicles
         }
 
-        TypeView nowViewType;                                        // Вид отображения {изображения, [маски]} 
-        TypeCreate nowCreateType;                                    // Тип создаваемого объекта
-        Color backgroundСolor;                                       // Цвет фона /// добавить в форму для изменения пользователем
+        /// <summary>
+        /// Current view type (image or masks)
+        /// </summary>
+        TypeView currImageViewType;
 
-
+        /// <summary>
+        /// The current object being created type
+        /// </summary>                                            
+        TypeCreate currCreateType;  
+                                        
+        Color backgroundСolor;                                       /// добавить в форму для изменения пользователем
         Size image_size;                                             /// добавить в форму для изменения пользователем через функцию с изменением image
 
         Bitmap image;                                                // Хранение основного изображение
@@ -78,11 +96,10 @@ namespace Synthetics
         {
             try
             {
-
                 Bitmap now_view; // выбор маски или изображения для рисования в зависимости от ситуации
                 Type TypeMask = typeof(ICompartment);
 
-                switch (nowViewType)
+                switch (currImageViewType)
                 {
                     case TypeView.image:
                         now_view = image;
@@ -111,7 +128,7 @@ namespace Synthetics
                 }
 
                 Color background = Color.Black; // выбор цвета фона в зависимости маска или изображение
-                if (nowViewType == TypeView.image)
+                if (currImageViewType == TypeView.image)
                 {
                     background = backgroundСolor;
                 }
@@ -130,7 +147,7 @@ namespace Synthetics
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)
                 {
-                    if (nowViewType == TypeView.image)
+                    if (currImageViewType == TypeView.image)
                     {
                         c.Draw(g);
                     }
@@ -144,7 +161,7 @@ namespace Synthetics
                 }
 
                 // save result                                                                              /// не забыть поправить и тут
-                switch (nowViewType)
+                switch (currImageViewType)
                 {
                     case TypeView.image:
                         image = now_view;
@@ -214,7 +231,7 @@ namespace Synthetics
                     GC.WaitForPendingFinalizers();
                 }
 
-                switch (nowCreateType) /// не все типы ///////////////////
+                switch (currCreateType) /// не все типы ///////////////////
                 {
                     case TypeCreate.axon:
                         LastRemember = new Acson();
@@ -222,7 +239,7 @@ namespace Synthetics
                     case TypeCreate.mitoxondrion:
                         LastRemember = new Mitohondrion();
                         break;
-                    case TypeCreate.vesicules:
+                    case TypeCreate.vesicles:
                         LastRemember = new Vesicules();
                         break;
                     case TypeCreate.PSD:
@@ -254,26 +271,26 @@ namespace Synthetics
             try
             {
                 ComboBox comboBox = (ComboBox)sender;
-
+                
                 switch (comboBox.SelectedItem.ToString())
                 {
                     case "image":
-                        nowViewType = TypeView.image;
+                        currImageViewType = TypeView.image;
                         break;
                     case "mask axon":
-                        nowViewType = TypeView.maskAxon;
+                        currImageViewType = TypeView.maskAxon;
                         break;
                     case "mask mitoxondrion":
-                        nowViewType = TypeView.maskMitoxondrion;
+                        currImageViewType = TypeView.maskMitoxondrion;
                         break;
                     case "mask vesicules":
-                        nowViewType = TypeView.maskVesicules;
+                        currImageViewType = TypeView.maskVesicules;
                         break;
                     default:
                         throw new Exception("Неизвестный тип отображения в comboBoxViewType_SelectedIndexChanged");
                 }
 
-                Console.WriteLine(nowViewType);
+                Console.WriteLine(currImageViewType);
                 Draw();
             }
             catch (Exception ex)
@@ -291,25 +308,25 @@ namespace Synthetics
                 switch (comboBox.SelectedItem.ToString())
                 {
                     case "axon":
-                        nowCreateType = TypeCreate.axon;
+                        currCreateType = TypeCreate.axon;
                         break;
                     case "mitoxondrion":
-                        nowCreateType = TypeCreate.mitoxondrion;
+                        currCreateType = TypeCreate.mitoxondrion;
                         break;
                     case "PSD":
-                        nowCreateType = TypeCreate.PSD;
+                        currCreateType = TypeCreate.PSD;
                         break;
                     case "membrans":
-                        nowCreateType = TypeCreate.membrans;
+                        currCreateType = TypeCreate.membranes;
                         break;
                     case "vesicules":
-                        nowCreateType = TypeCreate.vesicules;
+                        currCreateType = TypeCreate.vesicles;
                         break;
                     default:
                         throw new Exception("Неизвестный тип выбора органеллы для создания в comboBoxOrganelsCreate_SelectedIndexChanged");
                 }
 
-                Console.WriteLine(nowCreateType);
+                Console.WriteLine(currCreateType);
             }
             catch (Exception ex)
             {
@@ -339,11 +356,6 @@ namespace Synthetics
             {
                 Console.WriteLine(ex.Message);
             }
-        }
-
-        private void pictureOrganelsBox_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }
