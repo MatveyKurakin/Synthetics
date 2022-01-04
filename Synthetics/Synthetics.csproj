@@ -49,6 +49,7 @@
     <Compile Include="Comparts\Compartment.cs" />
     <Compile Include="Comparts\Acson.cs" />
     <Compile Include="Comparts\ICompartment.cs" />
+    <Compile Include="Comparts\Membrans.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

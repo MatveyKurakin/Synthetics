@@ -39,13 +39,14 @@ namespace Synthetics
         /// </summary>                                    
         List<ICompartment> compartments = new List<ICompartment>();  ///  добавить в форму для отображения и изменения параметров 
 
-        enum TypeView                                                /// сделаны не все типы
+        enum TypeView
         {
             layer,
             maskAxon,
             maskMitoxondrion,
             maskVesicules,
-            maskPSD
+            maskPSD,
+            maskMembranes
         }
 
         enum TypeOrganelle                                              
@@ -98,7 +99,7 @@ namespace Synthetics
                     case TypeView.maskAxon:
                         TypeMask = typeof(Acson);
                         break;
-                    case TypeView.maskMitoxondrion:;
+                    case TypeView.maskMitoxondrion:
                         TypeMask = typeof(Mitohondrion);
                         break;
                     case TypeView.maskVesicules:
@@ -106,6 +107,9 @@ namespace Synthetics
                         break;
                     case TypeView.maskPSD:
                         TypeMask = typeof(PSD);
+                        break;
+                    case TypeView.maskMembranes:
+                        TypeMask = typeof(Membrans);
                         break;
 
                     default:
@@ -205,6 +209,9 @@ namespace Synthetics
                     case TypeOrganelle.PSD:
                         LastRemember = new PSD();
                         break;
+                    //case TypeOrganelle.membranes:                                                         /// Добавить после реализации
+                    //    LastRemember = new Membranes();
+                    //    break;
 
                     default:
                         throw new Exception("Неизвестный тип выбора органеллы в create_organel_Click");
@@ -226,7 +233,7 @@ namespace Synthetics
             }
         } 
 
-        private void comboBoxViewType_SelectedIndexChanged(object sender, EventArgs e)     // Функция смены отображения /// не доделана
+        private void comboBoxViewType_SelectedIndexChanged(object sender, EventArgs e)     // Функция смены отображения
         {
             try
             {
@@ -248,6 +255,9 @@ namespace Synthetics
                         break;
                     case "mask PSD":
                         currImageViewType = TypeView.maskPSD;
+                        break;
+                    case "mask membranes":
+                        currImageViewType = TypeView.maskMembranes;
                         break;
                     default:
                         throw new Exception("Неизвестный тип отображения в comboBoxViewType_SelectedIndexChanged");
