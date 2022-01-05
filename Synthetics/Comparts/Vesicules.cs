@@ -29,12 +29,12 @@ namespace Synthetics
         private bool CheckOverlap(Point point, double proportion)
         {
             int count = mPoints.Count;
-            for (int i = 0; i < count; ++i)
+            foreach (Point mpoint in mPoints)
             {
-                double x_delt = Math.Abs(mPoints[i].X - point.X);
-                double y_delt = Math.Abs(mPoints[i].Y - point.Y);
+                double x_delt = (double)Math.Abs(mpoint.X - point.X);
+                double y_delt = (double)Math.Abs(mpoint.Y - point.Y);
 
-                if (x_delt / (mSizeCycle.Width + mPen.Width) < proportion ||
+                if (x_delt / (mSizeCycle.Width + mPen.Width) < proportion &&
                     y_delt / (mSizeCycle.Height + mPen.Width) < proportion)
                 {
                     return true;
@@ -56,8 +56,8 @@ namespace Synthetics
                 max_r = rnd_size.Next(0, 50);
             }
 
-            int max_iteration = 100000;
-
+            int max_iteration = 10000;
+            int fail_counter = 0;
             for (int i = 0; i < mSizePoint; ++i)
             {
                 int counter = 0;
@@ -72,10 +72,16 @@ namespace Synthetics
 
                 if (counter == max_iteration)
                 {
-                    Console.WriteLine("Can't create unique visicul");
+                    ++fail_counter;
                 }
                 mPoints.Add(now_point);
             }
+
+            if (fail_counter != 0)
+            {
+                Console.WriteLine($"The number of vesicles that could not be generated at a unique position: {fail_counter} out of {mSizePoint}");
+            }
+
 
             ChangePositionPoints();
         }
