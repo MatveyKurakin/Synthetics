@@ -175,6 +175,7 @@ namespace Synthetics
                 }
 
                 Graphics g = Graphics.FromImage(currView);
+                g.Clear(background);
 
                 // чистка изображения
                 g.Clear(background);
