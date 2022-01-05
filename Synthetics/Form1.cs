@@ -75,14 +75,66 @@ namespace Synthetics
 
         Random random = new Random();
 
+        public static bool CompareColorR(Color a, Color b)
+        {
+            return a.R == b.R;
+        }
+        private bool CheckOverlapNewElement(Bitmap all_mask, Bitmap check_mask, int width, int height)
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; ++x)
+                {
+                    if (!CompareColorR(all_mask.GetPixel(x, y), Color.Black) && !CompareColorR(check_mask.GetPixel(x, y), Color.Black))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        private void AddNewElementWithoutOverlap(int width, int height)
+        {
+            Bitmap checkImage = new Bitmap(width, height);
+            Bitmap checkNewImage = new Bitmap(width, height);
+            Graphics g = Graphics.FromImage(checkImage);
+            g.Clear(Color.Black);
+            foreach (ICompartment c in compartments)
+            {
+                c.DrawMask(g);
+            }
+            Graphics g2 = Graphics.FromImage(checkNewImage);
+
+            int counter = 0;
+            int max_iter = 50;
+            do
+            {
+                g2.Clear(Color.Black);
+                LastRemember.NewPosition(random.Next(0, width), random.Next(0, height));
+                LastRemember.DrawMask(g2);
+                ++counter;
+            } while (CheckOverlapNewElement(checkImage, checkNewImage, width, height) && counter < max_iter);
+
+            if (counter == max_iter)
+            {
+                Console.WriteLine("Can't add unique position new element");
+            }
+        }
+
         private void addNewElementIntoImage(int width, int height)                        /// нормальное добавление а не по случайныи координатам
         {
+
             // добавление нового изображения если есть
             if (LastRemember != null)
-            {  
-                LastRemember.NewPosition(random.Next(0, width), random.Next(0, height));
+            {
+                AddNewElementWithoutOverlap(width, height);
                 compartments.Add(LastRemember);
                 LastRemember = null;
+
+                //чистка памяти
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
@@ -122,14 +174,10 @@ namespace Synthetics
                     background = backgroundСolor;
                 }
 
-                // чистка изображения
-                for (int x = 0; x < currView.Width; x++)
-                    for (int y = 0; y < currView.Height; y++)
-                    {
-                        currView.SetPixel(x, y, background);
-                    }
-
                 Graphics g = Graphics.FromImage(currView);
+
+                // чистка изображения
+                g.Clear(background);
 
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)

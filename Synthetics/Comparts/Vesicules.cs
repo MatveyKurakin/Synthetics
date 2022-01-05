@@ -26,6 +26,22 @@ namespace Synthetics
 
         }
 
+        private bool CheckOverlap(Point point, double proportion)
+        {
+            int count = mPoints.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                double x_delt = Math.Abs(mPoints[i].X - point.X);
+                double y_delt = Math.Abs(mPoints[i].Y - point.Y);
+
+                if (x_delt / (mSizeCycle.Width + mPen.Width) < proportion ||
+                    y_delt / (mSizeCycle.Height + mPen.Width) < proportion)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public void Create(int min_r = 0, int max_r = 0)
         {
             mSizePoint = 20;
@@ -40,11 +56,24 @@ namespace Synthetics
                 max_r = rnd_size.Next(0, 50);
             }
 
+            int max_iteration = 100000;
+
             for (int i = 0; i < mSizePoint; ++i)
             {
-                int rx = rnd_size.Next(min_r, max_r);
-                int ry = rnd_size.Next(min_r, max_r);
-                Point now_point = new Point(rx, ry);
+                int counter = 0;
+                Point now_point = new Point();
+                do
+                {
+                    now_point.X = rnd_size.Next(min_r, max_r);
+                    now_point.Y = rnd_size.Next(min_r, max_r);
+                    ++counter;
+                }
+                while (CheckOverlap(now_point, 1) && counter < max_iteration);
+
+                if (counter == max_iteration)
+                {
+                    Console.WriteLine("Can't create unique visicul");
+                }
                 mPoints.Add(now_point);
             }
 
