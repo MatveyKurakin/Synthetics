@@ -255,9 +255,9 @@ namespace Synthetics
                     case TypeOrganelle.PSD:
                         LastRemember = new PSD();
                         break;
-                    //case TypeOrganelle.membranes:                                                         /// Добавить после реализации
-                    //    LastRemember = new Membranes();
-                    //    break;
+                    case TypeOrganelle.membranes:                                                         /// Добавить после реализации
+                        LastRemember = new Membrans(compartments, imageSize);
+                        break;
 
                     default:
                         throw new Exception("Неизвестный тип выбора органеллы в create_organel_Click");
