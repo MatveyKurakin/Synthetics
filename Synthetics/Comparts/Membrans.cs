@@ -180,7 +180,7 @@ namespace Synthetics
             }
 
             RegionCounter(checkImage, labelImage);
-            CreateBitmap(labelImage).Save("file.png", System.Drawing.Imaging.ImageFormat.Png);
+            //CreateBitmap(labelImage).Save("file.png", System.Drawing.Imaging.ImageFormat.Png);
 
             bool repit = true;
 
