@@ -71,7 +71,7 @@ namespace Synthetics
         TypeOrganelle currCreateType;  
                                         
         Color backgroundСolor;                                       /// добавить в форму для изменения пользователем
-        Size imageSize;                                             /// добавить в форму для изменения пользователем через функцию с изменением image
+        Size imageSize;                                              /// добавить в форму для изменения пользователем через функцию с изменением image
 
         Random random = new Random();
 
@@ -122,9 +122,8 @@ namespace Synthetics
             }
         }
 
-        private void addNewElementIntoImage(int width, int height)                        /// нормальное добавление а не по случайныи координатам
+        private void addNewElementIntoImage(int width, int height)
         {
-
             // добавление нового изображения если есть
             if (LastRemember != null)
             {
@@ -175,8 +174,6 @@ namespace Synthetics
                 }
 
                 Graphics g = Graphics.FromImage(currView);
-                g.Clear(background);
-
                 // чистка изображения
                 g.Clear(background);
 
