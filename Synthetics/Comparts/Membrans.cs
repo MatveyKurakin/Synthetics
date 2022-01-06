@@ -172,7 +172,7 @@ namespace Synthetics
             return (A.X - O.X) * (B.Y - O.Y) - (A.Y - O.Y) * (B.X - O.X);
         }
 
-        // функция создания выпуклой оболочки                                                               ///(взял с форума, может быть плохой)
+        // функция создания выпуклой оболочки                                                               ///(взял с форума, может быть плохой, но вроде работает)
         public static List<Point> GetConvexHull(List<Point> points)
         {
             if (points == null)
@@ -206,7 +206,6 @@ namespace Synthetics
             return H.Take(k - 1).ToList();
         }
 
-
         // Функция создания мембран
         public void Create(List<ICompartment> compartments, Size sizeImg)
         {
@@ -218,7 +217,7 @@ namespace Synthetics
             Pen pen = new Pen(Color.White);
             foreach (ICompartment c in compartments)
             {
-                if (c.GetType() != typeof(Vesicules))
+                if (c.GetType() != typeof(Vesicules))                                                       /// можно обобщить для всех кроме класса PSD и мембран
                 {
                     c.DrawMask(g);
                 }
@@ -332,7 +331,7 @@ namespace Synthetics
             }
 
             //Сохранение карты разросшихся регионов
-            CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
+            //CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
 
             //печать в консоль доп. информацию
             Console.WriteLine($"count point = {mPoints.Count}");
