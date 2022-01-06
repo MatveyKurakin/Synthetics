@@ -56,7 +56,7 @@ namespace Synthetics
                 {
                     int kx = x - 1;
                     int B = 0;
-                    if (kx <= 0)
+                    if (kx < 0)
                     {
                         kx = 0;
                     }
@@ -67,7 +67,7 @@ namespace Synthetics
 
                     int ky = y - 1;
                     int C = 0;
-                    if (ky <= 0)
+                    if (ky < 0)
                     {
                         ky = 1;
                     }
@@ -253,6 +253,8 @@ namespace Synthetics
                     }
                 }
             }
+
+            //CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
             Console.WriteLine($"count point = {mPoints.Count}");
         }
 
