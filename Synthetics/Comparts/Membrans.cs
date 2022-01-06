@@ -18,6 +18,7 @@ namespace Synthetics
             Create(compartments, sizeImg);
         }
 
+        //Переименовывает имена меток в матрице изображения меток
         private void RenameRegion(int[,] labels, int ChangeLabel, int NewLabel)
         {
             for (int y = 0; y < labels.GetLength(1); ++y)
@@ -31,6 +32,8 @@ namespace Synthetics
                 }
             }
         }
+
+        //Ищет метку в матрице изображения меток
         private bool FindName(int[,] labels, int findLabel)
         {
             for (int y = 0; y < labels.GetLength(1); ++y)
@@ -46,10 +49,14 @@ namespace Synthetics
             return false;
         }
 
+        //Функция посчёта регионов на изображении
         private void RegionCounter(Bitmap img, int[,] labels)
         {
             int label = 0;
             // Цикл по пикселям изображения
+            //       C                 (ky, x)
+            //     B A         (y, kx) ( y, x)
+            // A - рассматриваемый в данный момент пиксель
             for (int y = 0; y < img.Height; ++y)
             {
                 for (int x = 0; x < img.Width; ++x)
@@ -69,7 +76,7 @@ namespace Synthetics
                     int C = 0;
                     if (ky < 0)
                     {
-                        ky = 1;
+                        ky = 0;
                     }
                     else
                     {
@@ -106,7 +113,7 @@ namespace Synthetics
             }
         }
 
-
+        // Приведение меток в непрерывную последовательность в диапозоне [0:N], где N от 0 до 255
         void ChangeNameRegion(int[,] labels)
         {
             int label = 1;
@@ -147,18 +154,22 @@ namespace Synthetics
             Console.WriteLine($"Max Label {label - 1}");
         }
 
+        // Перевод 2D массива (или матрицу изображения меток) в Bitmap для возможности сохранить как png
         Bitmap CreateBitmap(int[,] source)
         {
             ChangeNameRegion(source);
             var bitmap = new Bitmap(source.GetLength(0), source.GetLength(1));
             for (var i = 0; i < bitmap.Height; i++)
                 for (var j = 0; j < bitmap.Width; j++)
-                    bitmap.SetPixel(i, j, Color.FromArgb(source[i, j], 0, 0)); // вместо Color.FromArgb можете использовать любой другой способ преобразования элемента массива в цвет
+                    bitmap.SetPixel(j, i, Color.FromArgb(source[i, j], 0, 0)); // вместо Color.FromArgb можете использовать любой другой способ преобразования элемента массива в цвет
 
             return bitmap;
         }
+
+        // Функция создания мембран
         public void Create(List<ICompartment> compartments, Size sizeImg)
         {
+            // Создание маски регионов и зпаолнение её
             Bitmap checkImage = new Bitmap(sizeImg.Width, sizeImg.Height);
             Graphics g = Graphics.FromImage(checkImage);
             g.Clear(Color.Black);
@@ -167,8 +178,10 @@ namespace Synthetics
                 c.DrawMask(g);
             }
 
+            // Сохранение маски
             //checkImage.Save("fileMask.png", System.Drawing.Imaging.ImageFormat.Png);
 
+            // Создание и инициализация 0 матрицы меток (или матрицы изображения меток)
             int[,] labelImage = new int[sizeImg.Height, sizeImg.Width];
 
             for (int y = 0; y < sizeImg.Height; ++y)
@@ -179,12 +192,13 @@ namespace Synthetics
                 }
             }
 
+            // Вычисление карты различных регионов
             RegionCounter(checkImage, labelImage);
             //CreateBitmap(labelImage).Save("file.png", System.Drawing.Imaging.ImageFormat.Png);
 
+            // Разрастание регионов
             bool repit = true;
-
-            while (repit)
+            while (repit) // Продолжать пока есть новые пиксели
             {
                 int[,] LastLabel = (int[,])labelImage.Clone();
                 repit = false;
@@ -192,24 +206,26 @@ namespace Synthetics
                 {
                     for (int x = 0; x < sizeImg.Width; ++x)
                     {
+                        // Для каждого ненулевого пикселя проверить ближайших соседей (пустой, тот же регион или граница с другим)
                         if (LastLabel[y, x] != 0)
                         {
                             int label = LastLabel[y, x];
-                            //labelImage[y, x] = label;
+                            // сосед слева
                             if (x > 0)
                             {
                                 int value = labelImage[y, x - 1];
-                                if (value == 0)
+                                if (value == 0)                   // Если есть неразмеченный сосед, то пометить его своей меткой
                                 {
                                     labelImage[y, x - 1] = label;
-                                    repit = true;
+                                    repit = true;                 // Если есть новый пиксель, то проверить что из него можно разростись на следующей итерации
                                 }
                                 else if (value != label)
                                 {
-                                    mPoints.Add(new Point(x, y));
+                                    mPoints.Add(new Point(x, y)); // Добавление граничного пикселя
                                 }
                             }
 
+                            // сосед справа
                             if (x < sizeImg.Width - 1)
                             {
                                 int value = labelImage[y, x + 1];
@@ -220,9 +236,11 @@ namespace Synthetics
                                 }
                                 else if (value != label)
                                 {
-                                    mPoints.Add(new Point(x, y));
+                                    mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
+
+                            // сосед сверху
                             if (y > 0)
                             {
                                 int value = labelImage[y - 1, x];
@@ -233,9 +251,11 @@ namespace Synthetics
                                 }
                                 else if (value != label)
                                 {
-                                    mPoints.Add(new Point(x, y));
+                                    mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
+
+                            // сосед снизу
                             if (y < sizeImg.Height - 1)
                             {
                                 int value = labelImage[y + 1, x];
@@ -246,7 +266,7 @@ namespace Synthetics
                                 }
                                 else if (value != label)
                                 {
-                                    mPoints.Add(new Point(x, y));
+                                    mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
                         }
@@ -254,12 +274,16 @@ namespace Synthetics
                 }
             }
 
+            //Сохранение карты разросшихся регионов
             //CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            //печать в консоль доп. информацию
             Console.WriteLine($"count point = {mPoints.Count}");
         }
 
         public override void Draw(Graphics g)
         {
+            // Попиксельная печаль граничных пикселей (у каждого будет по 2 штуки с одного и с другого региона)
             foreach (Point point in mPoints)
             {
                 g.DrawLine(mPen, point.X, point.Y, point.X + 1 , point.Y + 1);
