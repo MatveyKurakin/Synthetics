@@ -12,7 +12,7 @@ namespace Synthetics
         protected Pen mPen;
         protected Pen mMaskPen;
         public Point mCenterPoint;
-        protected List<Point> mListPointWithOffset;
+        public List<Point> mListPointWithOffset;
         public List<Point> mPoints;
 
         protected static Random rnd_size = new Random();

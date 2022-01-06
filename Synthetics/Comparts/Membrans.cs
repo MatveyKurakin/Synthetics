@@ -166,16 +166,73 @@ namespace Synthetics
             return bitmap;
         }
 
+        // вспомогательная функция для GetConvexHull
+        private static double cross(Point O, Point A, Point B)
+        {
+            return (A.X - O.X) * (B.Y - O.Y) - (A.Y - O.Y) * (B.X - O.X);
+        }
+
+        // функция создания выпуклой оболочки                                                               ///(взял с форума, может быть плохой)
+        public static List<Point> GetConvexHull(List<Point> points)
+        {
+            if (points == null)
+                return null;
+
+            if (points.Count() <= 1)
+                return points;
+
+            int n = points.Count(), k = 0;
+            List<Point> H = new List<Point>(new Point[2 * n]);
+
+            points.Sort((a, b) =>
+                 a.X == b.X ? a.Y.CompareTo(b.Y) : a.X.CompareTo(b.X));
+
+            // Build lower hull
+            for (int i = 0; i < n; ++i)
+            {
+                while (k >= 2 && cross(H[k - 2], H[k - 1], points[i]) <= 0)
+                    k--;
+                H[k++] = points[i];
+            }
+
+            // Build upper hull
+            for (int i = n - 2, t = k + 1; i >= 0; i--)
+            {
+                while (k >= t && cross(H[k - 2], H[k - 1], points[i]) <= 0)
+                    k--;
+                H[k++] = points[i];
+            }
+
+            return H.Take(k - 1).ToList();
+        }
+
+
         // Функция создания мембран
         public void Create(List<ICompartment> compartments, Size sizeImg)
         {
             // Создание маски регионов и зпаолнение её
             Bitmap checkImage = new Bitmap(sizeImg.Width, sizeImg.Height);
             Graphics g = Graphics.FromImage(checkImage);
-            g.Clear(Color.Black);
+            g.Clear(Color.Black);                                                                           ///есть прозрачный transparent
+            SolidBrush brush = new SolidBrush(Color.White);
+            Pen pen = new Pen(Color.White);
             foreach (ICompartment c in compartments)
             {
-                c.DrawMask(g);
+                if (c.GetType() != typeof(Vesicules))
+                {
+                    c.DrawMask(g);
+                }
+                else
+                {
+                    Vesicules ves_c = (Vesicules)c;
+                    List<Point> ConvexHuLLVesicules = GetConvexHull(ves_c.mListPointWithOffset);
+                    pen.Width = ves_c.mSizeCycle.Width + 2;
+
+
+                    g.FillClosedCurve(brush, ConvexHuLLVesicules.ToArray());
+                    g.DrawClosedCurve(pen, ConvexHuLLVesicules.ToArray());
+
+                }
             }
 
             // Сохранение маски
@@ -275,7 +332,7 @@ namespace Synthetics
             }
 
             //Сохранение карты разросшихся регионов
-            //CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
+            CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
 
             //печать в консоль доп. информацию
             Console.WriteLine($"count point = {mPoints.Count}");
