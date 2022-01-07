@@ -11,7 +11,7 @@ namespace Synthetics
     {
         public PSD()
         {
-            mPen = new Pen(Color.Black, 8);
+            mPen = new Pen(Color.FromArgb(20,20,20), 3);
             mListPointWithOffset = new List<Point>();
             Create();
         }
@@ -41,8 +41,12 @@ namespace Synthetics
 
         public override void Draw(Graphics g)
         {
+            Pen p = new Pen(Color.FromArgb(96, 96, 96), 10);
+            int offset = 2;
             for (int i = 0; i < mListPointWithOffset.Count; i = i + 2)
-            { 
+            {
+                g.DrawLine(p, mListPointWithOffset[i].X + offset, mListPointWithOffset[i].Y + offset,
+                                mListPointWithOffset[i + 1].X + offset, mListPointWithOffset[i + 1].Y + offset);
                 g.DrawLine(mPen, mListPointWithOffset[i].X, mListPointWithOffset[i].Y,
                                 mListPointWithOffset[i + 1].X, mListPointWithOffset[i + 1].Y);
             }
