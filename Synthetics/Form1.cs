@@ -27,13 +27,13 @@ namespace Synthetics
         /// <summary>
         /// Preview organelles image
         /// </summary>
-        Bitmap imagePrew;  
-          
+        Bitmap imagePrew;
+
         /// <summary>
         /// Last created object which doesn't added to result image
         /// </summary>                                               
-        ICompartment LastRemember;    
-        
+        ICompartment LastRemember;
+
         /// <summary>
         /// Element list
         /// </summary>                                    
@@ -49,7 +49,7 @@ namespace Synthetics
             maskMembranes
         }
 
-        enum TypeOrganelle                                              
+        enum TypeOrganelle
         {
             axon,
             mitoxondrion,
@@ -64,12 +64,13 @@ namespace Synthetics
         TypeView currImageViewType;
 
         Bitmap currView;
+        Bitmap backgroundImg = null;
 
         /// <summary>
         /// The current object being created type
         /// </summary>                                            
-        TypeOrganelle currCreateType;  
-                                        
+        TypeOrganelle currCreateType;
+
         Color backgroundСolor;                                       /// добавить в форму для изменения пользователем
         Size imageSize;                                              /// добавить в форму для изменения пользователем через функцию с изменением image
 
@@ -137,7 +138,23 @@ namespace Synthetics
             }
         }
 
-        private void Draw()                                          // Основная функция для отрисовки основного поля
+        private void DrawBackround()
+        {
+            Graphics g = Graphics.FromImage(backgroundImg);
+            // чистка изображения
+            g.Clear(backgroundСolor);
+
+            PointsNoise p = new PointsNoise();
+            p.Draw(g);
+            backgroundImg = GaussFilter.Process(backgroundImg, 6);
+            g = Graphics.FromImage(backgroundImg);
+        }
+
+
+        /// <summary>
+        /// Main DRAW function
+        /// </summary>
+        private void Draw()
         {
             try
             {
@@ -170,12 +187,19 @@ namespace Synthetics
                 Color background = Color.Black; // выбор цвета фона в зависимости маска или изображение
                 if (currImageViewType == TypeView.layer)
                 {
-                    background = backgroundСolor;
+                    if (backgroundImg == null)
+                    {
+                        backgroundImg = new Bitmap(imageSize.Width, imageSize.Height);
+                        DrawBackround();
+                    }
+                    currView = new Bitmap(backgroundImg);
                 }
 
                 Graphics g = Graphics.FromImage(currView);
-                // чистка изображения
-                g.Clear(background);
+                if (currImageViewType != TypeView.layer)
+                {
+                    g.Clear(Color.Black);
+                }
 
                 // рисование в зависимости от типа (изображение или маска)
                 foreach (ICompartment c in compartments)
@@ -192,6 +216,12 @@ namespace Synthetics
                         }
                     }
                 }
+
+
+                Noise n = new Noise();
+                currView = n.AddGaussianNoise(currView);
+                currView = GaussFilter.Process(currView, 4);
+                currView = n.AddGaussianNoise(currView);
 
                 pictureGeneralBox.Image = currView;
                 pictureGeneralBox.Refresh();
@@ -277,14 +307,14 @@ namespace Synthetics
             {
                 Console.WriteLine(ex.Message);
             }
-        } 
+        }
 
         private void comboBoxViewType_SelectedIndexChanged(object sender, EventArgs e)     // Функция смены отображения
         {
             try
             {
                 ComboBox comboBox = (ComboBox)sender;
-                
+
                 switch (comboBox.SelectedItem.ToString())
                 {
                     case "image":
