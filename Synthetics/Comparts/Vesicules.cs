@@ -19,8 +19,8 @@ namespace Synthetics
         {
             mPen = new Pen(mPenColor, 3);
 
-            mSizeCycleMin = 5;                              /// перенести в генерацию
-            mSizeCycleMax = 15;
+            mSizeCycleMin = 5;
+            mSizeCycleMax = 12;
 
             mSizeCycle = new List<int>();
             mListPointWithOffset = new List<Point>();

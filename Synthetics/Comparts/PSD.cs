@@ -60,7 +60,7 @@ namespace Synthetics
             // создание точки конца отрезка, симметрично относительно (0, 0)
             mPoints.Add(new Point(-lenXPSD, -lenYPSD));
 
-            int sizeOffset = 4;                   // смещение дополнительной полосы в выпуклую сторону (+ значение) и в внутренюю сторону (- значение)
+            int sizeOffset = -4;                   // смещение дополнительной полосы в выпуклую сторону (+ значение) и в внутренюю сторону (- значение)
             if (sizeLenNormal > 0)
             {
                 Offset.X = (int)Math.Round(eXnormal * sizeOffset);
