@@ -9,16 +9,20 @@ namespace Synthetics
 {
     class Vesicules : Compartment
     {
-        public Size mSizeCycle;
+        public int mSizeCycleMin;
+        public int mSizeCycleMax;
         public int mSizePoint;
         private Color mPenColor = Color.FromArgb(50,50,50);                     /// подобрать цвета
+        private List<int> mSizeCycle;
 
         public Vesicules()
         {
             mPen = new Pen(mPenColor, 3);
 
-            int SizeCycleR = rnd_size.Next(5, 15);                              /// перенести в генерацию
-            mSizeCycle = new Size(SizeCycleR, SizeCycleR);
+            mSizeCycleMin = 5;                              /// перенести в генерацию
+            mSizeCycleMax = 15;
+
+            mSizeCycle = new List<int>();
             mListPointWithOffset = new List<Point>();
             Create();
         }
@@ -28,16 +32,17 @@ namespace Synthetics
 
         }
 
-        private bool CheckOverlap(Point point, double proportion)
+        private bool CheckOverlap(Point point, int sizeCycle, double proportion)
         {
             int count = mPoints.Count;
-            foreach (Point mpoint in mPoints)
-            {
-                double x_delt = (double)Math.Abs(mpoint.X - point.X);
-                double y_delt = (double)Math.Abs(mpoint.Y - point.Y);
 
-                if (x_delt / (mSizeCycle.Width + mPen.Width) < proportion &&
-                    y_delt / (mSizeCycle.Height + mPen.Width) < proportion)
+            for (int i = 0; i < count; ++i)
+            {
+                double x_delt = (double)Math.Abs(mPoints[i].X - point.X);
+                double y_delt = (double)Math.Abs(mPoints[i].Y - point.Y);
+
+                if (x_delt / ((mSizeCycle[i] + sizeCycle)/2 + mPen.Width * 2) < proportion &&
+                    y_delt / ((mSizeCycle[i] + sizeCycle)/2 + mPen.Width * 2) < proportion)
                 {
                     return true;
                 }
@@ -64,18 +69,22 @@ namespace Synthetics
             {
                 int counter = 0;
                 Point now_point = new Point();
+                int nowSizeCycle;
                 do
                 {
+                    nowSizeCycle = rnd_size.Next(mSizeCycleMin, mSizeCycleMax);
                     now_point.X = rnd_size.Next(min_r, max_r);
                     now_point.Y = rnd_size.Next(min_r, max_r);
+
                     ++counter;
                 }
-                while (CheckOverlap(now_point, 1) && counter < max_iteration);
+                while (CheckOverlap(now_point, nowSizeCycle, 1) && counter < max_iteration);
 
                 if (counter == max_iteration)
                 {
                     ++fail_counter;
                 }
+                mSizeCycle.Add(nowSizeCycle);
                 mPoints.Add(now_point);
             }
 
@@ -91,10 +100,10 @@ namespace Synthetics
 
         private void DrawVesicules(Graphics g, Pen p, Brush br)
         {
-            foreach (Point point in mListPointWithOffset)
+            for (int i = 0; i < mListPointWithOffset.Count; ++i)
             {
-                g.FillEllipse(br, point.X, point.Y, mSizeCycle.Width, mSizeCycle.Height);
-                g.DrawEllipse(p, point.X, point.Y, mSizeCycle.Width, mSizeCycle.Height);
+                g.FillEllipse(br, mListPointWithOffset[i].X, mListPointWithOffset[i].Y, mSizeCycle[i], mSizeCycle[i]);
+                g.DrawEllipse(p, mListPointWithOffset[i].X, mListPointWithOffset[i].Y, mSizeCycle[i], mSizeCycle[i]);
             }
         }
 

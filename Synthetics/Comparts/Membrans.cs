@@ -339,7 +339,7 @@ namespace Synthetics
                 {
                     Vesicules ves_c = (Vesicules)c;
                     List<Point> ConvexHuLLVesicules = GetConvexHull(ves_c.mListPointWithOffset);
-                    pen.Width = ves_c.mSizeCycle.Width + 2;
+                    pen.Width = ves_c.mSizeCycleMax + 2;
 
 
                     g.FillClosedCurve(brush, ConvexHuLLVesicules.ToArray());
