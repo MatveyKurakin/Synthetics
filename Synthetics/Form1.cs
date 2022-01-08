@@ -217,11 +217,13 @@ namespace Synthetics
                     }
                 }
 
-
-                Noise n = new Noise();
-                currView = n.AddGaussianNoise(currView);
-                currView = GaussFilter.Process(currView, 4);
-                currView = n.AddGaussianNoise(currView);
+                if (currImageViewType == TypeView.layer)
+                {
+                    Noise n = new Noise();
+                    currView = n.AddGaussianNoise(currView);
+                    currView = GaussFilter.Process(currView, 4);
+                    currView = n.AddGaussianNoise(currView);
+                }
 
                 pictureGeneralBox.Image = currView;
                 pictureGeneralBox.Refresh();

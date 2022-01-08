@@ -11,17 +11,19 @@ namespace Synthetics
     {
         public Size mSizeCycle;
         public int mSizePoint;
-        private Color mPenColor = Color.FromArgb(80,80,80);
+        private Color mPenColor = Color.FromArgb(50,50,50);                     /// подобрать цвета
 
         public Vesicules()
         {
-            mPen = new Pen(mPenColor, 2);
-            mSizeCycle = new Size(5, 5);
+            mPen = new Pen(mPenColor, 3);
+
+            int SizeCycleR = rnd_size.Next(5, 15);                              /// перенести в генерацию
+            mSizeCycle = new Size(SizeCycleR, SizeCycleR);
             mListPointWithOffset = new List<Point>();
             Create();
         }
 
-        public Vesicules(int l)
+        public Vesicules(int l)                                                 /// заглушка на будущее
         {
 
         }
@@ -46,14 +48,14 @@ namespace Synthetics
         {
             mSizePoint = 20;
 
-            if (min_r == 0)
+            if (min_r == 0)                                                                 /// сделать осмесленную форму генерации
             {
-                min_r = rnd_size.Next(-50, 0);
+                min_r = rnd_size.Next(-75, 0);
             }
 
             if (max_r == 0)
             {
-                max_r = rnd_size.Next(0, 50);
+                max_r = rnd_size.Next(0, 75);
             }
 
             int max_iteration = 10000;
@@ -97,7 +99,7 @@ namespace Synthetics
         }
 
         Color brushColor = Color.Gray;
-        SolidBrush brush = new SolidBrush(Color.Gray);
+        SolidBrush brush = new SolidBrush(Color.FromArgb(192, 192, 192));
 
         public override void Draw(Graphics g)
         {

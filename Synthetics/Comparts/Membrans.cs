@@ -13,7 +13,7 @@ namespace Synthetics
 
         public Membrans(List<ICompartment> compartments, Size sizeImg)
         {
-            mPen = new Pen(Color.FromArgb(0, 128, 0), 1);
+            mPen = new Pen(Color.FromArgb(0, 128, 0), 2);
             mListPointWithOffset = new List<Point>();
             Create(compartments, sizeImg);
         }
@@ -161,7 +161,18 @@ namespace Synthetics
             var bitmap = new Bitmap(source.GetLength(0), source.GetLength(1));
             for (var i = 0; i < bitmap.Height; i++)
                 for (var j = 0; j < bitmap.Width; j++)
-                    bitmap.SetPixel(j, i, Color.FromArgb(source[i, j], 0, 0)); // вместо Color.FromArgb можете использовать любой другой способ преобразования элемента массива в цвет
+                    if (source[i, j] == -1)
+                    {
+                        bitmap.SetPixel(j, i, Color.FromArgb(0, 255, 0));
+                    }
+                    else if (source[i, j] == -2)
+                    {
+                        bitmap.SetPixel(j, i, Color.FromArgb(0, 255, 255));
+                    }
+                    else
+                    {
+                        bitmap.SetPixel(j, i, Color.FromArgb(source[i, j], 0, 0)); // вместо Color.FromArgb можете использовать любой другой способ преобразования элемента массива в цвет
+                    }
 
             return bitmap;
         }
@@ -206,6 +217,106 @@ namespace Synthetics
             return H.Take(k - 1).ToList();
         }
 
+        // Расширение для PSD
+        private void AddingPSDDirection(int[,] labelImage, Point antiDir, Point pStart, int labelPrint = -2)
+        {
+            // основная идея расширяться в направлении конца до тех пор, пока не упрёмся в границу или выйдем за поле
+
+            // если край за полем видимости, то выходим
+            Size sizeImg = new Size(labelImage.GetLength(1), labelImage.GetLength(0));
+            if (pStart.X < 0 || pStart.X >= sizeImg.Width)
+            {
+                return;
+            }
+            if (pStart.Y < 0 || pStart.Y >= sizeImg.Height)
+            {
+                return;
+            }
+
+            // вычисление направления движения
+            double directionX = pStart.X - antiDir.X;
+            double directionY = pStart.Y - antiDir.Y;
+
+            double lenDir = Math.Sqrt(directionX * directionX + directionY * directionY);
+            directionX /= lenDir;
+            directionY /= lenDir;
+
+            int counter = 1;
+            Point now_position = new Point(pStart.X, pStart.Y);
+
+            // Двигаемся, помечая границей labelPrint пока не выйдем за поле или рядом будет граница
+            bool repit_dir = true;
+            while (repit_dir)
+            {
+                bool flag_fing_boarder = false; // flag нахождения в окрестности границы
+
+                if (now_position.X > 0)
+                {
+                    int value = labelImage[now_position.Y, now_position.X - 1];
+                    if (value == -1)
+                    {
+                        flag_fing_boarder = true;
+                    }
+                }
+
+                if (now_position.X < sizeImg.Width - 1)
+                {
+                    int value = labelImage[now_position.Y, now_position.X + 1];
+                    if (value == -1)
+                    {
+                        flag_fing_boarder = true;
+                    }
+                }
+
+                if (now_position.Y > 0)
+                {
+                    int value = labelImage[now_position.Y - 1, now_position.X];
+                    if (value == -1)
+                    {
+                        flag_fing_boarder = true;
+                    }
+                }
+
+                if (now_position.Y < sizeImg.Height - 1)
+                {
+                    int value = labelImage[now_position.Y + 1, now_position.X];
+                    if (value == -1)
+                    {
+                        flag_fing_boarder = true;
+                    }
+                }
+
+                if (flag_fing_boarder == false)
+                {
+                    labelImage[now_position.Y, now_position.X] = -2;
+                    mPoints.Add(new Point(now_position.X, now_position.Y));  // Добавление граничного пикселя
+
+                    // вычисление следующего шага
+                    now_position.X = pStart.X + (int)Math.Round(directionX * counter);
+                    now_position.Y = pStart.Y + (int)Math.Round(directionY * counter);
+                    ++counter;
+
+                    // проверка останова
+                    if (now_position.X < 0 || now_position.X >= sizeImg.Width)
+                    {
+                        repit_dir = false;
+                    }
+                    else if (now_position.Y < 0 || now_position.Y >= sizeImg.Height)
+                    {
+                        repit_dir = false;
+                    } else if (labelImage[now_position.Y, now_position.X] == -1)
+                    {
+                        repit_dir = false;
+                    }
+                }
+                else
+                {
+                    repit_dir = false;
+                }
+            }
+        }
+
+
         // Функция создания мембран
         public void Create(List<ICompartment> compartments, Size sizeImg)
         {
@@ -219,7 +330,10 @@ namespace Synthetics
             {
                 if (c.GetType() != typeof(Vesicules))                                                       /// можно обобщить для всех кроме класса PSD и мембран
                 {
-                    c.DrawMask(g);
+                    //if (c.GetType() != typeof(PSD))                                                         /// Без PSD не получается так как мембрана проходит и через них
+                    {
+                        c.DrawMask(g);
+                    }
                 }
                 else
                 {
@@ -263,20 +377,21 @@ namespace Synthetics
                     for (int x = 0; x < sizeImg.Width; ++x)
                     {
                         // Для каждого ненулевого пикселя проверить ближайших соседей (пустой, тот же регион или граница с другим)
-                        if (LastLabel[y, x] != 0)
+                        if (LastLabel[y, x] != 0 && LastLabel[y, x] != -1)
                         {
                             int label = LastLabel[y, x];
                             // сосед слева
                             if (x > 0)
                             {
-                                int value = labelImage[y, x - 1];
+                                int value = LastLabel[y, x - 1];
                                 if (value == 0)                   // Если есть неразмеченный сосед, то пометить его своей меткой
                                 {
                                     labelImage[y, x - 1] = label;
                                     repit = true;                 // Если есть новый пиксель, то проверить что из него можно разростись на следующей итерации
                                 }
-                                else if (value != label)
+                                else if (value != label && value > 0)
                                 {
+                                    //labelImage[y, x] = -1;    // Значение -1 обозначает границу
                                     mPoints.Add(new Point(x, y)); // Добавление граничного пикселя
                                 }
                             }
@@ -284,14 +399,15 @@ namespace Synthetics
                             // сосед справа
                             if (x < sizeImg.Width - 1)
                             {
-                                int value = labelImage[y, x + 1];
+                                int value = LastLabel[y, x + 1];
                                 if (value == 0)
                                 {
                                     labelImage[y, x + 1] = label;
                                     repit = true;
                                 }
-                                else if (value != label)
+                                else if (value != label && value > 0)
                                 {
+                                    labelImage[y, x] = -1;    // Значение -1 обозначает границу
                                     mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
@@ -299,14 +415,15 @@ namespace Synthetics
                             // сосед сверху
                             if (y > 0)
                             {
-                                int value = labelImage[y - 1, x];
+                                int value = LastLabel[y - 1, x];
                                 if (value == 0)
                                 {
                                     labelImage[y - 1, x] = label;
                                     repit = true;
                                 }
-                                else if (value != label)
+                                else if (value != label && value > 0)
                                 {
+                                    //labelImage[y, x] = -1;    // Значение -1 обозначает границу               
                                     mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
@@ -314,14 +431,15 @@ namespace Synthetics
                             // сосед снизу
                             if (y < sizeImg.Height - 1)
                             {
-                                int value = labelImage[y + 1, x];
+                                int value = LastLabel[y + 1, x];
                                 if (value == 0)
                                 {
                                     labelImage[y + 1, x] = label;
                                     repit = true;
                                 }
-                                else if (value != label)
+                                else if (value != label && value > 0)
                                 {
+                                    labelImage[y, x] = -1;    // Значение -1 обозначает границу                 /// так как проверка идёт сверху вниз, то проверять с 2 сторон нет смысла
                                     mPoints.Add(new Point(x, y));  // Добавление граничного пикселя
                                 }
                             }
@@ -330,8 +448,52 @@ namespace Synthetics
                 }
             }
 
-            //Сохранение карты разросшихся регионов
+            //Сохранение карты разросшихся регионов без обработки PSD
             //CreateBitmap(labelImage).Save("file2.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            // Обработка PSD
+            foreach (ICompartment c in compartments)
+            {
+                // для расширение всех PSD
+                if (c.GetType() == typeof(PSD))
+                {
+                    PSD psd = (PSD)c;
+
+                    Point center = psd.mCenterPoint;
+                    Point pStart = psd.mListPointWithOffset[0];
+                    Point pNormal = psd.mListPointWithOffset[1];
+                    Point pEnd = psd.mListPointWithOffset[2];
+
+                    // смещение разметки мембран так как в реальных данных PSD больше внутри 1 мембраны клетки
+                    double eDirX;
+                    double eDirY;
+                    if (center.X == pNormal.X && center.Y == pNormal.Y)
+                    {
+                        // вычисление нормали к вектору из end to start
+                        eDirX = 1;
+                        eDirY = -((double)(pStart.X - pEnd.X) / (double)pStart.Y - pEnd.Y);
+                    }
+                    else
+                    {
+                        eDirX = pNormal.X - center.X;
+                        eDirY = pNormal.Y - center.Y;
+                    }
+
+                    double lenNormal = Math.Sqrt(eDirX * eDirX + eDirY * eDirY);
+                    eDirX /= lenNormal;
+                    eDirY /= lenNormal;
+
+                    int addedX = (int)Math.Round(eDirX * 2); // 2 = (6 - 2) /2 - размер пера PSD минус размер пера мембран деленое на 2
+                    int addedY = (int)Math.Round(eDirY * 2); // 2 = (6 - 2) /2- размер пера PSD минус размер пера мембран деленое на 2 
+
+                    // добавление смещения
+                    AddingPSDDirection(labelImage, new Point(pNormal.X + 6 * addedX, pNormal.Y + 6 * addedY), new Point(pStart.X + addedX, pStart.Y + addedY));
+                    AddingPSDDirection(labelImage, new Point(pNormal.X + 6 * addedX, pNormal.Y + 6 * addedY), new Point(pEnd.X + addedX, pEnd.Y + addedY));
+                }
+            }
+
+            //Сохранение карты разросшихся регионов c PSD
+            //CreateBitmap(labelImage).Save("file3.png", System.Drawing.Imaging.ImageFormat.Png);
 
             //печать в консоль доп. информацию
             Console.WriteLine($"count point = {mPoints.Count}");

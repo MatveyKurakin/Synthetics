@@ -9,31 +9,66 @@ namespace Synthetics
 {
     class PSD : Compartment
     {
+        public Point Offset;
         public PSD()
         {
-            mPen = new Pen(Color.FromArgb(20,20,20), 3);
+            mPen = new Pen(Color.FromArgb(20,20,20), 6);
             mListPointWithOffset = new List<Point>();
+            Offset = new Point();
             Create();
         }
 
-        public void Create(int min_r = 0, int max_r = 0)
-        {   
-            if (min_r == 0)
+        private List<Point> GetPositionPointsDark()
+        {
+            List<Point> mListPointDarkOffset = new List<Point>();
+            foreach (Point point in mListPointWithOffset) {
+                mListPointDarkOffset.Add(new Point(point.X + Offset.X, point.Y + Offset.Y));
+            }
+            return mListPointDarkOffset;
+        }
+
+        public void Create()
+        {
+            int min_r = 10;
+            int max_r = 20;
+
+            // создание точки начала отрезка в 1 или 4 четвертях
+            int lenXPSD = rnd_size.Next(min_r, max_r);
+            int lenYPSD = rnd_size.Next(min_r, max_r);
+            if  (rnd_size.Next(0,2) == 0)
             {
-                min_r = rnd_size.Next(-50, 0);
+                lenYPSD *= -1;
             }
 
-            if (max_r == 0)
-            {
-                max_r = rnd_size.Next(0, 50);
-            }
+            mPoints.Add(new Point(lenXPSD, lenYPSD));
 
-            for (int i = 0; i < 2; ++i)
+            // вычисление нормали к вектору из (0, 0) до созданой точки
+            double eXnormal = 1;
+            double eYnormal = -((double)lenXPSD/ (double)lenYPSD);
+
+            double lenNormal = Math.Sqrt(eXnormal * eXnormal + eYnormal * eYnormal);
+            eXnormal /= lenNormal;
+            eYnormal /= lenNormal;
+
+            // создание точки, для искривление отрезка PSD
+            int sizeLenNormal = rnd_size.Next(-10, 10);
+            int coordXnormal = (int)Math.Round(eXnormal * sizeLenNormal);
+            int coordYnormal = (int)Math.Round(eYnormal * sizeLenNormal);
+
+            mPoints.Add(new Point(coordXnormal, coordYnormal));
+
+            // создание точки конца отрезка, симметрично относительно (0, 0)
+            mPoints.Add(new Point(-lenXPSD, -lenYPSD));
+
+            if (sizeLenNormal > 0)
             {
-                int rx = rnd_size.Next(min_r, max_r);
-                int ry = rnd_size.Next(min_r, max_r);
-                Point now_point = new Point(rx, ry);
-                mPoints.Add(now_point);
+                Offset.X = (int)Math.Round(eXnormal);
+                Offset.Y = (int)Math.Round(eYnormal);
+            }
+            else
+            {
+                Offset.X = -(int)Math.Round(eXnormal);
+                Offset.Y = -(int)Math.Round(eYnormal);
             }
 
             ChangePositionPoints();
@@ -41,15 +76,10 @@ namespace Synthetics
 
         public override void Draw(Graphics g)
         {
-            Pen p = new Pen(Color.FromArgb(96, 96, 96), 10);
-            int offset = 2;
-            for (int i = 0; i < mListPointWithOffset.Count; i = i + 2)
-            {
-                g.DrawLine(p, mListPointWithOffset[i].X + offset, mListPointWithOffset[i].Y + offset,
-                                mListPointWithOffset[i + 1].X + offset, mListPointWithOffset[i + 1].Y + offset);
-                g.DrawLine(mPen, mListPointWithOffset[i].X, mListPointWithOffset[i].Y,
-                                mListPointWithOffset[i + 1].X, mListPointWithOffset[i + 1].Y);
-            }
+
+            Pen mPenDarkZone = new Pen(Color.FromArgb(80, 80, 80), mPen.Width * 3);
+            g.DrawCurve(mPenDarkZone, GetPositionPointsDark().ToArray());
+            g.DrawCurve(mPen, mListPointWithOffset.ToArray());
         }
 
         protected override void setDrawParam()
