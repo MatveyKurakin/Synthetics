@@ -10,9 +10,14 @@ namespace Synthetics
     class PSD : Compartment
     {
         public Point Offset;
+        public Pen mPenDarkZone;
+        public double lenPSD;
         public PSD()
         {
-            mPen = new Pen(Color.FromArgb(20,20,20), 6);
+            colorPSD = Color.FromArgb(20, 20, 20);
+            colorDark = Color.FromArgb(80, 80, 80);
+            mPen = new Pen(colorDark, 6);
+            mPenDarkZone = new Pen(colorPSD, mPen.Width * 3);
             mListPointWithOffset = new List<Point>();
             Offset = new Point();
             Create();
@@ -72,25 +77,28 @@ namespace Synthetics
                 Offset.Y = -(int)Math.Round(eYnormal * sizeOffset);
             }
 
+            lenPSD = Math.Sqrt((4 * lenXPSD * lenXPSD) + (4 * lenYPSD * lenYPSD));
             ChangePositionPoints();
         }
 
         public override void Draw(Graphics g)
         {
-
-            Pen mPenDarkZone = new Pen(Color.FromArgb(80, 80, 80), mPen.Width * 3);
             g.DrawCurve(mPenDarkZone, GetPositionPointsDark().ToArray());
             g.DrawCurve(mPen, mListPointWithOffset.ToArray());
         }
 
+        private Color colorPSD;
+        private Color colorDark;
         protected override void setDrawParam()
         {
-            mPen.Color = Color.Black;
+            mPen.Color = colorPSD;
+            mPenDarkZone.Color = colorDark;
         }
 
         protected override void setMaskParam()
         {
             mPen.Color = Color.White;
+            mPenDarkZone.Color = Color.Transparent;
         }
     }
 }
