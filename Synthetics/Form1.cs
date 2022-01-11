@@ -95,31 +95,88 @@ namespace Synthetics
 
             return false;
         }
-        private void AddNewElementWithoutOverlap(int width, int height)
+        private void AddNewElementWithoutOverlap(int width, int height, List<ICompartment> compartmentsList, ICompartment newComponent)            ////// Нужна отдельная функция рисования технических масок для отделимости обьектов подальше друг от друга
         {
             Bitmap checkImage = new Bitmap(width, height);
             Bitmap checkNewImage = new Bitmap(width, height);
             Graphics g = Graphics.FromImage(checkImage);
             g.Clear(Color.Black);
-            foreach (ICompartment c in compartments)
+            foreach (ICompartment c in compartmentsList)
             {
-                c.DrawMask(g);
+                if (c.GetType() == typeof(Vesicules))                                                       /// можно обобщить для всех кроме класса PSD и мембран
+                {
+                    // для обработки окрестности везикул группировать как неделимый кластер
+                    Vesicules ves_c = (Vesicules)c;
+                    List<Point> ConvexHuLLVesicules = Membrans.GetConvexHull(ves_c.mListPointWithOffset);           /// выглядит криво
+
+                    g.FillClosedCurve(new SolidBrush(Color.White), ConvexHuLLVesicules.ToArray());
+                    g.DrawClosedCurve(new Pen(Color.White, ves_c.mSizeCycleMax + 2), ConvexHuLLVesicules.ToArray());
+                }
+                else if (c.GetType() == typeof(Acson))                                                         /// Без PSD не получается так как мембрана проходит и через них
+                {
+                    // для обработки Аксона не давать возможности рисовать внутри его
+                    Acson acson_c = (Acson)c;
+                    g.FillClosedCurve(new SolidBrush(Color.White), acson_c.mListPointWithOffset.ToArray());
+                    g.DrawClosedCurve(new Pen(Color.White, 12), acson_c.mListPointWithOffset.ToArray());
+                }
+                else if (c.GetType() == typeof(PSD))                                                         /// Без дополнительной технической зоны они генерятся слишком близко PSD
+                {
+                    PSD psd_c = (PSD)c;
+                    int addedSizeZone = 16; // увеличить диаметр зоны PSD на 16
+
+                    double unionDiametr = psd_c.lenPSD + addedSizeZone;                                     /// рисую техническую область PSD окружностью
+                    int startX = psd_c.mCenterPoint.X - (int)Math.Round(unionDiametr / 2);
+                    int startY = psd_c.mCenterPoint.Y - (int)Math.Round(unionDiametr / 2);
+                    g.FillEllipse(new SolidBrush(Color.White), startX, startY, (int)Math.Round(unionDiametr), (int)Math.Round(unionDiametr));
+                }
+                else
+                {
+                    c.DrawMask(g);
+                }
+                
             }
+
+            //pictureGeneralBox.Image = checkImage;
+            //pictureGeneralBox.Refresh();
             Graphics g2 = Graphics.FromImage(checkNewImage);
 
             int counter = 0;
             int max_iter = 50;
-            do
+            do                                                                                                        /// Для нового элнемента блок кода копируется (перенести это и то что выше в функцию и дёргать её
             {
                 g2.Clear(Color.Black);
-                LastRemember.NewPosition(random.Next(0, width), random.Next(0, height));
-                LastRemember.DrawMask(g2);
+                newComponent.NewPosition(random.Next(5, width-5), random.Next(5, height - 5));
+
+                if (newComponent.GetType() == typeof(Acson))                                                         /// Без PSD не получается так как мембрана проходит и через них
+                {
+                    // для обработки Аксона не давать возможности рисовать внутри его
+                    Acson acson_c = (Acson)newComponent;
+                    g2.FillClosedCurve(new SolidBrush(Color.White), acson_c.mListPointWithOffset.ToArray());
+                    g2.DrawClosedCurve(new Pen(Color.White, 12), acson_c.mListPointWithOffset.ToArray());
+                }
+                else if (newComponent.GetType() == typeof(PSD))                                                         /// Без дополнительной технической зоны они генерятся слишком близко PSD
+                {
+                    PSD psd_c = (PSD)newComponent;
+                    int addedSizeZone = 16; // увеличить диаметр зоны PSD на 16
+
+                    double unionDiametr = psd_c.lenPSD + addedSizeZone;                                                   /// рисую техническую область PSD окружностью
+                    int startX = psd_c.mCenterPoint.X - (int)Math.Round(unionDiametr / 2);
+                    int startY = psd_c.mCenterPoint.Y - (int)Math.Round(unionDiametr / 2);
+                    g2.FillEllipse(new SolidBrush(Color.White), startX, startY, (int)Math.Round(unionDiametr), (int)Math.Round(unionDiametr));
+                }
+                else
+                {
+                    newComponent.DrawMask(g2);
+                }
+
+
                 ++counter;
             } while (CheckOverlapNewElement(checkImage, checkNewImage, width, height) && counter < max_iter);
 
+            // Добавлено исключение чтобы элементы не накладывались друг на друга
             if (counter == max_iter)
             {
-                Console.WriteLine("Can't add unique position new element");
+                throw new Exception("Can't add unique position new element");
             }
         }
 
@@ -128,26 +185,37 @@ namespace Synthetics
             // добавление нового изображения если есть
             if (LastRemember != null)
             {
-                AddNewElementWithoutOverlap(width, height);
-                compartments.Add(LastRemember);
-                LastRemember = null;
+                try
+                {
+                    // нет смысла проверять мембраны, так как они касаются PSD и будет перекрытие
+                    if (LastRemember.GetType() != typeof(Membrans))
+                    {
+                        AddNewElementWithoutOverlap(width, height, compartments, LastRemember);
+                    }
+                    compartments.Add(LastRemember);
+                    LastRemember = null;
 
-                //чистка памяти
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                    //чистка памяти
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
-        private void DrawBackround()
+        private void DrawBackround(Bitmap Img, Color ImgСolor)
         {
-            Graphics g = Graphics.FromImage(backgroundImg);
+            Graphics g = Graphics.FromImage(Img);
             // чистка изображения
-            g.Clear(backgroundСolor);
+            g.Clear(ImgСolor);
 
             PointsNoise p = new PointsNoise();
             p.Draw(g);
-            backgroundImg = GaussFilter.Process(backgroundImg, 6);
-            g = Graphics.FromImage(backgroundImg);
+            Img = GaussFilter.Process(Img, 6);
+            g = Graphics.FromImage(Img);
         }
 
 
@@ -190,7 +258,7 @@ namespace Synthetics
                     if (backgroundImg == null)
                     {
                         backgroundImg = new Bitmap(imageSize.Width, imageSize.Height);
-                        DrawBackround();
+                        DrawBackround(backgroundImg, backgroundСolor);
                     }
                     currView = new Bitmap(backgroundImg);
                 }
@@ -252,6 +320,7 @@ namespace Synthetics
             addNewElementIntoImage(imageSize.Width, imageSize.Height);
             Draw();
             updateViewComponentList();
+
         }
 
         private void create_organel_Click(object sender, EventArgs e)                                   // Функция создания объектов по параметрам /// не доделана
@@ -401,6 +470,152 @@ namespace Synthetics
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Цикличная генерация
+            int count_img = 10;
+            Size sizeImageScript = new Size(256, 256);
+
+            // количество элементов на изображении
+            int count_PSD = 5;
+            int count_Axon = 5;
+
+            // директория сохранения картинок
+            string dir_save = "../../Sintetic generation/";
+
+            for (int counter = 0; counter < count_img; ++counter)
+            {
+                // создаю новый список для каждой генерации и очищаю для защиты от оптимизаций
+                List<ICompartment> ListGeneration = new List<ICompartment>();
+                //ListGeneration.Clear();
+
+                // генерация Axons
+                for (int j = 0; j < count_Axon; ++j)
+                {
+                    try
+                    {
+                        ICompartment newAcson = new Acson();
+                        AddNewElementWithoutOverlap(sizeImageScript.Width, sizeImageScript.Height, ListGeneration, newAcson);
+                        ListGeneration.Add(newAcson);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+
+                // генерация PSDs
+                for (int i = 0; i < count_PSD; ++i)
+                {
+                    try
+                    {
+                        ICompartment newPSD = new PSD();
+                        AddNewElementWithoutOverlap(sizeImageScript.Width, sizeImageScript.Height, ListGeneration, newPSD);
+                        ListGeneration.Add(newPSD);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+
+                // Добавление мембран
+                ListGeneration.Add(new Membrans(ListGeneration, sizeImageScript));
+
+
+                // Рисование
+
+                // рисование слоя и масок
+
+                // рисование слоя и фона к нему
+                Bitmap Img = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                DrawBackround(Img, backgroundСolor);
+                Graphics gImg = Graphics.FromImage(Img);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackAcson = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackAcson = Graphics.FromImage(MackAcson);
+                gMackAcson.Clear(Color.Black);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackPSD   = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackPSD = Graphics.FromImage(MackPSD);
+                gMackPSD.Clear(Color.Black);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackMito  = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackMito = Graphics.FromImage(MackMito);
+                gMackMito.Clear(Color.Black);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackMitoBoarder = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackMitoBoarder = Graphics.FromImage(MackMitoBoarder);
+                gMackMitoBoarder.Clear(Color.Black);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackMembrans = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackMembrans = Graphics.FromImage(MackMembrans);
+                gMackMembrans.Clear(Color.Black);
+
+                // рисование маски и заплолнение черным
+                Bitmap MackVesicules = new Bitmap(sizeImageScript.Width, sizeImageScript.Height);
+                Graphics gMackVesicules = Graphics.FromImage(MackVesicules);
+                gMackVesicules.Clear(Color.Black);
+
+                // рисовка в соответсвующее изображение
+                foreach (ICompartment c in ListGeneration)
+                {
+                    c.Draw(gImg);
+
+                    if (c.GetType() == typeof(PSD))
+                    {
+                        c.DrawMask(gMackPSD);
+                    } 
+                    else if (c.GetType() == typeof(Acson))
+                    {
+                        c.DrawMask(gMackAcson);
+                    }
+                    else if (c.GetType() == typeof(Membrans))
+                    {
+                        c.DrawMask(gMackMembrans);
+                    }
+                    else if (c.GetType() == typeof(Mitohondrion))
+                    {
+                        c.DrawMask(gMackMito);
+                    }
+                    else if (c.GetType() == typeof(Vesicules))
+                    {
+                        c.DrawMask(gMackVesicules);
+                    }
+                }
+
+                // добавление шума
+                Noise n = new Noise();
+                Img = n.AddGaussianNoise(Img);
+                Img = GaussFilter.Process(Img, 4);
+                Img = n.AddGaussianNoise(Img);
+
+                //Сохранение слоя и масок 
+
+                // coхранение слоя 
+                Img.Save(dir_save + "original/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackPSD.Save(dir_save + "PSD/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackAcson.Save(dir_save + "axon/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackMembrans.Save(dir_save + "boundaries/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackMito.Save(dir_save + "mitochondria/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackVesicules.Save(dir_save + "vesicles/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+                MackMitoBoarder.Save(dir_save + "mitochondrial boundaries/" + counter.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                // coхранение маски
+
             }
         }
     }

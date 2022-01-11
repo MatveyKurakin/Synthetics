@@ -49,6 +49,7 @@
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureGeneralBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureOrganelsBox)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -61,7 +62,7 @@
             // 
             this.pictureGeneralBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureGeneralBox.Location = new System.Drawing.Point(3, 2);
-            this.pictureGeneralBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pictureGeneralBox.Margin = new System.Windows.Forms.Padding(4);
             this.pictureGeneralBox.Name = "pictureGeneralBox";
             this.pictureGeneralBox.Size = new System.Drawing.Size(842, 614);
             this.pictureGeneralBox.TabIndex = 0;
@@ -71,7 +72,7 @@
             // 
             this.generate.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.generate.Location = new System.Drawing.Point(7, 527);
-            this.generate.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.generate.Margin = new System.Windows.Forms.Padding(4);
             this.generate.Name = "generate";
             this.generate.Size = new System.Drawing.Size(253, 55);
             this.generate.TabIndex = 1;
@@ -102,7 +103,7 @@
             // 
             this.pictureOrganelsBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureOrganelsBox.Location = new System.Drawing.Point(7, 249);
-            this.pictureOrganelsBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pictureOrganelsBox.Margin = new System.Windows.Forms.Padding(4);
             this.pictureOrganelsBox.Name = "pictureOrganelsBox";
             this.pictureOrganelsBox.Size = new System.Drawing.Size(253, 210);
             this.pictureOrganelsBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -230,6 +231,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.button1);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Controls.Add(this.comboBoxViewType);
             this.groupBox2.Controls.Add(this.button2);
@@ -280,6 +282,16 @@
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(21, 543);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(147, 71);
+            this.button1.TabIndex = 15;
+            this.button1.Text = "Выполнить скрипт по генерации и сохранению";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -288,7 +300,7 @@
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
             this.Text = "Synthetic";
             ((System.ComponentModel.ISupportInitialize)(this.pictureGeneralBox)).EndInit();
@@ -321,6 +333,7 @@
         private System.Windows.Forms.TabControl tabControl;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Button button1;
     }
 }
 

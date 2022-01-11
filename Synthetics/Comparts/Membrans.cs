@@ -326,26 +326,41 @@ namespace Synthetics
             g.Clear(Color.Black);                                                                           ///есть прозрачный transparent
             SolidBrush brush = new SolidBrush(Color.White);
             Pen pen = new Pen(Color.White);
-            foreach (ICompartment c in compartments)
-            {
-                if (c.GetType() != typeof(Vesicules))                                                       /// можно обобщить для всех кроме класса PSD и мембран
+            foreach (ICompartment c in compartments)                                                         ////// Нужна отдельная функция рисования технических масок для отделимости обьектов подальше друг от друга
+            {                                                                                                ////// Желательно с параметром на размер отступа
+                if (c.GetType() == typeof(Vesicules))                                                       /// можно обобщить для всех кроме класса PSD и мембран
                 {
-                    //if (c.GetType() != typeof(PSD))                                                         /// Без PSD не получается так как мембрана проходит и через них
-                    {
-                        c.DrawMask(g);
-                    }
-                }
-                else
-                {
+                    // для обработки окрестности везикул группировать как неделимый кластер
                     Vesicules ves_c = (Vesicules)c;
                     List<Point> ConvexHuLLVesicules = GetConvexHull(ves_c.mListPointWithOffset);
                     pen.Width = ves_c.mSizeCycleMax + 2;
 
-
                     g.FillClosedCurve(brush, ConvexHuLLVesicules.ToArray());
                     g.DrawClosedCurve(pen, ConvexHuLLVesicules.ToArray());
-
                 }
+                else if (c.GetType() == typeof(Acson))                                                         /// чтобы внутренность не дробила угол на 2 отдельных региона
+                {
+                    // для обработки Аксона не давать возможности рисовать внутри его
+                    Acson acson_c = (Acson)c;
+                    g.FillClosedCurve(new SolidBrush(Color.White), acson_c.mListPointWithOffset.ToArray());
+                    g.DrawClosedCurve(new Pen(Color.White, 12), acson_c.mListPointWithOffset.ToArray());
+                }
+                else if (c.GetType() == typeof(PSD))                                                            /// Без дополнительной технической зоны они генерятся слишком близко PSD
+                {
+                    PSD psd_c = (PSD)c;
+                    int addedSizeZone = 5; // увеличить диаметр зоны PSD на 5                                   /// Должен быть меньше чем при проверке на пересечения, иначе регион может сливаться с соседом и граница пройдёт по соседу.
+
+                    double unionDiametr = psd_c.lenPSD + addedSizeZone;                                         /// рисую техническую область PSD окружностью
+                    int startX = psd_c.mCenterPoint.X - (int)Math.Round(unionDiametr / 2);
+                    int startY = psd_c.mCenterPoint.Y - (int)Math.Round(unionDiametr / 2);
+                    g.FillEllipse(new SolidBrush(Color.White), startX, startY, (int)Math.Round(unionDiametr), (int)Math.Round(unionDiametr));
+                }
+                else
+                {
+                    c.DrawMask(g);
+                }
+
+
             }
 
             // Сохранение маски
