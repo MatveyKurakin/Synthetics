@@ -9,6 +9,9 @@ namespace Synthetics
 {
     abstract class Compartment : ICompartment
     {
+        public Color mColor;
+        public Color mColorCore;
+
         protected Pen mPen;
         protected Pen mMaskPen;
         public Point mCenterPoint;

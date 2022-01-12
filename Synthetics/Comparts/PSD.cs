@@ -12,12 +12,14 @@ namespace Synthetics
         public Point Offset;
         public Pen mPenDarkZone;
         public double lenPSD;
+
+        private Color colorDark;
         public PSD()
         {
-            colorPSD = Color.FromArgb(20, 20, 20);
-            colorDark = Color.FromArgb(80, 80, 80);
-            mPen = new Pen(colorDark, 6);
-            mPenDarkZone = new Pen(colorPSD, mPen.Width * 3);
+            mColor = Color.FromArgb(100, 100, 100);
+            colorDark = Color.FromArgb(65, 65, 65);
+            mPen = new Pen(mColor, 6);
+            mPenDarkZone = new Pen(colorDark, mPen.Width * 3);
             mListPointWithOffset = new List<Point>();
             Offset = new Point();
             Create();
@@ -65,7 +67,7 @@ namespace Synthetics
             // создание точки конца отрезка, симметрично относительно (0, 0)
             mPoints.Add(new Point(-lenXPSD, -lenYPSD));
 
-            int sizeOffset = -4;                   // смещение дополнительной полосы в выпуклую сторону (+ значение) и в внутренюю сторону (- значение)
+            int sizeOffset = -3;                   // смещение дополнительной полосы в выпуклую сторону (+ значение) и в внутренюю сторону (- значение)
             if (sizeLenNormal > 0)
             {
                 Offset.X = (int)Math.Round(eXnormal * sizeOffset);
@@ -87,11 +89,9 @@ namespace Synthetics
             g.DrawCurve(mPen, mListPointWithOffset.ToArray());
         }
 
-        private Color colorPSD;
-        private Color colorDark;
         protected override void setDrawParam()
         {
-            mPen.Color = colorPSD;
+            mPen.Color = mColor;
             mPenDarkZone.Color = colorDark;
         }
 

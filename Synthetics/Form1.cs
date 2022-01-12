@@ -476,7 +476,7 @@ namespace Synthetics
         private void button1_Click(object sender, EventArgs e)
         {
             // Цикличная генерация
-            int count_img = 10;
+            int count_img = 100;
             Size sizeImageScript = new Size(256, 256);
 
             // количество элементов на изображении
@@ -488,12 +488,16 @@ namespace Synthetics
 
             for (int counter = 0; counter < count_img; ++counter)
             {
+
+
+                Random rd = new Random();
+                int addAcsonAfterMempbran = rd.Next(0, count_Axon - 1);
                 // создаю новый список для каждой генерации и очищаю для защиты от оптимизаций
                 List<ICompartment> ListGeneration = new List<ICompartment>();
                 //ListGeneration.Clear();
 
                 // генерация Axons
-                for (int j = 0; j < count_Axon; ++j)
+                for (int j = 0; j < count_Axon - addAcsonAfterMempbran; ++j)
                 {
                     try
                     {
@@ -524,6 +528,21 @@ namespace Synthetics
 
                 // Добавление мембран
                 ListGeneration.Add(new Membrans(ListGeneration, sizeImageScript));
+
+                // генерация Аксонов после мембран
+                for (int j = 0; j < addAcsonAfterMempbran; ++j)
+                {
+                    try
+                    {
+                        ICompartment newAcson = new Acson();
+                        AddNewElementWithoutOverlap(sizeImageScript.Width, sizeImageScript.Height, ListGeneration, newAcson);
+                        ListGeneration.Add(newAcson);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
 
 
                 // Рисование

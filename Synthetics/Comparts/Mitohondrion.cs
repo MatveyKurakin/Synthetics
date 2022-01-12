@@ -9,19 +9,19 @@ namespace Synthetics
 {
     class Mitohondrion : Compartment
     {
-        public int mSizePoint;  
-        
+        public int mSizePoint;
+        public Brush brush;
+
         public Mitohondrion()
         {
-            mPen = new Pen(Color.FromArgb(80, 80, 80), 6);
+            mColor = Color.FromArgb(80, 80, 80);
+            mColorCore = Color.Red;
+            brush = new SolidBrush(mColorCore);
+            mPen = new Pen(mColor, 6);
             mListPointWithOffset = new List<Point>();
             Create();
         }
 
-        public Mitohondrion(int l)
-        {
-
-        }
         public void Create(int min_r = 0, int max_r = 0)
         {
             mSizePoint = 10;
@@ -58,20 +58,16 @@ namespace Synthetics
             DrawSpline(g, mPen, brush);
         }
 
-        SolidBrush brush = new SolidBrush(Color.Red);
-        private Color mPenColor = Color.Red;
         protected override void setMaskParam()
         {
-            mPenColor = mPen.Color;
             brush = new SolidBrush(Color.White);
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            brush = new SolidBrush(Color.Red);
-            mPen.Color = mPenColor;
+            brush = new SolidBrush(mColorCore);
+            mPen.Color = mColor;
         }
-
     }
 }

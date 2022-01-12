@@ -12,12 +12,17 @@ namespace Synthetics
         public int mSizeCycleMin;
         public int mSizeCycleMax;
         public int mSizePoint;
-        private Color mPenColor = Color.FromArgb(50,50,50);                     /// подобрать цвета
         private List<int> mSizeCycle;
+
+        public SolidBrush brush;
 
         public Vesicules()
         {
-            mPen = new Pen(mPenColor, 3);
+            mColor = Color.FromArgb(80, 80, 80);                     /// подобрать цвета
+            mPen = new Pen(mColor, 3);
+
+            mColorCore = Color.FromArgb(192, 192, 192);
+            brush = new SolidBrush(mColorCore);
 
             mSizeCycleMin = 5;
             mSizeCycleMax = 12;
@@ -108,7 +113,6 @@ namespace Synthetics
         }
 
         Color brushColor = Color.Gray;
-        SolidBrush brush = new SolidBrush(Color.FromArgb(192, 192, 192));
 
         public override void Draw(Graphics g)
         {
@@ -118,15 +122,14 @@ namespace Synthetics
 
         protected override void setMaskParam()
         {
-            brushColor = brush.Color;
             brush.Color = Color.White;
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            brush.Color = brushColor;
-            mPen.Color = mPenColor;
+            brush.Color = mColorCore;
+            mPen.Color = mColor;
         }
 
 

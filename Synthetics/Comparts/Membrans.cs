@@ -9,11 +9,10 @@ namespace Synthetics
 {
     class Membrans : Compartment
     {
-        public int mSizePoint;
-
         public Membrans(List<ICompartment> compartments, Size sizeImg)
         {
-            mPen = new Pen(Color.FromArgb(0, 128, 0), 2);
+            mColor = Color.FromArgb(100, 100, 100);
+            mPen = new Pen(mColor, 6);
             mListPointWithOffset = new List<Point>();
             Create(compartments, sizeImg);
         }
@@ -519,23 +518,18 @@ namespace Synthetics
             // Попиксельная печаль граничных пикселей (у каждого будет по 2 штуки с одного и с другого региона)
             foreach (Point point in mPoints)
             {
-                g.DrawLine(mPen, point.X, point.Y, point.X + 1 , point.Y + 1);
+                g.DrawLine(mPen, point.X - 1, point.Y - 1, point.X + 1 , point.Y + 1);
             }
         }
 
-        SolidBrush brush = new SolidBrush(Color.Red);
-        private Color mPenColor = Color.Red;
         protected override void setMaskParam()
         {
-            mPenColor = mPen.Color;
-            brush = new SolidBrush(Color.White);
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            brush = new SolidBrush(Color.Red);
-            mPen.Color = mPenColor;
+            mPen.Color = mColor;
         }
 
     }
