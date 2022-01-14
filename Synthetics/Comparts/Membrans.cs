@@ -342,7 +342,7 @@ namespace Synthetics
                     // для обработки Аксона не давать возможности рисовать внутри его
                     Acson acson_c = (Acson)c;
                     g.FillClosedCurve(new SolidBrush(Color.White), acson_c.mListPointWithOffset.ToArray());
-                    g.DrawClosedCurve(new Pen(Color.White, 12), acson_c.mListPointWithOffset.ToArray());
+                    g.DrawClosedCurve(new Pen(Color.White, 16), acson_c.mListPointWithOffset.ToArray());
                 }
                 else if (c.GetType() == typeof(PSD))                                                            /// Без дополнительной технической зоны они генерятся слишком близко PSD
                 {

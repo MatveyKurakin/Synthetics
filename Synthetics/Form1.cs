@@ -152,7 +152,7 @@ namespace Synthetics
                     // для обработки Аксона не давать возможности рисовать внутри его
                     Acson acson_c = (Acson)newComponent;
                     g2.FillClosedCurve(new SolidBrush(Color.White), acson_c.mListPointWithOffset.ToArray());
-                    g2.DrawClosedCurve(new Pen(Color.White, 12), acson_c.mListPointWithOffset.ToArray());
+                    g2.DrawClosedCurve(new Pen(Color.White, 32), acson_c.mListPointWithOffset.ToArray());
                 }
                 else if (newComponent.GetType() == typeof(PSD))                                                         /// Без дополнительной технической зоны они генерятся слишком близко PSD
                 {
@@ -480,8 +480,8 @@ namespace Synthetics
             Size sizeImageScript = new Size(256, 256);
 
             // количество элементов на изображении
-            int count_PSD = 5;
-            int count_Axon = 5;
+            int count_PSD = 0;
+            int count_Axon = 1;
 
             // директория сохранения картинок
             string dir_save = "../../Sintetic generation/";

@@ -17,7 +17,10 @@ namespace Synthetics
         {
             mColor = Color.FromArgb(70, 70, 70);
             mColorCore = Color.FromArgb(100, 100, 100);
-            mPen = new Pen(mColor, 10);
+
+            int sizePen = rnd_size.Next(10, 12);
+
+            mPen = new Pen(mColor, sizePen);
             mListPointWithOffset = new List<Point>();
             Create();
         }
@@ -28,17 +31,17 @@ namespace Synthetics
 
             if (mSizePoint == 0)
             { 
-                mSizePoint = rnd_size.Next(5, 10);
+                mSizePoint = rnd_size.Next(7, 14);
             }
 
             if (min_r == 0)
             {
-                min_r = rnd_size.Next(10, 30);
+                min_r = rnd_size.Next(60, 70);
             }
 
             if (max_r == 0)
             {
-                max_r = min_r + rnd_size.Next(4, 30);                                  /// лучше поменять параметры
+                max_r = min_r + rnd_size.Next(4, 80);                                  /// лучше поменять параметры
             }
 
             int max_increase_len = max_r - min_r;

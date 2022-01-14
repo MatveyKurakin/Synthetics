@@ -19,7 +19,7 @@ namespace Synthetics
             mColor = Color.FromArgb(100, 100, 100);
             colorDark = Color.FromArgb(65, 65, 65);
             mPen = new Pen(mColor, 6);
-            mPenDarkZone = new Pen(colorDark, mPen.Width * 3);
+            mPenDarkZone = new Pen(colorDark, mPen.Width * 3+2);
             mListPointWithOffset = new List<Point>();
             Offset = new Point();
             Create();
