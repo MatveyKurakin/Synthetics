@@ -17,8 +17,8 @@ namespace Synthetics
 
         public PSD()
         {
-            mColor = Color.FromArgb(30, 30, 30);
-            colorGray = Color.FromArgb(120, 120, 120);
+            mColor = Color.FromArgb(50, 50, 50);
+            colorGray = Color.FromArgb(90, 90, 90);
             mPen = new Pen(mColor, 4);
             mPenGrayZone = new Pen(colorGray, 8);
             mBrushGrayZone = new SolidBrush(colorGray);

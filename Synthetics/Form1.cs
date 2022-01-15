@@ -507,8 +507,8 @@ namespace Synthetics
             Size sizeImageScript = new Size(256, 256);
 
             // количество элементов на изображении
-            int count_PSD = 0;
-            int count_Axon = 1;
+            int count_PSD = 5;
+            int count_Axon = 5;
 
             // директория сохранения картинок
             string dir_save = "../../Sintetic generation/";
@@ -516,7 +516,7 @@ namespace Synthetics
 
             for (int counter = 0; counter < count_img; ++counter)
             {
-
+                Console.WriteLine($"{counter + 1} generation img for {count_img}");
 
                 Random rd = new Random();
                 int addAcsonAfterMempbran = rd.Next(0, count_Axon - 1);
@@ -642,7 +642,7 @@ namespace Synthetics
                 // добавление шума
                 Noise n = new Noise();
                 Img = n.AddGaussianNoise(Img);
-                Img = GaussFilter.Process(Img, 4);
+                Img = GaussFilter.Process(Img, 6);
                 Img = n.AddGaussianNoise(Img);
 
                 //Сохранение слоя и масок 
