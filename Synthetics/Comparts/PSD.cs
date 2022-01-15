@@ -9,29 +9,21 @@ namespace Synthetics
 {
     class PSD : Compartment
     {
-        public Point Offset;
-        public Pen mPenDarkZone;
+        public Pen mPenGrayZone;
         public double lenPSD;
 
-        private Color colorDark;
+        private Color colorGray;
+        private SolidBrush mBrushGrayZone;
+
         public PSD()
         {
-            mColor = Color.FromArgb(100, 100, 100);
-            colorDark = Color.FromArgb(65, 65, 65);
-            mPen = new Pen(mColor, 6);
-            mPenDarkZone = new Pen(colorDark, mPen.Width * 3+2);
+            mColor = Color.FromArgb(30, 30, 30);
+            colorGray = Color.FromArgb(120, 120, 120);
+            mPen = new Pen(mColor, 4);
+            mPenGrayZone = new Pen(colorGray, 8);
+            mBrushGrayZone = new SolidBrush(colorGray);
             mListPointWithOffset = new List<Point>();
-            Offset = new Point();
             Create();
-        }
-
-        private List<Point> GetPositionPointsDark()
-        {
-            List<Point> mListPointDarkOffset = new List<Point>();
-            foreach (Point point in mListPointWithOffset) {
-                mListPointDarkOffset.Add(new Point(point.X + Offset.X, point.Y + Offset.Y));
-            }
-            return mListPointDarkOffset;
         }
 
         public void Create()
@@ -50,35 +42,48 @@ namespace Synthetics
             mPoints.Add(new Point(lenXPSD, lenYPSD));
 
             // вычисление нормали к вектору из (0, 0) до созданой точки
-            double eXnormal = 1;
-            double eYnormal = -((double)lenXPSD/ (double)lenYPSD);
+            float eXnormal = 1;
+            float eYnormal = -((float)lenXPSD/ (float)lenYPSD);
+            float lenNormal = (float)Math.Sqrt(eXnormal * eXnormal + eYnormal * eYnormal);
 
-            double lenNormal = Math.Sqrt(eXnormal * eXnormal + eYnormal * eYnormal);
             eXnormal /= lenNormal;
             eYnormal /= lenNormal;
+            PointF normal = new PointF(eXnormal, eYnormal);
+
 
             // создание точки, для искривление отрезка PSD
-            int delta = 5;
-            int sizeLenNormal = rnd_size.Next(-delta, delta);
-            int coordXnormal = (int)Math.Round(eXnormal * sizeLenNormal);
-            int coordYnormal = (int)Math.Round(eYnormal * sizeLenNormal);
+            int delta = 3;
+            int curveVal = rnd_size.Next(-delta, delta);
+            Point curvedPoint = new Point((int)Math.Round(normal.X * curveVal), (int)Math.Round(normal.Y * curveVal));
+            mPoints.Add(curvedPoint);
 
-            mPoints.Add(new Point(coordXnormal, coordYnormal));
 
             // создание точки конца отрезка, симметрично относительно (0, 0)
             mPoints.Add(new Point(-lenXPSD, -lenYPSD));
 
-            int sizeOffset = -3;                   // смещение дополнительной полосы в выпуклую сторону (+ значение) и в внутренюю сторону (- значение)
-            if (sizeLenNormal > 0)
-            {
-                Offset.X = (int)Math.Round(eXnormal * sizeOffset);
-                Offset.Y = (int)Math.Round(eYnormal * sizeOffset);
-            }
-            else
-            {
-                Offset.X = -(int)Math.Round(eXnormal * sizeOffset);
-                Offset.Y = -(int)Math.Round(eYnormal * sizeOffset);
-            }
+            // смещение дополнительной полосы в выпуклую сторону (- значение) и в внутренюю сторону (+ значение)
+            int sizeOffset = 3;
+            Point Offset = new Point();
+            Offset.X = Math.Sign(curveVal) * (int)Math.Round(normal.X * sizeOffset);
+            Offset.Y = Math.Sign(curveVal) * (int)Math.Round(normal.Y * sizeOffset);
+
+            Point p1_1 = new Point((int)(mPoints[0].X + Offset.X), (int)(mPoints[0].Y + Offset.Y));
+            Point c_1  = new Point((int)(mPoints[1].X + Offset.X), (int)(mPoints[1].Y + Offset.Y));
+            Point p2_1 = new Point((int)(mPoints[2].X + Offset.X), (int)(mPoints[2].Y + Offset.Y));
+
+            mPoints.Add(p1_1);
+            mPoints.Add(c_1);
+            mPoints.Add(p2_1);
+
+            sizeOffset = -12;
+            Offset.X = Math.Sign(curveVal) * (int)Math.Round(normal.X * sizeOffset);
+            Offset.Y = Math.Sign(curveVal) * (int)Math.Round(normal.Y * sizeOffset);
+
+            mPoints.Add(mPoints[0]);
+            Point c_2 = new Point((int)(mPoints[1].X + Offset.X), (int)(mPoints[1].Y + Offset.Y));
+            mPoints.Add(c_2);
+            mPoints.Add(mPoints[2]);
+            mPoints.Add(mPoints[1]);
 
             lenPSD = Math.Sqrt((4 * lenXPSD * lenXPSD) + (4 * lenYPSD * lenYPSD));
             ChangePositionPoints();
@@ -86,20 +91,29 @@ namespace Synthetics
 
         public override void Draw(Graphics g)
         {
-            g.DrawCurve(mPenDarkZone, GetPositionPointsDark().ToArray());
-            g.DrawCurve(mPen, mListPointWithOffset.ToArray());
+            // затемнение фона позади PSD
+            g.DrawCurve(mPenGrayZone, mListPointWithOffset.GetRange(6, 4).ToArray());
+            g.FillClosedCurve(mBrushGrayZone, mListPointWithOffset.GetRange(6, 4).ToArray());
+            // граница перед PSd
+            g.DrawCurve(mPenGrayZone, mListPointWithOffset.GetRange(3, 3).ToArray());
+            g.DrawCurve(mPen, mListPointWithOffset.GetRange(0,3).ToArray());
+
+            
+            
         }
 
         protected override void setDrawParam()
         {
             mPen.Color = mColor;
-            mPenDarkZone.Color = colorDark;
+            mPenGrayZone.Color = colorGray;
+            mBrushGrayZone = new SolidBrush(colorGray);
         }
 
         protected override void setMaskParam()
         {
             mPen.Color = Color.White;
-            mPenDarkZone.Color = Color.Transparent;
+            mPenGrayZone.Color = Color.Transparent;
+            mBrushGrayZone = new SolidBrush(Color.Black);
         }
     }
 }
