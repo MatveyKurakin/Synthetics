@@ -58,7 +58,8 @@ namespace Synthetics
             eYnormal /= lenNormal;
 
             // создание точки, для искривление отрезка PSD
-            int sizeLenNormal = rnd_size.Next(-10, 10);
+            int delta = 5;
+            int sizeLenNormal = rnd_size.Next(-delta, delta);
             int coordXnormal = (int)Math.Round(eXnormal * sizeLenNormal);
             int coordYnormal = (int)Math.Round(eYnormal * sizeLenNormal);
 

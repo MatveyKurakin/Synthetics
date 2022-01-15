@@ -214,7 +214,7 @@ namespace Synthetics
 
             PointsNoise p = new PointsNoise();
             p.Draw(g);
-            Img = GaussFilter.Process(Img, 6);
+            Img = GaussFilter.Process(Img, 7);
             g = Graphics.FromImage(Img);
         }
 
@@ -289,7 +289,7 @@ namespace Synthetics
                 {
                     Noise n = new Noise();
                     currView = n.AddGaussianNoise(currView);
-                    currView = GaussFilter.Process(currView, 4);
+                    currView = GaussFilter.Process(currView, 6);
                     currView = n.AddGaussianNoise(currView);
                 }
 
@@ -346,6 +346,26 @@ namespace Synthetics
                 {
                     case TypeOrganelle.axon:
                         LastRemember = new Acson();
+                        if (backgroundImg == null)
+                        {
+                            backgroundImg = new Bitmap(imageSize.Width, imageSize.Height);
+                            DrawBackround(backgroundImg, backgroundСolor);
+                        }
+                        Bitmap outer = new Bitmap(backgroundImg.Clone(new Rectangle(0, 0, 64, 64), System.Drawing.Imaging.PixelFormat.Format24bppRgb));
+                        int t = 40;
+                        for (int x = 0; x < outer.Width; x++)
+                            for (int y = 0; y < outer.Height; y++)
+                            {
+                                int c = outer.GetPixel(x, y).R;
+                                if (c > t)
+                                {
+                                    c = c - t;
+                                }
+
+                                outer.SetPixel(x, y, Color.FromArgb(c, c, c));
+                            }
+                        ((Acson)LastRemember).mInnerBrush = new TextureBrush(backgroundImg);
+                        ((Acson)LastRemember).mBubbleBrush = new TextureBrush(outer);
                         break;
                     case TypeOrganelle.mitoxondrion:
                         LastRemember = new Mitohondrion();
