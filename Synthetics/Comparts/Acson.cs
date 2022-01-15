@@ -19,6 +19,8 @@ namespace Synthetics
         public static Bitmap bubbleTexture;
 
         public int input_radius = 0;
+        private Pen addPen;
+        private int sublistNumber;
 
         public Acson()
         {
@@ -26,10 +28,12 @@ namespace Synthetics
             mColorCore = Color.FromArgb(100, 100, 100);
             mInnerBrush = new TextureBrush(innerTexture);
             mBubbleBrush = new TextureBrush(bubbleTexture);
-
+            
             int sizePen = rnd_size.Next(12, 14);
-
             mPen = new Pen(mColor, sizePen);
+            addPen = (Pen)mPen.Clone();
+            addPen.Width = rnd_size.Next(15, 20);
+
             mListPointWithOffset = new List<Point>();
             Create();
         }
@@ -73,16 +77,18 @@ namespace Synthetics
             }
 
             ChangePositionPoints();
+
+            sublistNumber = rnd_size.Next(2, mListPointWithOffset.Count - 3);
+            
         }
 
 
         public override void Draw(Graphics g)
         {
             g.DrawClosedCurve(mPen, mListPointWithOffset.ToArray());
-            Pen pp = (Pen)mPen.Clone();
-            pp.Width = rnd_size.Next(15, 20);
-            List<Point> sublist = mListPointWithOffset.GetRange(1, 6);
-            g.DrawCurve(pp, sublist.ToArray());
+            // дополнительное утолщение части границы
+            List<Point> sublist = mListPointWithOffset.GetRange(1, sublistNumber);
+            g.DrawCurve(addPen, sublist.ToArray());
             // для 2 типа генерации
             if (input_radius != 0) /// отключено для доработки, так как не работает как должно (поставить != 0)
             {
