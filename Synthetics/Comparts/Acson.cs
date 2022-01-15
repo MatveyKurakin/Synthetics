@@ -109,6 +109,7 @@ namespace Synthetics
             mInnerBrush = new SolidBrush(Color.Black);
             mBubbleBrush = new SolidBrush(Color.White);
             mPen.Color = Color.White;
+            addPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
@@ -116,6 +117,7 @@ namespace Synthetics
             mInnerBrush = new TextureBrush(innerTexture);
             mBubbleBrush = new TextureBrush(bubbleTexture);
             mPen.Color = mColor;
+            addPen.Color = mColor;
         }
     }
 }

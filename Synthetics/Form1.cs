@@ -65,6 +65,7 @@ namespace Synthetics
 
         Bitmap currView;
         Bitmap backgroundImg = null;
+        Bitmap outer = null;
 
         /// <summary>
         /// The current object being created type
@@ -345,31 +346,8 @@ namespace Synthetics
                 switch (currCreateType) /// не все типы ///////////////////
                 {
                     case TypeOrganelle.axon:
-                        if (backgroundImg == null)
-                        {
-                            backgroundImg = new Bitmap(imageSize.Width, imageSize.Height);
-                            DrawBackround(backgroundImg, backgroundСolor);
-
-                            Bitmap outer = new Bitmap(backgroundImg.Clone(new Rectangle(0, 0, 64, 64), System.Drawing.Imaging.PixelFormat.Format24bppRgb));
-                            int t = 50;
-                            for (int x = 0; x < outer.Width; x++)
-                                for (int y = 0; y < outer.Height; y++)
-                                {
-                                    int c = outer.GetPixel(x, y).R;
-                                    if (c > t)
-                                    {
-                                        c = c - t;
-                                    }
-
-                                    outer.SetPixel(x, y, Color.FromArgb(c, c, c));
-                                }
-                            Acson.innerTexture = backgroundImg;
-                            Acson.bubbleTexture = outer;
-                        }
-                        
+                        InitializeBackground();
                         LastRemember = new Acson();
-                        
-                        
                         break;
                     case TypeOrganelle.mitoxondrion:
                         LastRemember = new Mitohondrion();
@@ -401,6 +379,31 @@ namespace Synthetics
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        private void InitializeBackground()
+        {
+            if (backgroundImg == null)
+            {
+                backgroundImg = new Bitmap(imageSize.Width, imageSize.Height);
+                DrawBackround(backgroundImg, backgroundСolor);
+
+                outer = new Bitmap(backgroundImg.Clone(new Rectangle(0, 0, 64, 64), System.Drawing.Imaging.PixelFormat.Format24bppRgb));
+                int t = 50;
+                for (int x = 0; x < outer.Width; x++)
+                    for (int y = 0; y < outer.Height; y++)
+                    {
+                        int c = outer.GetPixel(x, y).R;
+                        if (c > t)
+                        {
+                            c = c - t;
+                        }
+
+                        outer.SetPixel(x, y, Color.FromArgb(c, c, c));
+                    }
+                Acson.innerTexture = backgroundImg;
+                Acson.bubbleTexture = outer;
             }
         }
 
@@ -509,6 +512,7 @@ namespace Synthetics
 
             // директория сохранения картинок
             string dir_save = "../../Sintetic generation/";
+            InitializeBackground();
 
             for (int counter = 0; counter < count_img; ++counter)
             {
