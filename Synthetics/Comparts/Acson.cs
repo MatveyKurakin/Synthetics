@@ -13,14 +13,19 @@ namespace Synthetics
         /// Number of circle points
         /// </summary>
         public int mPointNumber;
-        public Brush mInnerBrush;
-        public Brush mBubbleBrush;
+        private Brush mInnerBrush;
+        private Brush mBubbleBrush;
+        public static Bitmap innerTexture;
+        public static Bitmap bubbleTexture;
+
         public int input_radius = 0;
 
         public Acson()
         {
             mColor = Color.FromArgb(50, 50, 50);
             mColorCore = Color.FromArgb(100, 100, 100);
+            mInnerBrush = new TextureBrush(innerTexture);
+            mBubbleBrush = new TextureBrush(bubbleTexture);
 
             int sizePen = rnd_size.Next(12, 14);
 
@@ -95,13 +100,15 @@ namespace Synthetics
         }
         protected override void setMaskParam()
         {
-            mInnerBrush = new SolidBrush(Color.White);
+            mInnerBrush = new SolidBrush(Color.Black);
+            mBubbleBrush = new SolidBrush(Color.White);
             mPen.Color = Color.White;
         }
 
         protected override void setDrawParam()
         {
-            mInnerBrush = new SolidBrush(mColorCore);
+            mInnerBrush = new TextureBrush(innerTexture);
+            mBubbleBrush = new TextureBrush(bubbleTexture);
             mPen.Color = mColor;
         }
     }
