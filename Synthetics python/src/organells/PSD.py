@@ -9,21 +9,32 @@ if __name__ == "__main__":
 
 from src.container.spline import *
 from src.container.subclass import *
+from settings import PARAM, uniform_float, uniform_int
+
 
 class PSD:
     def __init__(self):
         self.type = "PSD"
         
-        self.color = (63, 63, 63)
-        self.addColor = (90, 90, 90)
+        color = uniform_int(
+            PARAM['psd_back_color_mean'],
+            PARAM['psd_back_color_std'])
+        self.color = (color, color, color)
+
+        addcolor = uniform_int(
+            PARAM['psd_addcolor_mean'],
+            PARAM['psd_addcolor_std'])
+        self.addColor = (addcolor, addcolor, addcolor)
         
-        input_color = np.random.randint(100, 131)
-        self.addColor2 = (input_color, input_color, input_color)
+        topline_color = uniform_int(
+            PARAM['psd_topline_color_mean'],
+            PARAM['psd_topline_color_std'])
+        self.topline_color = (topline_color, topline_color, topline_color)
         
         self.nowBrush = Brush(self.addColor)
         
         self.nowPen = Pen(self.color, 12)
-        self.nowAddPen = Pen(self.addColor2, 2)
+        self.nowAddPen = Pen(self.topline_color, 2)
         
         self.centerPoint = [0, 0]
         
@@ -112,7 +123,7 @@ class PSD:
 
     def setDrawParam(self):
         self.nowPen.color = self.color
-        self.nowAddPen.color = self.addColor2
+        self.nowAddPen.color = self.topline_color
  
         self.nowBrush.brush = self.addColor
 
