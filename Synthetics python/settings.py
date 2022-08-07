@@ -16,7 +16,8 @@ PARAM = {
     'psd_addcolor_mean': 90.0,                  'psd_addcolor_std': 5.0,
     'psd_topline_color_mean': 115.0,            'psd_topline_color_std': 15.0,
 
-
+    'vesicles_shell_color_mean': 65.0,          'vesicles_shell_color_std': 5.0,
+    'vesicles_back_color_mean': 130.0,          'vesicles_back_color_std': 5.0,
 }
 
 
