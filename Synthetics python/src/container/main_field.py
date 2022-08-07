@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 import datetime
-
+from settings import PARAM, uniform_int
 
 import albumentations as albu
 
@@ -84,8 +84,11 @@ def AddGaussianNoise(image, noisePower = 16):
 
 class Form:
     def __init__(self, size = (512, 512)):
-        color = np.random.randint(175, 186)                        # выбор цвета фона
-        self.backgroundСolor = (color, color, color)
+
+        color = uniform_int(
+            PARAM['main_color_mean'],
+            PARAM['main_color_std'])
+        self.backgroundСolor = (color, color, color) # выбор цвета фона
         
         self.nowViewType = 'layer'
         self.sizeImage = size
