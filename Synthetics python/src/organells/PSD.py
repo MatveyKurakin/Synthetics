@@ -140,17 +140,23 @@ class PSD:
         self.nowBrush.FullBrush(draw_image, rangeList)
  
         
-        #граница за PSD
+        #главная темная линия PSD
         #if layer_drawing == True:
         small_spline_line(draw_image, self.PointsWithOffset[3:3+3], self.nowPen.color, self.nowPen.sizePen)  
   
-        # граница перед PSD   
-        small_spline_line(draw_image, self.PointsWithOffset[0:3], self.nowAddPen.color, self.nowAddPen.sizePen) 
+        # светлая полоска от границы на PSD 
+        if np.random.random() < 0.5:
+            small_spline_line(draw_image, self.PointsWithOffset[0:3], self.nowAddPen.color, self.nowAddPen.sizePen) 
+        
         return draw_image
             
     def DrawUniqueArea(self, image, small_mode = False):
         # Функция создающая маску с немного большим отступом для алгорима случайного размещения новых органнел без пересечения 
-        draw_image = image.copy()
+        ret_image = image.copy()
+        
+        ret_image = ret_image.astype(int)
+        
+        draw_image = np.zeros(image.shape, np.uint8) 
         
         draw_image = self.DrawMask(draw_image)
         
@@ -158,10 +164,40 @@ class PSD:
             kernel = np.array([[0, 1, 0],
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 8)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 4)
+        else:
+            kernel = np.array([[0, 1, 0],
+                               [1, 1, 1],
+                               [0, 1, 0]], dtype=np.uint8)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+            
+            normal = [self.centerPoint[0] - self.PointsWithOffset[7][0], self.centerPoint[1] - self.PointsWithOffset[7][1]]
+            
+            sizeNormal = math.sqrt(normal[0]**2 + normal[1]**2)
+            
+            normal = [normal[0]/sizeNormal, normal[1]/sizeNormal]
+            
+            sizeInputOffset = -15
+            
+            poligon = [self.PointsWithOffset[0], [self.PointsWithOffset[1][0] + sizeInputOffset * normal[0], self.PointsWithOffset[1][1] + sizeInputOffset * normal[1]], self.PointsWithOffset[2]]
+             
+            int_poligon = []
+            for x,y in poligon:
+                int_poligon.append([np.array((int(round(x)),int(round(y))), dtype = np.int32)])
 
-        return draw_image
+            contour = np.array(int_poligon, dtype = np.int32)
 
+            cv2.drawContours(draw_image,[contour], 0,(255,255,255), -1)
+            
+            #cv2.imshow("sdad", draw_image)
+            #cv2.waitKey()
+            
+        ret_image = ret_image + draw_image
+        ret_image[ret_image[:,:,:] > 255] = 255
+        ret_image = ret_image.astype(np.uint8)
+        
+        return ret_image
+        
     def DrawMask(self, image):
         #Смена цветов для рисования маски
         self.setMaskParam()

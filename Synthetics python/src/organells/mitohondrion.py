@@ -258,8 +258,10 @@ class Mitohondrion:
             
     def DrawUniqueArea(self, image, small_mode = False):
         # Функция создающая маску с немного большим отступом для алгорима случайного размещения новых органнел без пересечения 
-        draw_image = image.copy()
+        ret_image = image.copy()
+        ret_image = ret_image.astype(int)
         
+        draw_image = np.zeros(image.shape, np.uint8) 
         draw_image = self.DrawMask(draw_image)
         
         if small_mode == False:
@@ -267,8 +269,14 @@ class Mitohondrion:
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
                                
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 1)     
-        return draw_image
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 4)     
+                    
+        ret_image = ret_image + draw_image
+        ret_image[ret_image[:,:,:] > 255] = 255
+        ret_image = ret_image.astype(np.uint8)
+        
+        return ret_image
+        
 
 def testMitohondrion():
     q = None

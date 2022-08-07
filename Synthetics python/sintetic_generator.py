@@ -23,8 +23,9 @@ count_Axon = 1
 count_Vesicles = 3
 count_Mitohondrion = 2
 
-number_generation = 2000
-ArrLayers = forma.StartGeneration(number_generation, count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, dir_save = "small_Sintetic_generation_dataset 2/")
+number_generation = 1000
+ArrLayers = forma.StartGeneration(number_generation, count_PSD, count_Axon, count_Vesicles, count_Mitohondrion,\
+                                  dir_save = "small_Sintetic_generation_dataset test boarder/", startIndex = 2000)
 #ArrLayers = [[Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules], ...]
 
 

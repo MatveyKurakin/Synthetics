@@ -171,9 +171,10 @@ class Axon:
 
     def DrawUniqueArea(self, image, small_mode = False):
         # Функция создающая маску с немного большим отступом для алгорима случайного размещения новых органнел без пересечения 
-       
-        draw_image = image.copy()
+        ret_image = image.copy()
+        ret_image = ret_image.astype(int)
         
+        draw_image = np.zeros(image.shape, np.uint8) 
         
         Brush((255,255,255)).FullBrush(draw_image, self.PointsWithOffset)
         spline_line(draw_image, self.PointsWithOffset, (255,255,255), self.nowPen.sizePen)
@@ -183,9 +184,14 @@ class Axon:
 
         if small_mode == False:
             kernel = np.ones((5, 5), 'uint8')
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 1)
-
-        return draw_image
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+            
+        ret_image = ret_image + draw_image
+        ret_image[ret_image[:,:,:] > 255] = 255
+        ret_image = ret_image.astype(np.uint8)
+        
+        return ret_image
+        
 
     def setMaskParam(self):
         self.nowInnerBrush = Brush(brush = (0,0,0), typeFull = "full")

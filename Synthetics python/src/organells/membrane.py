@@ -20,11 +20,19 @@ class Membrane:
         self.nowColor = self.color
         self.labels = None
 
+        self.typeLine = 0 # 0 -full boarder, 1 - clear center
+        self.sizeInputLine = 0 # size input line
+
         self.Points = []
 
         self.Create(compartmentsList.copy(), sizeImage)
 
     def Create(self, compartments, sizeImg):
+        
+        self.typeLine = np.random.randint(0,2)
+        self.sizeInputLine = np.random.randint(1,3)
+        
+        self.sizeLine = np.random.randint(3,5)
     
         checkMask = np.zeros((*sizeImg,3), np.uint8)
 
@@ -262,16 +270,22 @@ class Membrane:
                            [1, 1, 1],
                            [0, 1, 0]], dtype=np.uint8)
                                
-        mask = cv2.dilate(mask,kernel,iterations = self.sizeLine)
+        mask_dilate = cv2.dilate(mask,kernel,iterations = self.sizeLine)
         
         maskPSD = np.zeros(draw_image.shape[0:2], np.uint8)
         maskPSD[self.labels[:,:] == -2] = 255
-        maskPSD = cv2.dilate(maskPSD,kernel,iterations = 2)
+        maskPSD_dilate = cv2.dilate(maskPSD,kernel,iterations = 2)
         
+        if self.typeLine == 1:
+            mask_dilate = cv2.dilate(mask_dilate,kernel,iterations = 2)
+            maskPSD_dilate = cv2.dilate(maskPSD_dilate,kernel,iterations = 2)
         
-        draw_image[mask[:,:] == 255] = self.nowColor  
-        draw_image[maskPSD[:,:] == 255] = self.nowColor
-
+            mask_dilate = mask_dilate - cv2.dilate(mask,kernel,iterations = self.sizeInputLine)
+            maskPSD_dilate = maskPSD_dilate - cv2.dilate(maskPSD,kernel,iterations = self.sizeInputLine)
+ 
+        draw_image[mask_dilate[:,:] == 255] = self.nowColor  
+        draw_image[maskPSD_dilate[:,:] == 255] = self.nowColor
+        
         return draw_image
         
     def setDrawParam(self):

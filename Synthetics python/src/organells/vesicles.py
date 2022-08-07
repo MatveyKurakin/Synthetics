@@ -56,7 +56,7 @@ class Vesicles:
         
         sqrt_int_square = int(round(math.sqrt(square)))
         
-        self.numberPoints = np.random.randint(sqrt_int_square//2 - 10, sqrt_int_square//2 + 10)
+        self.numberPoints = np.random.randint(sqrt_int_square//2 - 10, sqrt_int_square)
         
         max_iteration = 1000
         
@@ -163,7 +163,10 @@ class Vesicles:
             
     def DrawUniqueArea(self, image, small_mode = False):
         # Функция создающая маску с немного большим отступом для алгорима случайного размещения новых органнел без пересечения 
-        draw_image = image.copy()
+        ret_image = image.copy()
+        ret_image = ret_image.astype(int)
+        
+        draw_image = np.zeros(image.shape, np.uint8) 
 
         hull = cv2.convexHull(np.array(self.PointsWithOffset).astype(int))
         hull = np.squeeze(hull)
@@ -178,9 +181,20 @@ class Vesicles:
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
 
-            draw_image = cv2.dilate(draw_image, kernel, iterations = 6)
+            draw_image = cv2.dilate(draw_image, kernel, iterations = 10)
+        else:
+            kernel = np.array([[0, 1, 0],
+                               [1, 1, 1],
+                               [0, 1, 0]], dtype=np.uint8)
 
-        return draw_image
+            draw_image = cv2.dilate(draw_image, kernel, iterations = 7)
+
+                    
+        ret_image = ret_image + draw_image
+        ret_image[ret_image[:,:,:] > 255] = 255
+        ret_image = ret_image.astype(np.uint8)
+        
+        return ret_image
     
 def testVesicles():
     q = None
@@ -213,10 +227,19 @@ def testVesicles():
         img2 = vesicles.Draw(img)
         tecnicalMask = vesicles.DrawUniqueArea(tecnicalMask)
         
+        smalltecnicalMask = np.zeros((512,512,3), np.uint8)
+        
+        smalltecnicalMask = vesicles.DrawUniqueArea(smalltecnicalMask, True)
+        
         cv2.imshow("img", img1)
         cv2.imshow("mask", mask)
         cv2.imshow("img2", img2)
         cv2.imshow("tecnicalMask", tecnicalMask)
+        
+        cv2.imshow("tecnicalMaskZove", tecnicalMask - mask)
+        
+        cv2.imshow("tecnicalMaskSmall", smalltecnicalMask)
+        cv2.imshow("tecnicalMaskZoveSmall", smalltecnicalMask - mask)
         
         q = cv2.waitKey()
 

@@ -328,7 +328,7 @@ class Form:
         
         return RetList
 
-    def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None):
+    def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
         ArrLayers = []
 
@@ -434,7 +434,7 @@ class Form:
                     os.mkdir(os.path.join(dir_save, "vesicles"))
 
                 date = datetime.datetime.now().strftime(r'%Y_%m_%d')
-                name = str(counter) + "_" + date
+                name = str(counter + startIndex) + "_" + date
                 # coхранение слоя
                 cv2.imwrite(os.path.join(dir_save, "original", name + ".png"), cv2.cvtColor(Img, cv2.COLOR_RGB2GRAY))
                 # coхранение маски
