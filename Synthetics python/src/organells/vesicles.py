@@ -29,12 +29,19 @@ class Vesicles:
         self.centerPoint = [0, 0]
         self.Points = []
         self.PointsWithOffset = []
+        
+        self.typeGen = 0            # 0 - norma mode, 1 - many small vesicles
            
         self.Create()
 
     def Create(self, min_r = 0, max_r = 0):
     
-        mainVesiculesSize = np.random.randint(4, 7)
+        self.typeGen = np.random.randint(0, 2)
+    
+        if self.typeGen == 0:
+            mainVesiculesSize = np.random.randint(5, 7)
+        else:
+            mainVesiculesSize = 4
     
         self.sizeVesiculeMin = mainVesiculesSize-1
         self.sizeVesiculeMax = mainVesiculesSize+2
@@ -56,7 +63,10 @@ class Vesicles:
         
         sqrt_int_square = int(round(math.sqrt(square)))
         
-        self.numberPoints = np.random.randint(sqrt_int_square//2 - 10, sqrt_int_square)
+        if self.typeGen == 0:
+            self.numberPoints = np.random.randint(sqrt_int_square//3 - 10, sqrt_int_square//3)
+        else:
+            self.numberPoints = np.random.randint(sqrt_int_square//2, sqrt_int_square + 30)
         
         max_iteration = 1000
         
@@ -117,11 +127,12 @@ class Vesicles:
     def CheckOverlap(self, Points, point, sizeVesicule, proportion):
         for i in range(len(Points)):
            
-            x_delt = abs(Points[i][0] - point[0]);
-            y_delt = abs(Points[i][1] - point[1]);
+            x_delt = abs(Points[i][0] - point[0])
+            y_delt = abs(Points[i][1] - point[1])
+            
+            len_new_now = math.sqrt(x_delt**2 + y_delt**2)
 
-            if x_delt / ((self.listSizeVesiculs[i] + sizeVesicule)/2 + self.nowPen.sizePen * 2) < proportion and\
-               y_delt / ((self.listSizeVesiculs[i] + sizeVesicule)/2 + self.nowPen.sizePen * 2) < proportion:
+            if len_new_now < self.listSizeVesiculs[i] + sizeVesicule + self.nowPen.sizePen + proportion:
                 return True
 
         return False
@@ -131,8 +142,16 @@ class Vesicles:
 
         draw_image = image.copy()
         
-        for i in range(self.numberPoints):            
-            self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
+        for i in range(self.numberPoints):
+
+            if self.typeGen == 0:
+                self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
+            else:
+                if np.random.random() < 0.5:
+                    Brush(self.nowPen.color).FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
+                else:
+                    self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
+                   
 
             cv2.ellipse(img = draw_image,
                        center = self.PointsWithOffset[i],
@@ -230,6 +249,8 @@ def testVesicles():
         smalltecnicalMask = np.zeros((512,512,3), np.uint8)
         
         smalltecnicalMask = vesicles.DrawUniqueArea(smalltecnicalMask, True)
+        
+        print(vesicles.typeGen)
         
         cv2.imshow("img", img1)
         cv2.imshow("mask", mask)
