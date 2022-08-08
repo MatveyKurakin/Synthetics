@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-
 import math
 
 if __name__ == "__main__":
@@ -10,6 +9,7 @@ if __name__ == "__main__":
 from src.container.spline import *
 from src.container.subclass import *
 
+from settings import PARAM, uniform_int
 
 class Axon:
     def __init__(self):
@@ -20,8 +20,11 @@ class Axon:
         self.innerTexture = None
         self.bubbleTexture = None
         
-    
-        self.color = (65, 65, 65)
+        color = uniform_int(
+            PARAM['axon_shell_color_mean'],
+            PARAM['axon_shell_color_std'])
+        self.shell_color = (color, color, color)
+
         self.sizePen = np.random.randint(14, 18)
         self.sizeAddPen = np.random.randint(self.sizePen, 20)
         
@@ -34,8 +37,8 @@ class Axon:
         self.Points = []
         self.PointsWithOffset = []
 
-        self.nowPen = Pen(self.color, self.sizePen)
-        self.nowAddPen = Pen(self.color, self.sizeAddPen)
+        self.nowPen = Pen(self.shell_color, self.sizePen)
+        self.nowAddPen = Pen(self.shell_color, self.sizeAddPen)
         self.Create()
         
     def Create(self, min_r=0, max_r=0):
@@ -74,15 +77,18 @@ class Axon:
         self.innerTexture = image
         
         self.bubbleTexture = image.copy()
-        t = 50
+
+        t = uniform_int(
+            PARAM['axon_back_color_diff_mean'],
+            PARAM['axon_back_color_diff_std'])
         
         self.bubbleTexture[self.bubbleTexture[:,:,0] > t] -= t
         
-        # создание пятен        
+        # создание пятен  (spot)       
         now_x = 10
         
-        color1 = 168
-        color2 = 100
+        spot_color1 = 168
+        spot_color2 = 100
         
         while now_x < image.shape[1] - 10:
             now_y = 10
@@ -90,12 +96,12 @@ class Axon:
 
                 radius = np.random.randint(11,14,2)
 
-                Brush((color1,color1,color1)).FullBrushEllipse(self.bubbleTexture, (now_x, now_y), radius)
+                Brush((spot_color1,spot_color1,spot_color1)).FullBrushEllipse(self.bubbleTexture, (now_x, now_y), radius)
 
                 cv2.ellipse(img = self.bubbleTexture,
                            center = (now_x, now_y),
                            axes = radius,
-                           color = (color2,color2,color2),
+                           color = (spot_color2,spot_color2,spot_color2),
                            thickness = 4,
                            angle = 0,
                            startAngle = 0,
@@ -204,8 +210,8 @@ class Axon:
         self.nowInnerBrush = Brush(brush = self.innerTexture, typeFull = "texture")
         self.nowBubbleBrush = Brush(brush = self.bubbleTexture, typeFull = "texture")
 
-        self.nowPen.color = self.color
-        self.nowAddPen.color = self.color       
+        self.nowPen.color = self.shell_color
+        self.nowAddPen.color = self.shell_color       
 
 
 def testAxon():

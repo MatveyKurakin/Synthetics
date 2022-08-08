@@ -9,15 +9,22 @@ if __name__ == "__main__":
 
 from src.container.spline import *
 from src.container.subclass import *
+from settings import PARAM, uniform_int
 
 class Mitohondrion:
     def __init__(self):
         self.type = "Mitohondrion"
 
-        self.color = (85, 85, 85)                   #/// подобрать цвета, сделать заливку текстурой
-        
-        addColor = np.random.randint(100, 141)                     # основной цвет текстуры
-        self.addColor = (addColor, addColor, addColor)
+        color = uniform_int(
+            PARAM['mitohondrion_shell_color_mean'],
+            PARAM['mitohondrion_shell_color_std'])
+        self.color = (color, color, color) #/// подобрать цвета, сделать заливку текстурой
+                
+
+        addColor = uniform_int(
+            PARAM['mitohondrion_back_color_mean'],
+            PARAM['mitohondrion_back_color_std'])
+        self.addColor = (addColor, addColor, addColor) # основной цвет текстуры
         
         self.nowPen = Pen(self.color, 5)    
         self.nowBrush = None
@@ -146,12 +153,18 @@ class Mitohondrion:
         self.texture = np.full((*image.shape[0:2],3), self.addColor, np.uint8)
         #self.texture[:,:] = (0,0,255)
         
-        color = 240 - self.addColor[0]
+        cristae_color = uniform_int(
+            PARAM['mitohondrion_cristae_color_mean'],
+            PARAM['mitohondrion_cristae_color_std'])
+        cristae_color = (cristae_color,cristae_color,cristae_color)
         
+        forecolor = uniform_int(
+            PARAM['mitohondrion_cristae_shell_color_mean'],
+            PARAM['mitohondrion_cristae_shell_color_std'])        
+        forecolor = (forecolor,forecolor,forecolor)
+
         now_x = 10
-        
-        color2 = (80,80,80)
-        
+
         while now_x < image.shape[1] - 10:
             now_y = 10
             while now_y < image.shape[1] - 10:
@@ -160,16 +173,16 @@ class Mitohondrion:
                 start_pos = [now_x + np.random.randint(-2,3), now_y]
                 enf_pos = [now_x + np.random.randint(-2,3), now_y+len_line]
                 
-                self.texture = cv2.line(self.texture, start_pos, enf_pos, color2, 5)
+                self.texture = cv2.line(self.texture, start_pos, enf_pos, forecolor, 5)
                 
                 if len_line == 0: # генерация черной точки
                     if np.random.random() < 0.5: 
                         self.texture = cv2.line(self.texture, start_pos, enf_pos, (1,1,1), 5)
                         self.texture = cv2.line(self.texture, start_pos, enf_pos, (1,1,1), 2)
                     else:
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, (color,color,color), 2)
+                        self.texture = cv2.line(self.texture, start_pos, enf_pos, (cristae_color), 2)
                 else:
-                    self.texture = cv2.line(self.texture, start_pos, enf_pos, (color,color,color), 2)
+                    self.texture = cv2.line(self.texture, start_pos, enf_pos, (cristae_color), 2)
 
                 #step y
                 step_y = np.random.randint(7,20)

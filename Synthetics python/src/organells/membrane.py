@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+from settings import PARAM, uniform_float, uniform_int
 import math
 
 if __name__ == "__main__":
@@ -10,14 +11,12 @@ if __name__ == "__main__":
 from src.container.spline import *
 from src.container.subclass import *
 
+
 class Membrane:
     def __init__(self, compartmentsList, sizeImage):
         self.type = "Membrane"
 
-        self.sizeLine = 4 - 1
-
-        self.color = (80, 80, 80)
-        self.nowColor = self.color
+        self.setDrawParam() # Set membrane color
         self.labels = None
 
         self.typeLine = 0 # 0 -full boarder, 1 - clear center
@@ -27,13 +26,14 @@ class Membrane:
 
         self.Create(compartmentsList.copy(), sizeImage)
 
+
     def Create(self, compartments, sizeImg):
         
         self.typeLine = np.random.randint(0,2)
         self.sizeInputLine = np.random.randint(1,3)
-        
-        self.sizeLine = np.random.randint(3,5)
-    
+        self.sizeLine = uniform_int(
+            PARAM['membrane_thickness_mean'],
+            PARAM['membrane_thickness_std'])
         checkMask = np.zeros((*sizeImg,3), np.uint8)
 
         # Создание маски регионов и зпаолнение её
@@ -271,7 +271,7 @@ class Membrane:
                            [0, 1, 0]], dtype=np.uint8)
                                
         mask_dilate = cv2.dilate(mask,kernel,iterations = self.sizeLine)
-        
+
         maskPSD = np.zeros(draw_image.shape[0:2], np.uint8)
         maskPSD[self.labels[:,:] == -2] = 255
         maskPSD_dilate = cv2.dilate(maskPSD,kernel,iterations = 2)
@@ -283,13 +283,18 @@ class Membrane:
             mask_dilate = mask_dilate - cv2.dilate(mask,kernel,iterations = self.sizeInputLine)
             maskPSD_dilate = maskPSD_dilate - cv2.dilate(maskPSD,kernel,iterations = self.sizeInputLine)
  
+        # Добавление к изображению (маске) основных клеточных мембран 
         draw_image[mask_dilate[:,:] == 255] = self.nowColor  
+        # Добавление к изображению (маске) мембран от PSD
         draw_image[maskPSD_dilate[:,:] == 255] = self.nowColor
         
         return draw_image
         
     def setDrawParam(self):
-        self.nowColor = self.color 
+        color = uniform_int(
+            PARAM['membrane_color_mean'],
+            PARAM['membrane_color_std'])
+        self.nowColor = (color, color, color)
         
     def setMaskParam(self):
         self.nowColor = (255,255,255)

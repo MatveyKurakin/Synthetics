@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
 from src.container.spline import *
 from src.container.subclass import *
+from settings import PARAM, uniform_int
 
 class Vesicles:
     def __init__(self):
@@ -19,10 +20,16 @@ class Vesicles:
          
         self.numberPoints = 0
         self.listSizeVesiculs = []
-         
-        self.color = (60, 60, 60)                   #/// подобрать цвета
-        self.nowPen = Pen(self.color, 2)    
-        self.addColor = (135, 135, 135)
+
+        color = uniform_int(
+            PARAM['vesicles_shell_color_mean'],
+            PARAM['vesicles_shell_color_std'])
+        self.color = (color, color, color) #/// подобрать цвета          
+        self.nowPen = Pen(self.color, 2)
+        backcolor = uniform_int(
+            PARAM['vesicles_back_color_mean'],
+            PARAM['vesicles_back_color_std'])    
+        self.addColor = (backcolor, backcolor, backcolor)
 
         self.nowBrush = Brush(self.addColor)
              
