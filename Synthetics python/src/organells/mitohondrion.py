@@ -87,11 +87,7 @@ class Mitohondrion:
         angle = self.angle * (math.pi/180)
         
         #print(self.numberPoints, half_len, len(tPoints))
-        for point in tPoints:
-            x = int(round(point[0] * math.cos(angle) - point[1] * math.sin(angle)))
-            y = int(round(point[0] * math.sin(angle) + point[1] * math.cos(angle)))
-            
-            self.Points.append([x,y])
+        self.Points = tPoints
 
         #добавление доп. точек
         
@@ -124,13 +120,9 @@ class Mitohondrion:
             
             tAddPoints = tAddPoints1 + tAddPoints2
             
-            for point2 in tAddPoints:
-                x = int(round(point2[0] * math.cos(angle) - point2[1] * math.sin(angle)))
-                y = int(round(point2[0] * math.sin(angle) + point2[1] * math.cos(angle)))
-                
-                self.addPoints.append([x,y]) 
+            self.addPoints = tAddPoints 
 
-        self.ChangePositionPoints()
+        self.setRandomAngle(0, 0)
 
     def ChangePositionPoints(self):
         self.PointsWithOffset = []
@@ -146,6 +138,33 @@ class Mitohondrion:
         self.centerPoint[0] = x
         self.centerPoint[1] = y
 
+        self.ChangePositionPoints()
+       
+    def setRandomAngle(self, min_angle = 0, max_angle = 90, is_singned_change = True):  
+    
+        if np.random.random() < 0.5 and is_singned_change:
+            sign = -1
+        else:
+            sign = 1
+            
+        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+        
+        change_angle = self.angle * (math.pi/180)
+        
+        tPoints = []
+        for point in self.Points:
+            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
+            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
+            tPoints.append([x,y])
+
+        tAddPoints = []
+        for point2 in self.addPoints:
+            x = int(round(point2[0] * math.cos(change_angle) - point2[1] * math.sin(change_angle)))
+            y = int(round(point2[0] * math.sin(change_angle) + point2[1] * math.cos(change_angle)))
+            tAddPoints.append([x,y]) 
+       
+        self.Points = tPoints
+        self.addPoints = tAddPoints   
         self.ChangePositionPoints()
        
     def CreateTexture(self, image):
