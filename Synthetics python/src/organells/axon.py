@@ -36,6 +36,8 @@ class Axon:
         self.pointNumber = 0
         self.Points = []
         self.PointsWithOffset = []
+        
+        self.typeGen = 0 # 0 - only output boarder, 1 - with input boarder
 
         self.nowPen = Pen(self.shell_color, self.sizePen)
         self.nowAddPen = Pen(self.shell_color, self.sizeAddPen)
@@ -43,15 +45,25 @@ class Axon:
         
     def Create(self, min_r=0, max_r=0):
         
+        self.typeGen = np.random.randint(0, 2)
+        
         self.Points = []
 
-        self.pointNumber = np.random.randint(7, 14)
+        self.pointNumber = np.random.randint(7, 15)
  
-        if (min_r == 0):
-            min_r = np.random.randint(30, 70)
-        
-        if (max_r == 0):
-            max_r = min_r + np.random.randint(4, min_r);                                  # лучше поменять параметры
+        if self.typeGen == 0:
+            if (min_r == 0):
+                min_r = np.random.randint(15, 41)
+            
+            if (max_r == 0):
+                max_r = min_r + np.random.randint(4, min_r);                                  # лучше поменять параметры
+         
+        elif self.typeGen == 1:
+            if (min_r == 0):
+                min_r = np.random.randint(40, 70)
+            
+            if (max_r == 0):
+                max_r = min_r + np.random.randint(4, min_r);                                  # лучше поменять параметры
  
         max_increase_len = max_r - min_r
         
@@ -66,7 +78,7 @@ class Axon:
             now_point = [int(round(r * math.sin(now_angle))), int(round(r * math.cos(now_angle)))]
             self.Points.append(now_point)
 
-        if min_r > 40:
+        if self.typeGen == 1:
             self.input_radius = np.random.randint(min_r/2, min_r-2, 2)
             self.angle = np.random.randint(0, 360)
 
@@ -116,6 +128,27 @@ class Axon:
         
         self.nowInnerBrush = Brush(self.innerTexture, typeFull = "texture")
         self.nowBubbleBrush = Brush(self.bubbleTexture, typeFull = "texture")
+
+
+    def setRandomAngle(self, min_angle = 0, max_angle = 45, is_singned_change = True):
+
+        if np.random.random() < 0.5 and is_singned_change:
+            sign = -1
+        else:
+            sign = 1
+            
+        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+
+        change_angle = self.angle * (math.pi/180)
+        
+        tPoints = []
+        for point in self.Points:
+            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
+            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
+            tPoints.append([x,y])
+       
+        self.Points = tPoints
+        self.ChangePositionPoints()
 
     def ChangePositionPoints(self):
         self.PointsWithOffset = []

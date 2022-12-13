@@ -106,15 +106,17 @@ class Form:
         return False
 
     def AddNewElementWithoutOverlap(self, compartmentsList, newComponent):
+
         checkImage = np.zeros((*self.sizeImage, 3), np.uint8)
 
         for component in compartmentsList:
             checkImage = component.DrawUniqueArea(checkImage)
 
-        max_iter = 200
+        max_iter = 300
                 
         checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
         newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+        newComponent.setRandomAngle(0, 90)
         checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
         counter = 1
@@ -122,10 +124,16 @@ class Form:
         while self.CheckOverlapNewElement(checkImage, checkNewImage) and counter < max_iter:
             checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
             newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+            newComponent.setRandomAngle(0, 90)
             checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
             counter += 1
-            
+        
+        #except Exception as ex:
+        #    print(ex)
+        #    print(newComponent.type)
+        #    print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
+           
         # Добавлено исключение чтобы элементы не накладывались друг на друга
         if counter == max_iter:
             raise Exception("Can't add unique position new element")
@@ -135,6 +143,7 @@ class Form:
                 
         checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
         newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+        newComponent.setRandomAngle(0, 90)
         checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
         counter = 1
@@ -142,6 +151,7 @@ class Form:
         while self.CheckOverlapNewElement(technicalMackAllcompanenst, checkNewImage) and counter < max_iter:
             checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
             newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+            newComponent.setRandomAngle(0, 90)
             checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
             counter += 1
@@ -162,6 +172,7 @@ class Form:
 
             except Exception as ex:
                 print(ex)
+                #print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
                 
     def addNewElementIntoImage_WithMask(self, compartmentsList, technicalMackAllcompanenst, newComponent):
         if newComponent is not None:
@@ -176,6 +187,7 @@ class Form:
 
             except Exception as ex:
                 print(ex)
+                #print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
  
         return technicalMackAllcompanenst
 
@@ -191,7 +203,29 @@ class Form:
 
         return draw_image
         
-    def createListGeneration(self, count_PSD = 0, count_Axon = 0, count_Vesicles = 0, count_Mitohondrion = 0):
+    def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+        
+        if max_count_PSD > 0:
+            count_PSD = np.random.randint(1, max_count_PSD+1)
+        else:
+            count_PSD = 0
+            
+        if max_count_Axon > 0:
+            count_Axon = np.random.randint(1, max_count_Axon+1)
+        else:
+            count_Axon = 0
+            
+        if max_count_Vesicles > 0:
+            count_Vesicles = np.random.randint(1, max_count_Vesicles+1)
+        else:
+            count_Vesicles = 0
+         
+        if max_count_Mitohondrion > 0:
+            count_Mitohondrion = np.random.randint(1, max_count_Mitohondrion+1)
+        else:
+            count_Mitohondrion = 0
+        
+        
         addAxonAfterMempbran         = np.random.randint(0, count_Axon+1)
         addMitohondrionAfterMempbran = np.random.randint(0, count_Mitohondrion+1)
         addVesiclesAfterMempbran     = np.random.randint(0, count_Vesicles+1)
@@ -201,7 +235,7 @@ class Form:
         addVesiclesBeforeMempbran     = count_Vesicles     - addVesiclesAfterMempbran
         
         RetList = []
-        
+                
         ListMixingClass = [["Axon"        , addAxonBeforeMempbran],
                            ["Mitohondrion", addMitohondrionBeforeMempbran],
                            ["Vesicles"    , addVesiclesBeforeMempbran],
@@ -224,12 +258,12 @@ class Form:
                 elif ListMixingClass[index][0] == "PSD":
                     newElement = PSD()
                 else:
-                    raise Exception("Shlyapa")
+                    raise Exception("What's up ?")
                     
                 UnionMask = self.addNewElementIntoImage(RetList, newElement)
 
         #################################################
-        UnionMask = self.addNewElementIntoImage(RetList, Membrane(RetList, self.sizeImage))
+        UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList))
         #################################################
         
         ListMixingClass2 = [["Axon"        , addAxonAfterMempbran],
@@ -251,15 +285,38 @@ class Form:
                     elif ListMixingClass2[index][0] == "Vesicles":
                         newElement = Vesicles()
                     else:
-                        raise Exception("Shlyapa")
+                        raise Exception("What's up ?")
 
                     self.addNewElementIntoImage(RetList, newElement)
                 except Exception as ex:
                     print(ex)
+                    #print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
         
         return RetList
         
-    def createListGenerationWithMask(self, count_PSD = 0, count_Axon = 0, count_Vesicles = 0, count_Mitohondrion = 0):
+    def createListGenerationWithMask(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+       
+        if max_count_PSD > 0:
+            count_PSD = np.random.randint(1, max_count_PSD+1)
+        else:
+            count_PSD = 0
+            
+        if max_count_Axon > 0:
+            count_Axon = np.random.randint(1, max_count_Axon+1)
+        else:
+            count_Axon = 0
+            
+        if max_count_Vesicles > 0:
+            count_Vesicles = np.random.randint(1, max_count_Vesicles+1)
+        else:
+            count_Vesicles = 0
+         
+        if max_count_Mitohondrion > 0:
+            count_Mitohondrion = np.random.randint(1, max_count_Mitohondrion+1)
+        else:
+            count_Mitohondrion = 0
+        
+        
         addAxonAfterMempbran         = np.random.randint(0, count_Axon+1)
         addMitohondrionAfterMempbran = np.random.randint(0, count_Mitohondrion+1)
         addVesiclesAfterMempbran     = np.random.randint(0, count_Vesicles+1)
@@ -294,14 +351,14 @@ class Form:
                 elif ListMixingClass[index][0] == "PSD":
                     newElement = PSD()
                 else:
-                    raise Exception("Shlyapa")
+                    raise Exception("What's up ?")
                     
                 UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, newElement)
 
         #cv2.imshow("testMask", UnionMask)
         #cv2.waitKey()
         #################################################
-        UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, Membrane(RetList, self.sizeImage))
+        UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, Membrane(self.sizeImage, RetList))
         #################################################
         
         ListMixingClass2 = [["Axon"        , addAxonAfterMempbran],
@@ -323,26 +380,83 @@ class Form:
                     elif ListMixingClass2[index][0] == "Vesicles":
                         newElement = Vesicles()
                     else:
-                        raise Exception("Shlyapa")
+                        raise Exception("What's up ?")
 
                     UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, newElement)
                 except Exception as ex:
                     print(ex)
+                    #print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
         
+        return RetList
+
+    def createListGenerationWithStartMembrane(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+        if max_count_PSD > 0:
+            count_PSD = np.random.randint(1, max_count_PSD+1)
+        else:
+            count_PSD = 0
+            
+        if max_count_Axon > 0:
+            count_Axon = np.random.randint(1, max_count_Axon+1)
+        else:
+            count_Axon = 0
+            
+        if max_count_Vesicles > 0:
+            count_Vesicles = np.random.randint(1, max_count_Vesicles+1)
+        else:
+            count_Vesicles = 0
+         
+        if max_count_Mitohondrion > 0:
+            count_Mitohondrion = np.random.randint(1, max_count_Mitohondrion+1)
+        else:
+            count_Mitohondrion = 0
+       
+        RetList = []
+        
+        ListMixingClass = [["Axon"        , count_Axon],
+                           ["Mitohondrion", count_Mitohondrion],
+                           ["Vesicles"    , count_Vesicles],
+                           ["PSD"         , count_PSD]]
+
+        #################################################
+        UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage))
+        #################################################
+
+        while len(ListMixingClass) != 0:
+            index = np.random.randint(0, len(ListMixingClass))
+            
+            if ListMixingClass[index][1] <= 0:
+                ListMixingClass.pop(index)
+            else:
+                ListMixingClass[index][1] -= 1
+ 
+                if ListMixingClass[index][0] == "Axon":
+                    newElement = Axon()
+                elif ListMixingClass[index][0] == "Mitohondrion":
+                    newElement = Mitohondrion()
+                elif ListMixingClass[index][0] == "Vesicles":
+                    newElement = Vesicles()
+                elif ListMixingClass[index][0] == "PSD":
+                    newElement = PSD()
+                else:
+                    raise Exception("What's up ?")
+                    
+                UnionMask = self.addNewElementIntoImage(RetList, newElement)
+  
         return RetList
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
         ArrLayers = []
 
-        Noise = albu.Compose(albu.GaussNoise(var_limit = (10,25), per_channel = False, always_apply=True)) 
-        
+        Noise = albu.Compose(albu.GaussNoise(var_limit = (PARAM['main_min_gausse_noise_value'], PARAM['main_max_gausse_noise_value']), per_channel = False, always_apply=True))
 
         for counter in range(count_img):
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            
             
             # Рисование
             # рисование слоя и масок
@@ -395,8 +509,8 @@ class Form:
             # добавление шума
             #Img = AddGaussianNoise(Img, 40)
 
-            r = 6
-            G = 2
+            r = PARAM["main_radius_gausse_blur"]
+            G = PARAM["main_sigma_gausse_blur"]
             Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
 
             img = np.ones((*self.sizeImage, 3), np.uint8)
