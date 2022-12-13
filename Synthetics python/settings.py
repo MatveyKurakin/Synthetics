@@ -24,6 +24,8 @@ PARAM = {
 
     'vesicles_shell_color_mean': 80.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки визикул
     'vesicles_back_color_mean': 125.0,          'vesicles_back_color_std': 10.0, # Цвет внутри визикул
+    
+    'pearson_noise': 25, # интенсивность шума Пирсона
 }
 
 

@@ -513,7 +513,13 @@ class Form:
             G = PARAM["main_sigma_gausse_blur"]
             Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
 
-            Img = Noise(image=Img)['image']
+            img = np.ones((*self.sizeImage, 3), np.uint8)
+            noisy = np.random.poisson(img)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+            Img = Img + noisy
+            Img[Img < 0] = 0
+            Img[Img > 255] = 255
+            Img = Img.astype(np.uint8)
 
             ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
 
