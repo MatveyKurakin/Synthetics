@@ -335,7 +335,8 @@ class Form:
         # Цикличная генерация
         ArrLayers = []
 
-        Noise = albu.Compose(albu.GaussNoise(var_limit = (10,25), per_channel = False, always_apply=True))
+        Noise = albu.Compose(albu.GaussNoise(var_limit = (10,25), per_channel = False, always_apply=True)) 
+        
 
         for counter in range(count_img):
             print(f"{counter + 1} generation img for {count_img}")
@@ -398,7 +399,13 @@ class Form:
             G = 2
             Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
 
-            Img = Noise(image=Img)['image']
+            img = np.ones((*self.sizeImage, 3), np.uint8)
+            noisy = np.random.poisson(img)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+            Img = Img + noisy
+            Img[Img < 0] = 0
+            Img[Img > 255] = 255
+            Img = Img.astype(np.uint8)
 
             ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
 
