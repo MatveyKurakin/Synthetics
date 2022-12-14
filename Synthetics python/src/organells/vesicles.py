@@ -51,7 +51,7 @@ class Vesicles:
             mainVesiculesSize = np.random.randint(5, 7)
         else:
             mainVesiculesSize = 4
-            self.varibleInputFulling = np.random.random() * 0.5                             #не более половины полностью заполненных, так как получается единое месиво
+            self.varibleInputFulling = np.random.random() * 0.25                             #не более 1/4 полностью заполненных, так как получается единое месиво
     
         self.sizeVesiculeMin = mainVesiculesSize-1
         self.sizeVesiculeMax = mainVesiculesSize+2
@@ -81,7 +81,7 @@ class Vesicles:
             nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
             counter = 1
             
-            while (self.CheckOverlap(tPoints, now_point, nowSizeCycle, 1) and counter < max_iteration):
+            while (self.CheckOverlap(tPoints, now_point, nowSizeCycle, 0) and counter < max_iteration):
                 now_point = self.getNewCoordVesicules(radius_x, radius_y)
                 nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
                 counter += 1
@@ -89,8 +89,9 @@ class Vesicles:
             if (counter == max_iteration):
                 fail_counter += 1
 
-            self.listSizeVesiculs.append(nowSizeCycle)
-            tPoints.append(now_point)
+            else:
+                self.listSizeVesiculs.append(nowSizeCycle)
+                tPoints.append(now_point)
             
         # поворот везикул
         self.angle = np.random.randint(0, 90) 
@@ -110,6 +111,8 @@ class Vesicles:
             
         if (fail_counter != 0):
             print(f"The number of vesicles that could not be generated at a unique position: {fail_counter} out of {self.numberPoints}")
+
+        self.numberPoints = len(self.Points)
 
         self.ChangePositionPoints()
      
