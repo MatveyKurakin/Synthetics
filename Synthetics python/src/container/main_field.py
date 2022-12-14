@@ -22,42 +22,64 @@ from src.container.subclass import *
 
 class PointsNoise:
     def __init__(self, size = (512,512)):
-        self.Points = []
-        self.PointsWithOffset = []
+        # self.Points = []
+        # self.PointsWithOffset = []
         self.sizeImage = size
 
-    def Create(self, min_r_st = -20, max_r_st = 20):
-        min_r = np.random.randint(min_r_st, 0)
-        max_r = np.random.randint(0, max_r_st)
-
-        for i in range(2):
-            rx = np.random.randint(min_r, max_r)
-            ry = np.random.randint(min_r, max_r)
-            now_point = [rx, ry]
-            self.Points.append(now_point)
-            
-    def  ChangePositionPoints(self):
-        self.PointsWithOffset = []
-        
-        for i in range(0, len(self.Points), 2):
-            x = np.random.randint(0, self.sizeImage[0])
-            y = np.random.randint(0, self.sizeImage[1])
-            
-            self.PointsWithOffset.append([self.Points[i][0] + x, self.Points[i][1] + y])
-            self.PointsWithOffset.append([self.Points[i + 1][0] + x, self.Points[i + 1][1] + y])
 
     def Draw(self, image):
         draw_image = image.copy()
-    
-        for i in range(500):
-            self.Create()
-        self.ChangePositionPoints()
+        # число линий
+        count = 200
+        # максимальная длина линий
+        maxdist = np.random.randint(4, 40, 4)
+        
+        #  разбиваем область на 4 части в каждой будет свое направление линий
+        xs = np.random.randint(0, self.sizeImage[0]/2, count)
+        ys = np.random.randint(0, self.sizeImage[1]/2, count)
+        
+        xs[int(count/4):int(count/2)] = np.random.randint(int(self.sizeImage[0]/2), self.sizeImage[0], int(count/2)-int(count/4))
+        xs[int(count*3/4):] = np.random.randint(int(self.sizeImage[0]/2), self.sizeImage[0], int(count/2)-int(count/4))
+        ys[int(count/2):] = np.random.randint(int(self.sizeImage[1]/2), self.sizeImage[1], int(count/2))
+        
+        #  направление линий
+        vecx = np.random.rand(4)
+        vecy = np.random.rand(4)*2 - 1
 
-        for i in range(0, len(self.PointsWithOffset), 2):
-            c = np.random.randint(100, 159)
-            w = np.random.randint(1, 10)
-            
-            draw_image = cv2.line(draw_image, self.PointsWithOffset[i],  self.PointsWithOffset[i+1], (c,c,c), w)
+        #  забиваем дистанцию у каждой четверти свой максимум
+        #  забиваем направления
+        xd = np.ones(count)
+        yd = np.ones(count)
+        dist = np.ones(count)*2
+        j = 0
+        for i in range(0, int(count/4)*4, int(count/4)):
+            a = np.asarray([vecx[j], vecy[j]])
+            a = a/np.sqrt(a.dot(a))    
+            xd[i:i+int(count/4)] = a[0]
+            yd[i:i+int(count/4)] = a[1]
+            dist[i:i+int(count/4)] = np.random.randint(3, maxdist[j], int(count/4))
+            j = j + 1
+        
+        
+        xe = xs + xd * dist
+        ye = ys + yd * dist
+        
+        xe = xe.astype(np.int)
+        ye = ye.astype(np.int)
+    
+        xe[xe < 0] = 0
+        ye[ye < 0] = 0
+        
+        xe[xe > self.sizeImage[0]] = self.sizeImage[0]
+        ye[ye > self.sizeImage[1]] = self.sizeImage[1]
+        
+        #  толщина линий
+        w = np.random.randint(1, 5, count)
+
+
+        for i in range(0, count):    
+            c = np.random.randint(100, 160)
+            draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
             
         return draw_image
 
@@ -197,7 +219,7 @@ class Form:
         p = PointsNoise(self.sizeImage)
         draw_image = p.Draw(draw_image)
             
-        r = 7
+        r = 3
         G = (2 * r + 1) / 3
         draw_image = cv2.GaussianBlur(draw_image,(r*2+1,r*2+1), G)
 
@@ -465,25 +487,25 @@ class Form:
             Img = np.zeros((*self.sizeImage, 3), np.uint8)
             Img = self.DrawBackround(Img, self.backgroundСolor)
             
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисование маски и заплолнение черным
+            # рисование маски и заполнение черным
             MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
 
-            # рисовка в соответсвующее изображение
+            # рисовка в соответствующее изображение
             for component in ListGeneration:
                 Img = component.Draw(Img)
 
@@ -513,8 +535,8 @@ class Form:
             G = PARAM["main_sigma_gausse_blur"]
             Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
 
-            img = np.ones((*self.sizeImage, 3), np.uint8)
-            noisy = np.random.poisson(img)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+            noisy = np.ones((*self.sizeImage, 3), np.uint8)
+            noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
 
             Img = Img + noisy
             Img[Img < 0] = 0
