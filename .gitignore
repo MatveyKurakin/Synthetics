@@ -54,6 +54,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+*png
+
 Synthetics/bin
 Synthetics/obj
 

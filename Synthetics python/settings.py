@@ -22,10 +22,10 @@ PARAM = {
     'psd_addcolor_mean': 85.0,                  'psd_addcolor_std': 10.0, # Цвет метелки PSD
     'psd_centerline_color_mean': 115.0,            'psd_centerline_color_std': 15.0, # Цвет нитки поверс PSD 
 
-    'vesicles_shell_color_mean': 80.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки визикул
-    'vesicles_back_color_mean': 125.0,          'vesicles_back_color_std': 10.0, # Цвет внутри визикул
+    'vesicles_shell_color_mean': 80.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки везикул
+    'vesicles_back_color_mean': 125.0,          'vesicles_back_color_std': 10.0, # Цвет внутри везикул
     
-    'pearson_noise': 25, # интенсивность шума Пирсона
+    'pearson_noise': 15, # интенсивность шума Пирсона
 }
 
 
