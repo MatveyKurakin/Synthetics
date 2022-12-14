@@ -22,14 +22,12 @@ def small_spline_line(img, points, color, thickness_line):
 
     x, y = zip(*work_points)
     tck,u = interpolate.splprep([x, y], s = 0, k = 2)
-    unew = np.linspace(0, 1, 1000)
+    unew = np.linspace(0, 1, 100)
     out = interpolate.splev(unew, tck)
 
     out_list = np.array([[int(round(out[0][i])), int(round(out[1][i]))] for i in range(len(out[0]))])
 
     img = cv2.polylines(img, [out_list], isClosed = False, color = color, thickness = thickness_line, lineType = cv2.LINE_AA)
-
-
 
 
 def fill_full_spline(img, points, color, is_closed = True):
@@ -87,6 +85,27 @@ def fill_texture_ellipse(img, center, radius, texture, angle = 0, startAngle = 0
                startAngle = startAngle,
                endAngle = endAngle)
     img[mask[:,:] == 255] = texture[mask[:,:] == 255]
+
+def fill_texture_2_poligons(img, poligon1, poligon2, color, thickness_line):
+    work_points = poligon1.copy()
+    x, y = zip(*work_points)
+    tck,u = interpolate.splprep([x, y], s=0, k=2, per = False)
+    unew = np.linspace(0, 1, 100)
+    out1 = interpolate.splev(unew, tck)
+    out_list1 = [[int(round(out1[0][i])), int(round(out1[1][i]))] for i in range(len(out1[0]))]
+    
+    work_points = reversed(poligon2.copy())
+    x, y = zip(*work_points)
+    tck,u = interpolate.splprep([x, y], s=0, k=2, per = False)
+    unew = np.linspace(0, 1, 100)
+    out2 = interpolate.splev(unew, tck)
+    
+    out_list2 = [[int(round(out2[0][i])), int(round(out2[1][i]))] for i in range(len(out2[0]))]
+
+    out_list = np.array(out_list1 + out_list2)
+    #img = cv2.polylines(img, [out_list], isClosed = is_closed, color = color, thickness = thickness_line, lineType = cv2.LINE_AA)
+    img = cv2.drawContours(img, [out_list], -1, color, -1)
+    img = cv2.polylines(img, [out_list], isClosed = True, color = color, thickness = thickness_line, lineType = cv2.LINE_AA)
 
 if __name__ == "__main__":
     img = np.zeros((512,512,3), np.uint8)
