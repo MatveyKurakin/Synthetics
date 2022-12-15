@@ -4,7 +4,7 @@ import random
 PARAM = {
     
     'main_color_mean': 185.0,                   'main_color_std': 15, # Основной цвет фона
-    'main_radius_gausse_blur': 5,               'main_sigma_gausse_blur': 2,  # радиус и размытие конечного изображения
+    'main_radius_gausse_blur': 5,               'main_sigma_gausse_blur': 1.95,  # радиус и размытие конечного изображения
     'main_min_gausse_noise_value': 6,          'main_max_gausse_noise_value': 15, # пределы для разброса нормального шума
 
     'axon_shell_color_mean': 65.0,              'axon_shell_color_std': 10.0, # Цвет оболочек аксона
@@ -19,10 +19,10 @@ PARAM = {
     'mitohondrion_cristae_color_mean': 120.0,   'mitohondrion_cristae_color_std': 5.0, # Цвет внутри крист
 
     'psd_back_color_mean': 60.0,                'psd_back_color_std': 10.0, # Цвет основной части PSD
-    'psd_addcolor_mean': 85.0,                  'psd_addcolor_std': 10.0, # Цвет метелки PSD
-    'psd_centerline_color_mean': 115.0,            'psd_centerline_color_std': 15.0, # Цвет нитки поверс PSD 
+    'psd_addcolor_mean': 95.0,                  'psd_addcolor_std': 20.0, # Цвет метелки PSD
+    'psd_centerline_color_mean': 115.0,            'psd_centerline_color_std': 15.0, # Цвет нитки поверх PSD
 
-    'vesicles_shell_color_mean': 80.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки везикул
+    'vesicles_shell_color_mean': 83.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки везикул
     'vesicles_back_color_mean': 125.0,          'vesicles_back_color_std': 10.0, # Цвет внутри везикул
     
     'pearson_noise': 15, # интенсивность шума Пирсона

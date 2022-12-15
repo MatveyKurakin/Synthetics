@@ -16,6 +16,25 @@ class PSD:
     def __init__(self, TreePoints = None):
         self.type = "PSD"
         
+        """
+        
+        генерация PSD в 3 линии
+        
+        u - верхняя
+        i - внутрення
+        d - нижняя
+        
+        форма по слоям:
+         uuuuu
+        u     u
+         
+         iiiii
+        i     i
+        
+         ddddd
+        d     d
+        """
+        
         color = uniform_int(
             PARAM['psd_back_color_mean'],
             PARAM['psd_back_color_std'])
@@ -30,15 +49,11 @@ class PSD:
             PARAM['psd_centerline_color_mean'],
             PARAM['psd_centerline_color_std'])
         self.centerline_color = (centerline_color, centerline_color, centerline_color)
-        
-        
-        self.mainSizeLinePSD = 3
-        self.inputSizeLinePSD = 2
-        
+     
         # карандаш для темной линии PSD
-        self.nowPen = Pen(self.color, self.mainSizeLinePSD)
+        self.nowPen = Pen(self.color)
         # карандаш для центральной линии
-        self.nowAddPen = Pen(self.centerline_color, self.inputSizeLinePSD)
+        self.nowAddPen = Pen(self.centerline_color)
         # заливка для затемненоой области
         self.nowBrush = Brush(self.addColor)
         
@@ -54,11 +69,11 @@ class PSD:
         self.angle = 0
         
         if TreePoints is None:
-            self.CreateInit()
+            self.Create()
         else:
             self.CreateTreePoints(TreePoints)
         
-    def CreateInit(self):
+    def Create(self):
         
         min_len_05 = 15
         max_len_05 = 30
@@ -85,8 +100,16 @@ class PSD:
             self.centerline_color = self.color
             self.nowAddPen.color = self.centerline_color
             
+                        
+            self.mainUpSizeLinePSD = 2
+            self.inputSizeLinePSD = np.random.randint(2, 3+1)
+            self.mainDownSizeLinePSD = 2
         else:
             self.typeGen = 0
+            
+            self.mainUpSizeLinePSD = np.random.randint(2, 4+1)
+            self.inputSizeLinePSD = np.random.randint(1, 2+1)
+            self.mainDownSizeLinePSD = 2
             
         point1 = TreePoints[0]
         normal = TreePoints[1]
@@ -120,7 +143,7 @@ class PSD:
         
         ########### 3-7 PSD-line (цвет PSD под выпоклустью)
         # смещение 1 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
-        sizeOffsetY_1 = - (self.mainSizeLinePSD + self.inputSizeLinePSD)+1
+        sizeOffsetY_1 = - (self.mainDownSizeLinePSD + self.inputSizeLinePSD)+1
         #главная темная линия PSD
         p1_1 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_1+1)]
         c_1  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_1)]
@@ -133,7 +156,7 @@ class PSD:
 
         ########### 8-12 PSD-line (цвет PSD над выпоклустью)
         # смещение 2 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
-        sizeOffsetY_2 = (self.mainSizeLinePSD + self.inputSizeLinePSD)
+        sizeOffsetY_2 = (self.mainUpSizeLinePSD + self.inputSizeLinePSD)
         #главная темная линия PSD
         p1_2 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_2-1)]
         c_2  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_2)]
@@ -211,14 +234,14 @@ class PSD:
 
         # рисование нижней линии 
         rangeList_up = self.PointsWithOffset[3: 3+3]
-        small_spline_line(draw_image, rangeList_up, self.nowPen.color, self.nowPen.sizePen)        
+        small_spline_line(draw_image, rangeList_up, self.nowPen.color, self.mainDownSizeLinePSD)        
         # рисование верхней линии 
         rangeList_down = self.PointsWithOffset[6: 6+3]
-        small_spline_line(draw_image, rangeList_down, self.nowPen.color, self.nowPen.sizePen)
+        small_spline_line(draw_image, rangeList_down, self.nowPen.color, self.mainUpSizeLinePSD)
         
         # рисование внутренней линии
         rangeList_input = self.PointsWithOffset[0: 0+3]
-        small_spline_line(draw_image, rangeList_input, self.nowAddPen.color, self.nowAddPen.sizePen)
+        small_spline_line(draw_image, rangeList_input, self.nowAddPen.color, self.inputSizeLinePSD)
 
 
          

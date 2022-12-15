@@ -35,6 +35,8 @@ class Membrane:
             self.CreateWithNoneList(sizeImage)
         else:
             self.Create(compartmentsList.copy(), sizeImage)
+            
+        print("Type membrane generation:", self.typeLine)
         
     def CreateWithNoneList(self, sizeImage):
     
@@ -116,7 +118,9 @@ class Membrane:
     def SetStartValue(self):
         self.typeLine = np.random.randint(0,3)
         
-        self.sizeInputLine = np.random.randint(0,2)
+        #self.typeLine = 1
+        
+        self.sizeInputLine = np.random.randint(0,3)
         self.sizeLine = uniform_int(
             PARAM['membrane_thickness_mean'],
             PARAM['membrane_thickness_std'])
@@ -124,7 +128,10 @@ class Membrane:
 
         self.color = uniform_int(PARAM['membrane_color_mean'],
                                  PARAM['membrane_color_std'])
-                                 
+                               
+        if self.typeLine == 1:
+            self.sizeInputLine = self.sizeInputLine + 1
+                               
         if self.typeLine == 2:
             self.sizeLine -= np.random.randint(0,2)
                                
@@ -548,17 +555,27 @@ class Membrane:
         maskAxon_dilate = cv2.dilate(maskAxon,kernel,iterations = 2)
         
         maskAxonOreol = np.zeros(draw_image.shape[0:2], np.uint8)
-        maskAxonOreol[self.labels[:,:] == -4] = 255       
-        
+        maskAxonOreol[self.labels[:,:] == -4] = 255
+
+        if self.typeLine == 0:
+            mask_erode = cv2.erode(mask_dilate,kernel,iterations = 10)
+            mask_dilate = mask_dilate - mask_erode
+
         if self.typeLine == 1:
-            mask_dilate = cv2.dilate(mask_dilate,kernel,iterations = 2)
-            mask_dilate = mask_dilate - cv2.dilate(mask,kernel,iterations = self.sizeInputLine)
-             
-            maskPSD_dilate = cv2.dilate(maskPSD_dilate,kernel,iterations = 2) 
-            maskPSD_dilate = maskPSD_dilate - cv2.dilate(maskPSD,kernel,iterations = self.sizeInputLine)
+            union_mask = mask + maskPSD + maskAxon
             
-            maskAxon_dilate = cv2.dilate(maskAxon_dilate,kernel,iterations = 2) 
-            maskAxon_dilate = maskAxon_dilate - cv2.dilate(maskAxon,kernel,iterations = self.sizeInputLine)
+            union_mask_dilate = mask_dilate + maskPSD_dilate + maskAxon_dilate
+            mask_dilate = cv2.dilate(union_mask_dilate, kernel,iterations = 2)
+            
+            maskPSD_dilate = maskPSD = np.zeros(draw_image.shape[0:2], np.uint8)
+            maskAxon_dilate = maskAxon = np.zeros(draw_image.shape[0:2], np.uint8)
+            
+            
+            if self.sizeInputLine != 0:
+                mask_dilate = mask_dilate - cv2.dilate(union_mask,kernel,iterations = self.sizeInputLine)
+            else:
+                mask_dilate = mask_dilate - union_mask
+        
             
         elif self.typeLine == 2:
             mask_erode = cv2.erode(mask_dilate, kernel, iterations = 7 - self.sizeInputLine)
@@ -577,7 +594,7 @@ class Membrane:
         # Добавление к изображению (маске) мембран от Axon
         draw_image[maskAxon_dilate[:,:] == 255] = self.nowColor
         draw_image[maskAxonOreol[:,:] == 255] = self.nowColor
-                
+   
         return draw_image
         
     def setDrawParam(self):
@@ -591,6 +608,10 @@ class Membrane:
         mask = self.Draw(image)
         self.setDrawParam()
         
+        #kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
+        #mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        #mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+                
         return mask             
             
     def DrawUniqueArea(self, image):

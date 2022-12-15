@@ -4,6 +4,8 @@
 # Prerequisites
 *.d
 
+dataset/
+
 # Object files
 *.o
 *.ko
