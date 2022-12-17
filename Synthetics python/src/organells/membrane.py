@@ -116,7 +116,16 @@ class Membrane:
         return False
         
     def SetStartValue(self):
-        self.typeLine = np.random.randint(0,3)
+        #self.typeLine = np.random.randint(0,3)
+        
+        choice = np.random.randint(0,10)
+        
+        if choice < 4:      
+            self.typeLine = 0
+        elif choice < 8:
+            self.typeLine = 2
+        else:
+            self.typeLine = 1           # первый тип линии сильно растворяется, поэтому его вероятность появления снижена
         
         #self.typeLine = 1
         
