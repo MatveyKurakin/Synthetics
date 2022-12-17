@@ -36,6 +36,10 @@ class Mitohondrion:
         self.centerPoint = [0, 0]
         self.Points = []
         self.PointsWithOffset = []
+        
+        self.direction = [0,0]         # вектор смещения границы, для имитации косоро среза
+        
+        
         self.addPoints = []            # точки с смещением для имитации косоро среза
         self.addPointsWithOffset = []
 
@@ -96,48 +100,55 @@ class Mitohondrion:
         self.Points = tPoints
 
         #добавление доп. точек
-        if np.random.random() < 0.5:            
-            size_dop = np.random.randint(3,4+1) * 2
+        if np.random.random() < 0.5 or True: ##############################
+            self.dopSizeLine = np.random.randint(3,4+1)
             
-            startMPointWithOffset = [startMPoint[0] - size_dop//2, 0]
+            direction = np.random.randint(-4,4+1, 2)
             
-            tAddPoints1 = [
-                           tPoints[1],
-                           startMPointWithOffset,
-                           tPoints[-1],
-                           
-                           tPoints[1],
-                           [startMPoint[0] + size_dop//2, startMPoint[1]],
-                           tPoints[-1]
-                           ]
-                           
-            endMPointWithOffset = [endMPoint[0] + size_dop//2, 0]
+            len_dir = math.sqrt(direction[0]**2 + direction[1]**2)
             
-            tAddPoints2 = [
-                           tPoints[half_len],
-                           endMPointWithOffset,
-                           tPoints[half_len+2],
-                           
-                           tPoints[half_len],
-                           [endMPoint[0] + size_dop//2, endMPoint[1]],
-                           tPoints[half_len+2]
-                           ]
-                           
-            tAddPoints = tAddPoints1 + tAddPoints2
+            if len_dir != 0:            
+                self.direction = [direction[0]/len_dir, direction[1]/len_dir]
             
-            self.addPoints = tAddPoints 
+            #startMPointWithOffset = [startMPoint[0] - size_dop//2, 0]
+            
+            #tAddPoints1 = [
+            #               tPoints[1],
+            #               startMPointWithOffset,
+            #               tPoints[-1],
+                           
+            #               tPoints[1],
+            #               [startMPoint[0] + size_dop//2, startMPoint[1]],
+            #               tPoints[-1]
+            #               ]
+                           
+            #endMPointWithOffset = [endMPoint[0] + size_dop//2, 0]
+            
+            #tAddPoints2 = [
+            #               tPoints[half_len],
+            #               endMPointWithOffset,
+            #               tPoints[half_len+2],
+            #               
+            #               tPoints[half_len],
+            #               [endMPoint[0] + size_dop//2, endMPoint[1]],
+            #               tPoints[half_len+2]
+            #               ]
+            #               
+            #tAddPoints = tAddPoints1 + tAddPoints2
+            
+            #self.addPoints = tAddPoints 
 
         self.setRandomAngle(0, 0)
 
     def ChangePositionPoints(self):
         self.PointsWithOffset = []
-        self.addPointsWithOffset = []
+        #self.addPointsWithOffset = []
 
         for point in self.Points:
             self.PointsWithOffset.append([self.centerPoint[0]+point[0], self.centerPoint[1]+point[1]])
             
-        for point2 in self.addPoints:
-            self.addPointsWithOffset.append([self.centerPoint[0]+point2[0], self.centerPoint[1]+point2[1]])
+        #for point2 in self.addPoints:
+        #    self.addPointsWithOffset.append([self.centerPoint[0]+point2[0], self.centerPoint[1]+point2[1]])
 
     def NewPosition(self, x, y):
         self.centerPoint[0] = x
@@ -162,14 +173,14 @@ class Mitohondrion:
             y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
             tPoints.append([x,y])
 
-        tAddPoints = []
-        for point2 in self.addPoints:
-            x = int(round(point2[0] * math.cos(change_angle) - point2[1] * math.sin(change_angle)))
-            y = int(round(point2[0] * math.sin(change_angle) + point2[1] * math.cos(change_angle)))
-            tAddPoints.append([x,y]) 
+        #tAddPoints = []
+        #for point2 in self.addPoints:
+        #    x = int(round(point2[0] * math.cos(change_angle) - point2[1] * math.sin(change_angle)))
+        #    y = int(round(point2[0] * math.sin(change_angle) + point2[1] * math.cos(change_angle)))
+        #    tAddPoints.append([x,y]) 
        
         self.Points = tPoints
-        self.addPoints = tAddPoints   
+        #self.addPoints = tAddPoints   
         self.ChangePositionPoints()
        
     def CreateTexture(self, image):
@@ -238,11 +249,23 @@ class Mitohondrion:
                 
         self.nowBrush.FullBrush(draw_image, self.PointsWithOffset)
                 
-        if len(self.addPointsWithOffset) != 0:
-            fill_texture_2_poligons(draw_image, self.addPointsWithOffset[0:3], self.addPointsWithOffset[3:6], self.nowPen.color, self.nowPen.sizePen+1)
-            fill_texture_2_poligons(draw_image, self.addPointsWithOffset[6:9], self.addPointsWithOffset[9:12], self.nowPen.color, self.nowPen.sizePen+1)
+        if self.direction[0] != 0 and self.direction[1] != 0:
             
-        spline_line(draw_image, self.PointsWithOffset, self.nowPen.color, self.nowPen.sizePen) 
+            for step in range(-self.dopSizeLine, self.dopSizeLine+1, self.nowPen.sizePen-1):
+     
+                temp_PointsWithOffset_for_boarder = []
+                
+                for point in self.PointsWithOffset:
+                    temp_PointsWithOffset_for_boarder.append([point[0]+int(round(step*self.direction[0])), point[1] + int(round(step*self.direction[1]))])
+                
+                spline_line(draw_image, temp_PointsWithOffset_for_boarder, self.nowPen.color, self.nowPen.sizePen) 
+            
+        
+        # if len(self.addPointsWithOffset) != 0:
+        #    fill_texture_2_poligons(draw_image, self.addPointsWithOffset[0:3], self.addPointsWithOffset[3:6], self.nowPen.color, self.nowPen.sizePen+1)
+        #    fill_texture_2_poligons(draw_image, self.addPointsWithOffset[6:9], self.addPointsWithOffset[9:12], self.nowPen.color, self.nowPen.sizePen+1)
+        else:
+            spline_line(draw_image, self.PointsWithOffset, self.nowPen.color, self.nowPen.sizePen) 
 
         return draw_image
         
