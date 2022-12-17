@@ -9,7 +9,7 @@ class Brush:
     def __init__(self, brush = (0,0,0), typeFull = "full"):
         self.brush = brush
         self.type = typeFull
-    
+
     def FullBrush(self, image, points):
         if self.type == "full":
             fill_full_spline(image, points, self.brush)
@@ -25,4 +25,3 @@ class Brush:
             fill_texture_ellipse(image, center, radius, self.brush, angle)
         else:
             raise Exception("There is no type", self.type, "using only 'full' or 'texture'")
-        

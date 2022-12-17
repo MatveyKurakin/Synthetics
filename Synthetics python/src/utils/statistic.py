@@ -16,7 +16,7 @@ def readTensor(path, name):
         f = f.replace('\\', '')
         d[f] = img
     return d
-        
+
 def getHist(maskname):
     temp = np.copy(d['original'])
     temp = temp.astype(np.int)
