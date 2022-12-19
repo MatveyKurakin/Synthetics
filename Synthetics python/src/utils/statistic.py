@@ -49,6 +49,7 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
     plt.xlim([0.0, 255.0])
     plt.ylim([0.0, 0.05])
     
+    separate = True
     
     plt.plot(bin_edges[0:-1], ground, 'g', label = 'background')
     plt.plot(bin_edges[0:-1], vesicles, 'r', label = 'vesicles')
@@ -59,6 +60,49 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
     plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
     plt.legend()
     plt.show()
+    
+    if separate:
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], ground, 'g', label = 'background')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], vesicles, 'r', label = 'vesicles')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], axon, 'b', label = 'axon')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], PSD, 'c', label = 'PSD')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], mitochondria, 'm', label = 'mitochondria')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], mitochondrial_boundaries, 'y', label = 'mitochondrial boundaries')
+        plt.legend()
+        plt.show()
+        
+        plt.title(title)
+        plt.ylim([0.0, 0.05])
+        plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
+        plt.legend()
+        plt.show()
 
 
 bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground = calcSlice(r"F://Dissertation//EPFL//new","training0000.png")
