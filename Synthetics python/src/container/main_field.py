@@ -30,7 +30,7 @@ class PointsNoise:
     def Draw(self, image):
         draw_image = image.copy()
         # число линий
-        count = 200
+        count = 400
         # максимальная длина линий
         maxdist = np.random.randint(4, 40, 4)
 
@@ -479,9 +479,14 @@ class Form:
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
             #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
 
-
+            color = uniform_int(
+                PARAM['main_color_mean'],
+                PARAM['main_color_std'])
+            self.backgroundСolor = (color, color, color)
+    
             # Рисование
             # рисование слоя и масок
+            
 
             # рисование слоя и фона к нему
             Img = np.zeros((*self.sizeImage, 3), np.uint8)
