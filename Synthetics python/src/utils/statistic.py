@@ -133,7 +133,6 @@ summitochondria = np.zeros(256)
 summitochondrial_boundaries = np.zeros(256)
 sumboundaries = np.zeros(256)
 sumground = np.zeros(256)
-print('st', summitochondria)
 
 for f in g:
     f = f.split('\\')[-1]

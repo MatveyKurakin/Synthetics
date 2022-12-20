@@ -3,7 +3,7 @@ import random
 
 PARAM = {
     
-    'main_color_mean': 185.0,                   'main_color_std': 15, # Основной цвет фона
+    'main_color_mean': 175.0,                   'main_color_std': 15, # Основной цвет фона
     'main_radius_gausse_blur': 5,               'main_sigma_gausse_blur': 1.95,  # радиус и размытие конечного изображения
     'main_min_gausse_noise_value': 6,          'main_max_gausse_noise_value': 15, # пределы для разброса нормального шума
 
@@ -25,7 +25,7 @@ PARAM = {
     'vesicles_shell_color_mean': 83.0,          'vesicles_shell_color_std': 10.0, # Цвет оболочки везикул
     'vesicles_back_color_mean': 125.0,          'vesicles_back_color_std': 10.0, # Цвет внутри везикул
     
-    'pearson_noise': 15, # интенсивность шума Пирсона
+    'pearson_noise': 10, # интенсивность шума Пирсона
 }
 
 
