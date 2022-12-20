@@ -231,7 +231,20 @@ class PSD:
         # пятно
         rangeList = self.PointsWithOffset[9:9+6]
         self.nowBrush.FullBrush(draw_image, rangeList)
-
+        
+        if layer_drawing:
+            arr = np.asarray(rangeList)
+            offset = 20
+            minxy = np.amin(arr, axis=0)
+            minxy = np.maximum(np.zeros(2), minxy - offset).astype(np.int)
+            maxxy = np.amax(arr, axis=0)
+            maxxy = np.minimum(np.asarray([draw_image.shape[0], draw_image.shape[1]]),maxxy + offset).astype(np.int)
+            add = np.random.randint(2,3)
+            r = PARAM["main_radius_gausse_blur"] + add
+            G = PARAM["main_sigma_gausse_blur"] + add + 0.5
+            patch = cv2.GaussianBlur(draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]],(r*2+1,r*2+1), G)
+            draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]] = patch
+            
         # рисование нижней линии 
         rangeList_up = self.PointsWithOffset[3: 3+3]
         small_spline_line(draw_image, rangeList_up, self.nowPen.color, self.mainDownSizeLinePSD)        
