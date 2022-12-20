@@ -243,7 +243,19 @@ class PSD:
             r = PARAM["main_radius_gausse_blur"] + add
             G = PARAM["main_sigma_gausse_blur"] + add + 0.5
             patch = cv2.GaussianBlur(draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]],(r*2+1,r*2+1), G)
-            draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]] = patch
+            original = draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]]
+            
+            self.nowBrush.brush = (255,255,255)
+            mask = np.zeros(draw_image.shape)
+            self.nowBrush.FullBrush(mask, rangeList)
+            self.nowBrush.brush = self.addColor
+            mask = mask[minxy[1]:maxxy[1], minxy[0]:maxxy[0],0]
+            
+            kernel = np.ones((r, r), np.uint8)
+            mask = cv2.dilate(mask, kernel, iterations=1)
+            mask = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+            original = np.where(mask > 0, patch, original)
+            draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]] = original
             
         # рисование нижней линии 
         rangeList_up = self.PointsWithOffset[3: 3+3]

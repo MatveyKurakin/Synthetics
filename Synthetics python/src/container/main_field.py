@@ -76,9 +76,21 @@ class PointsNoise:
         #  толщина линий
         w = np.random.randint(1, 5, count)
 
-
-        for i in range(0, count):
-            c = np.random.randint(100, 160)
+        for i in range(0, count):    
+            c = np.random.randint(95, 140)
+            draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
+        
+        count = 1000
+        # максимальная длина линий
+        xs = np.random.randint(0, self.sizeImage[0], count)
+        ys = np.random.randint(0, self.sizeImage[1], count)
+        xd = np.random.randint(-5, 5, count)
+        yd = np.random.randint(-5, 5, count)
+        xe = np.minimum(np.ones(count) * self.sizeImage[0], np.maximum(np.zeros(count), xs + xd)).astype(np.int)
+        ye = np.minimum(np.ones(count) * self.sizeImage[1], np.maximum(np.zeros(count),ys + yd)).astype(np.int)
+        w = np.random.randint(1, 5, count)
+        for i in range(0, count):    
+            c = np.random.randint(100, 150)
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
 
         return draw_image

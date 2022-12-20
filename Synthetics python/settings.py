@@ -4,6 +4,7 @@ import random
 PARAM = {
 
     'main_color_mean': 170.0,                   'main_color_std': 10, # Основной цвет фона
+
     'main_radius_gausse_blur': 5,               'main_sigma_gausse_blur': 1.95,  # радиус и размытие конечного изображения
     'main_min_gausse_noise_value': 6,          'main_max_gausse_noise_value': 15, # пределы для разброса нормального шума
 
