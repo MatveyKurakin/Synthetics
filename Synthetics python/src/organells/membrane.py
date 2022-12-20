@@ -140,6 +140,7 @@ class Membrane:
 
         if self.typeLine == 1:
             self.sizeInputLine = self.sizeInputLine + 1
+            self.color -= 15
 
         if self.typeLine == 2:
             self.sizeLine -= np.random.randint(0,2)
