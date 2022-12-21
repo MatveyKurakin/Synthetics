@@ -3,7 +3,7 @@ import random
 
 PARAM = {
 
-    'main_color_mean': 170.0,                   'main_color_std': 10, # Основной цвет фона
+    'main_color_mean': 185.0,                   'main_color_std': 20, # Основной цвет фона
 
     'main_radius_gausse_blur': 5,               'main_sigma_gausse_blur': 1.95,  # радиус и размытие конечного изображения
     'main_min_gausse_noise_value': 6,          'main_max_gausse_noise_value': 15, # пределы для разброса нормального шума
@@ -12,7 +12,7 @@ PARAM = {
     'axon_back_color_diff_mean': 50.0,          'axon_back_color_diff_std': 10.0, # Затемнение стандартной текстуры
 
     'membrane_thickness_mean': 3.0,             'membrane_thickness_std': 1.0, # Толщина линий
-    'membrane_color_mean': 82.5,                'membrane_color_std': 12.0, # Цвет линий
+    'membrane_color_mean': 84.0,                'membrane_color_std': 10.0, # Цвет линий
 
     'mitohondrion_shell_color_mean': 87.0,      'mitohondrion_shell_color_std': 6.8, # Цвет оболочки митохондрии
     'mitohondrion_back_color_mean': 113.0,      'mitohondrion_back_color_std': 11.0, # Цвет заполнения митохондрии

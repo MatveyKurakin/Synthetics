@@ -212,8 +212,9 @@ class Mitohondrion:
 
                 if len_line == 0: # генерация черной точки
                     if np.random.random() < 0.5:
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, (1,1,1), 5)
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, (1,1,1), 2)
+                        color_black_point = (20,20,20)
+                        self.texture = cv2.line(self.texture, start_pos, enf_pos, color_black_point, 5)
+                        self.texture = cv2.line(self.texture, start_pos, enf_pos, color_black_point, 2)
                     else:
                         self.texture = cv2.line(self.texture, start_pos, enf_pos, (cristae_color), 2)
                 else:
