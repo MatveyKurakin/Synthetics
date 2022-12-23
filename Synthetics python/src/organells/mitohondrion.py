@@ -203,10 +203,16 @@ class Mitohondrion:
         while now_x < image.shape[1] - 10:
             now_y = 10
             while now_y < image.shape[1] - 10:
-                len_line = np.random.randint(0, self.main_len // 2)
+                type_line = np.random.random()
+                if type_line < 0.1:
+                    len_line = 0
+                elif type_line < 0.55:
+                    len_line = np.random.randint(2, 5)
+                else:
+                    len_line = np.random.randint(5, self.main_len // 2)
 
-                start_pos = [now_x + np.random.randint(-2,3), now_y]
-                enf_pos = [now_x + np.random.randint(-2,3), now_y+len_line]
+                start_pos = [now_x + np.random.randint(-3,4), now_y]
+                enf_pos = [now_x + np.random.randint(-3,4), now_y+len_line]
 
                 self.texture = cv2.line(self.texture, start_pos, enf_pos, forecolor, 5)
 

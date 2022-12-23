@@ -45,7 +45,12 @@ class Axon:
 
     def Create(self, min_r=0, max_r=0):
 
-        self.typeGen = np.random.randint(0, 2)
+        if np.random.randint(0, 5) == 0:
+            self.typeGen = 0
+        else:
+            self.typeGen = 1
+        
+        
 
         self.Points = []
 
@@ -53,17 +58,17 @@ class Axon:
 
         if self.typeGen == 0:
             if (min_r == 0):
-                min_r = np.random.randint(15, 41)
+                min_r = np.random.randint(15, 36)
 
             if (max_r == 0):
-                max_r = min_r + np.random.randint(4, min_r);                                  # лучше поменять параметры
+                max_r = min_r + np.random.randint(5, 41 - min_r + 5)                                 # лучше поменять параметры
 
         elif self.typeGen == 1:
             if (min_r == 0):
-                min_r = np.random.randint(40, 70)
+                min_r = np.random.randint(40, 71)
 
             if (max_r == 0):
-                max_r = min_r + np.random.randint(4, min_r);                                  # лучше поменять параметры
+                max_r = min_r + np.random.randint(4, 104 - min_r + 4)                                # лучше поменять параметры
 
         max_increase_len = max_r - min_r
 

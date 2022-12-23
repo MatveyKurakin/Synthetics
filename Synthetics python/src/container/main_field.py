@@ -30,7 +30,7 @@ class PointsNoise:
     def Draw(self, image):
         draw_image = image.copy()
         # число линий
-        count = 400
+        count = np.random.randint(100, 400+1)
         # максимальная длина линий
         maxdist = np.random.randint(4, 40, 4)
 
@@ -38,9 +38,9 @@ class PointsNoise:
         xs = np.random.randint(0, self.sizeImage[0]/2, count)
         ys = np.random.randint(0, self.sizeImage[1]/2, count)
 
-        xs[int(count/4):int(count/2)] = np.random.randint(int(self.sizeImage[0]/2), self.sizeImage[0], int(count/2)-int(count/4))
-        xs[int(count*3/4):] = np.random.randint(int(self.sizeImage[0]/2), self.sizeImage[0], int(count/2)-int(count/4))
-        ys[int(count/2):] = np.random.randint(int(self.sizeImage[1]/2), self.sizeImage[1], int(count/2))
+        xs[int(count/4):int(count/4) + int(count/4)] = np.random.randint(int(self.sizeImage[0]//2), self.sizeImage[0], int(count/4))
+        xs[int(count*3/4):int(count*3/4) + int(count/4)] = np.random.randint(int(self.sizeImage[0]//2), self.sizeImage[0], int(count/4))
+        ys[int(count/2): int(count/2) + int(count/2)] = np.random.randint(int(self.sizeImage[1]//2), self.sizeImage[1], int(count/2))
 
         #  направление линий
         vecx = np.random.rand(4)
@@ -52,12 +52,12 @@ class PointsNoise:
         yd = np.ones(count)
         dist = np.ones(count)*2
         j = 0
-        for i in range(0, int(count/4)*4, int(count/4)):
+        for i in range(0, int(count//4)*4, int(count//4)):
             a = np.asarray([vecx[j], vecy[j]])
             a = a/np.sqrt(a.dot(a))
-            xd[i:i+int(count/4)] = a[0]
-            yd[i:i+int(count/4)] = a[1]
-            dist[i:i+int(count/4)] = np.random.randint(3, maxdist[j], int(count/4))
+            xd[i:i+int(count//4)] = a[0]
+            yd[i:i+int(count//4)] = a[1]
+            dist[i:i+int(count//4)] = np.random.randint(3, maxdist[j], int(count//4))
             j = j + 1
 
 
@@ -80,7 +80,7 @@ class PointsNoise:
             c = np.random.randint(95, 140)
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
         
-        count = 1000
+        count = np.random.randint(200, 1000+1)
         # максимальная длина линий
         xs = np.random.randint(0, self.sizeImage[0], count)
         ys = np.random.randint(0, self.sizeImage[1], count)

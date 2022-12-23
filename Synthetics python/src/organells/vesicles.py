@@ -51,7 +51,7 @@ class Vesicles:
             mainVesiculesSize = np.random.randint(5, 7)
         else:
             mainVesiculesSize = 4
-            self.varibleInputFulling = np.random.random() * 0.25                             #не более 1/4 полностью заполненных, так как получается единое месиво
+            self.varibleInputFulling = np.random.random() * 0.1                            #не более 0.1 полностью заполненных, так как получается единое месиво
 
         self.sizeVesiculeMin = mainVesiculesSize-1
         self.sizeVesiculeMax = mainVesiculesSize+2
@@ -81,7 +81,7 @@ class Vesicles:
             nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
             counter = 1
 
-            while (self.CheckOverlap(tPoints, now_point, nowSizeCycle, 0) and counter < max_iteration):
+            while (self.CheckOverlap(tPoints, now_point, nowSizeCycle, 1) and counter < max_iteration):
                 now_point = self.getNewCoordVesicules(radius_x, radius_y)
                 nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
                 counter += 1
@@ -185,12 +185,19 @@ class Vesicles:
 
         return False
 
-    def Draw(self, image):
+    def Draw(self, image, small_mask_mode = False):
         # Основная рисующая фукция
+        
+        if small_mask_mode:
+            minus_ves_size = 2
+        else:
+            minus_ves_size = 0
 
         draw_image = image.copy()
 
         for i in range(self.numberPoints):
+        
+            size_vesicule = self.listSizeVesiculs[i] - minus_ves_size
 
             if self.typeGen == 0:
                 self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
@@ -203,7 +210,7 @@ class Vesicles:
 
             cv2.ellipse(img = draw_image,
                        center = self.PointsWithOffset[i],
-                       axes = (self.listSizeVesiculs[i], self.listSizeVesiculs[i]),
+                       axes = (size_vesicule, size_vesicule),
                        color = self.nowPen.color,
                        thickness = self.nowPen.sizePen + self.listSizeVesiculs[i] - self.sizeVesiculeMin,
                        angle = 0,
@@ -223,7 +230,7 @@ class Vesicles:
     def DrawMask(self, image):
         #Смена цветов для рисования маски
         self.setMaskParam()
-        mask = self.Draw(image)
+        mask = self.Draw(image, small_mask_mode = True)
         self.setDrawParam()
 
         return mask

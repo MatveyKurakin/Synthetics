@@ -568,7 +568,7 @@ class Membrane:
         maskAxonOreol[self.labels[:,:] == -4] = 255
 
         if self.typeLine == 0:
-            mask_erode = cv2.erode(mask_dilate,kernel,iterations = 10)
+            mask_erode = cv2.erode(mask_dilate,kernel,iterations = 30)
             mask_dilate = mask_dilate - mask_erode
 
         if self.typeLine == 1:
