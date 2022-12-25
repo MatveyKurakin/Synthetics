@@ -121,7 +121,28 @@ class Axon:
     def CreateNewTexture(self, image):
         self.innerTexture = image
 
-        self.bubbleTexture = image.copy()
+        color = uniform_int(
+            PARAM['main_color_mean'],
+            PARAM['main_color_std'])
+        # backgroundСolor = (color, color, color) # выбор цвета фона
+
+        self.bubbleTexture = np.full(image.shape, color, np.uint8)
+
+        count = 600
+        xs = np.random.randint(0, image.shape[0], count)
+        ys = np.random.randint(0, image.shape[1], count)
+        xd = np.random.randint(-5, 5, count)
+        yd = np.random.randint(-5, 5, count)
+        xe = np.minimum(np.ones(count) * image.shape[0], np.maximum(np.zeros(count), xs + xd)).astype(np.int)
+        ye = np.minimum(np.ones(count) * image.shape[1], np.maximum(np.zeros(count), ys + yd)).astype(np.int)
+        w = np.random.randint(1, 5, count)
+        for i in range(0, count):
+            c = np.random.randint(100, 150)
+            self.bubbleTexture = cv2.line(self.bubbleTexture, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
+
+        r = 5
+        G = (2 * r + 1) / 3
+        self.bubbleTexture = cv2.GaussianBlur(self.bubbleTexture,(r*2+1,r*2+1), G)
 
         t = uniform_int(
             PARAM['axon_back_color_diff_mean'],
