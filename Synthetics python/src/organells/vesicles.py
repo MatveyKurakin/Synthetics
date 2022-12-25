@@ -37,9 +37,38 @@ class Vesicles:
         self.Points = []
         self.PointsWithOffset = []
 
+        self.varibleInputFulling = 0
+
         self.typeGen = 0            # 0 - norma mode, 1 - many small vesicles
 
         self.Create()
+
+    def __copy__(self):
+        new_vesic = Vesicles()
+
+        new_vesic.sizeVesiculeMin = self.sizeVesiculeMin
+        new_vesic.sizeVesiculeMax = self.sizeVesiculeMax
+        new_vesic.numberPoints = self.numberPoints
+        new_vesic.listSizeVesiculs = self.listSizeVesiculs
+
+        new_vesic.color = self.color
+        new_vesic.nowPen  = self.nowPen.copy()
+        new_vesic.addColor = self.addColor
+
+        new_vesic.centerPoint = self.centerPoint.copy()
+        new_vesic.Points = self.Points.copy()
+
+        new_vesic.angle = self.angle
+        new_vesic.typeGen = self.typeGen
+
+        new_vesic.varibleInputFulling = self.varibleInputFulling
+
+        new_vesic.setDrawParam()
+        new_vesic.setRandomAngle(0,0)
+        return new_vesic
+
+    def copy(self):
+        return self.__copy__()
 
     def Create(self):
 
@@ -123,9 +152,9 @@ class Vesicles:
         else:
             sign = 1
 
-        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-
-        change_angle = self.angle * (math.pi/180)
+        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+        change_angle = (new_angle - self.angle) * (math.pi/180)
+        self.angle = new_angle
 
         tPoints = []
         for point in self.Points:

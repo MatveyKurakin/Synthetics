@@ -93,6 +93,27 @@ class PSD:
 
         self.setRandomAngle(0,360)
 
+    def __copy__(self):
+        new_psd = PSD()
+        new_psd.color = self.color
+        new_psd.addColor = self.addColor
+        new_psd.centerline_color = self.centerline_color
+        new_psd.centerPoint = self.centerPoint.copy()
+        new_psd.Points = self.Points.copy()
+        new_psd.lenPSD = self.lenPSD
+        new_psd.typeGen = self.typeGen
+        new_psd.angle = self.angle
+        new_psd.mainUpSizeLinePSD   = self.mainUpSizeLinePSD
+        new_psd.inputSizeLinePSD    = self.inputSizeLinePSD
+        new_psd.mainDownSizeLinePSD = self.mainDownSizeLinePSD
+
+        new_psd.setDrawParam()
+        new_psd.setRandomAngle(0,0)
+        return new_psd
+
+    def copy(self):
+        return self.__copy__()
+
     def CreateTreePoints(self, TreePoints):
         # в 1 из 10 случаев полностью черная, в 9/10 с полосой внутри
         if np.random.randint(0,10) == 0:
@@ -191,9 +212,9 @@ class PSD:
         else:
             sign = 1
 
-        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-
-        change_angle = self.angle * (math.pi/180)
+        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+        change_angle = (new_angle - self.angle) * (math.pi/180)
+        self.angle = new_angle
 
         tPoints = []
         for point in self.Points:

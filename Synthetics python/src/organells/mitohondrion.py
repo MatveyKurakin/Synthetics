@@ -38,12 +38,42 @@ class Mitohondrion:
         self.PointsWithOffset = []
 
         self.direction = [0,0]         # вектор смещения границы, для имитации косоро среза
-
+        self.dopSizeLine = 0
 
         self.addPoints = []            # точки с смещением для имитации косоро среза
         self.addPointsWithOffset = []
 
         self.Create()
+
+    def __copy__(self):
+        new_mito = Mitohondrion()
+
+        new_mito.color = self.color
+        new_mito.addColor = self.addColor
+        new_mito.nowPen  = self.nowPen.copy()
+
+        if self.texture is not None:
+            new_mito.nowBrush  = self.nowBrush.copy()
+            new_mito.texture  = self.texture.copy()
+
+        new_mito.angle = self.angle
+        new_mito.main_len = self.main_len
+        new_mito.numberPoints = self.numberPoints
+        new_mito.centerPoint = self.centerPoint.copy()
+        new_mito.Points = self.Points.copy()
+
+        new_mito.direction  = self.direction.copy()
+        new_mito.addPoints  = self.addPoints.copy()
+
+        new_mito.dopSizeLine = self.dopSizeLine
+
+        new_mito.setDrawParam()
+        new_mito.setRandomAngle(0,0)
+
+        return new_mito
+
+    def copy(self):
+        return self.__copy__()
 
     def Create(self):
 
@@ -100,7 +130,7 @@ class Mitohondrion:
         self.Points = tPoints
 
         #добавление доп. точек
-        if np.random.random() < 0.5 or True: ##############################
+        if np.random.random() < 0.5: ##############################
             self.dopSizeLine = np.random.randint(3,4+1)
 
             direction = np.random.randint(-4,4+1, 2)
@@ -163,9 +193,9 @@ class Mitohondrion:
         else:
             sign = 1
 
-        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-
-        change_angle = self.angle * (math.pi/180)
+        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+        change_angle = (new_angle - self.angle) * (math.pi/180)
+        self.angle = new_angle
 
         tPoints = []
         for point in self.Points:
@@ -256,8 +286,7 @@ class Mitohondrion:
 
         self.nowBrush.FullBrush(draw_image, self.PointsWithOffset)
 
-        if self.direction[0] != 0 and self.direction[1] != 0:
-
+        if self.dopSizeLine != 0 and  self.direction[0] != 0 and self.direction[1] != 0:
             for step in range(-self.dopSizeLine, self.dopSizeLine+1, self.nowPen.sizePen-1):
 
                 temp_PointsWithOffset_for_boarder = []

@@ -43,14 +43,42 @@ class Axon:
         self.nowAddPen = Pen(self.shell_color, self.sizeAddPen)
         self.Create()
 
+    def __copy__(self):
+        new_axon = Axon()
+
+        if self.innerTexture is not None:
+            new_axon.nowInnerBrush = self.nowInnerBrush.copy()
+            new_axon.nowBubbleBrush= self.nowBubbleBrush.copy()
+            new_axon.innerTexture  = self.innerTexture.copy()
+            new_axon.bubbleTexture = self.bubbleTexture.copy()
+
+        new_axon.shell_color = self.shell_color
+        new_axon.sizePen = self.sizePen
+        self.sizeAddPen = self.sizeAddPen
+        new_axon.centerPoint = self.centerPoint.copy()
+        new_axon.input_radius = self.input_radius
+        new_axon.angle = self.angle
+        new_axon.sublistNumber = self.sublistNumber
+        new_axon.pointNumber = self.pointNumber
+        new_axon.Points = self.Points.copy()
+        new_axon.typeGen = self.typeGen
+
+        new_axon.nowPen = self.nowPen.copy()
+        new_axon.nowAddPen = self.nowAddPen.copy()
+
+        new_axon.setDrawParam()
+        new_axon.setRandomAngle(0,0)
+        return new_axon
+
+    def copy(self):
+        return self.__copy__()
+
     def Create(self, min_r=0, max_r=0):
 
         if np.random.randint(0, 5) == 0:
             self.typeGen = 0
         else:
             self.typeGen = 1
-        
-        
 
         self.Points = []
 
@@ -142,9 +170,9 @@ class Axon:
         else:
             sign = 1
 
-        self.angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-
-        change_angle = self.angle * (math.pi/180)
+        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
+        change_angle = (new_angle - self.angle) * (math.pi/180)
+        self.angle = new_angle
 
         tPoints = []
         for point in self.Points:

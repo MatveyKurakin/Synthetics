@@ -38,6 +38,13 @@ class Membrane:
 
         print("Type membrane generation:", self.typeLine)
 
+    def copy_main_param(self, main_membran):
+        self.color = main_membran.color
+        self.nowColor = main_membran.nowColor
+        self.typeLine = main_membran.typeLine
+        self.sizeInputLine = main_membran.sizeInputLine
+        self.sizeLine = main_membran.sizeLine
+
     def CreateWithNoneList(self, sizeImage):
 
         number_region = np.random.randint(3, 7)
