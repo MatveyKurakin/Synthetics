@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import os
 import datetime
+import math
 from settings import PARAM, uniform_int
 
 import albumentations as albu
@@ -149,7 +150,13 @@ class Form:
         max_iter = 300
 
         checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-        newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+
+        if newComponent.type == "PSD":
+            step_from_edge = 32
+        else:
+            step_from_edge = 5
+
+        newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
         newComponent.setRandomAngle(0, 90)
         checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
@@ -157,7 +164,7 @@ class Form:
 
         while self.CheckOverlapNewElement(checkImage, checkNewImage) and counter < max_iter:
             checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-            newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+            newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
             newComponent.setRandomAngle(0, 90)
             checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
@@ -176,7 +183,13 @@ class Form:
         max_iter = 200
 
         checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-        newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+
+        if newComponent.type == "PSD":
+            step_from_edge = 32
+        else:
+            step_from_edge = 5
+
+        newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
         newComponent.setRandomAngle(0, 90)
         checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
@@ -184,7 +197,7 @@ class Form:
 
         while self.CheckOverlapNewElement(technicalMackAllcompanenst, checkNewImage) and counter < max_iter:
             checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-            newComponent.NewPosition(np.random.randint(5, self.sizeImage[1]-5), np.random.randint(5, self.sizeImage[0] - 5))
+            newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
             newComponent.setRandomAngle(0, 90)
             checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
 
@@ -478,6 +491,159 @@ class Form:
 
         return RetList
 
+    def fake_3_layers(self, ListGeneration, counter, dir_save, startIndex, size_overlap = 5):
+        for i in range(-1, 2):
+            print("i:", i)
+            ListGenerationCopy = []
+            if i != 0:
+                for component in ListGeneration:
+                    # создание единичного случайного вектора для смещения
+                    x = np.random.random() * 2 - 1 # to -1:1
+                    y = np.random.random() * 2 - 1 # to -1:1
+                    len_direction = math.sqrt(x**2 + y**2)
+                    direction = [x/len_direction, y/len_direction]
+
+                    if component.type != "Membrane":
+                        copy_component = component.copy()
+                        copy_component.NewPosition(copy_component.centerPoint[0] + int(round(i * direction[0] * size_overlap)), copy_component.centerPoint[1] + int(round(i * direction[1] * size_overlap)))
+                        ListGenerationCopy.append(copy_component)
+                    else:
+                        new_membrane = Membrane(self.sizeImage, ListGenerationCopy)
+                        new_membrane.copy_main_param(component)
+                        ListGenerationCopy.append(new_membrane)
+            else:
+                ListGenerationCopy = ListGeneration
+
+            print(ListGenerationCopy[0].angle)
+
+            fake_suffix = str(i+ 1)  # 0, 1, 2...
+
+            draws_result = self.DrawsLayerAndMask(ListGenerationCopy)
+
+            Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = draws_result
+
+            self.SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
+
+    def DrawsLayerAndMask(self, ListComponents):
+        # рисование слоя и фона к нему
+        Img = np.zeros((*self.sizeImage, 3), np.uint8)
+        Img = self.DrawBackround(Img, self.backgroundСolor)
+
+        # рисование маски и заполнение черным
+        MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисование маски и заполнение черным
+        MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисование маски и заполнение черным
+        MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисование маски и заполнение черным
+        MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисование маски и заполнение черным
+        MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисование маски и заполнение черным
+        MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисовка в соответствующее изображение
+        for component in ListComponents:
+            Img = component.Draw(Img)
+
+            if component.type == "PSD":
+                MackPSD = component.DrawMask(MackPSD)
+
+            elif component.type == "Axon":
+                MackAxon = component.DrawMask(MackAxon)
+
+            elif component.type == "Membrane":
+                MackMembrans = component.DrawMask(MackMembrans)
+
+            elif component.type == "Mitohondrion":
+                MackMito = component.DrawMask(MackMito)
+                MackMitoBoarder = component.DrawMaskBoarder(MackMitoBoarder)
+
+            elif component.type ==  "Vesicles":
+                MackVesicules = component.DrawMask(MackVesicules)
+
+            else:
+                print(f"ERROR: no type {component.type}")
+
+        # добавление шума
+        #Img = AddGaussianNoise(Img, 40)
+
+        r = PARAM["main_radius_gausse_blur"]
+        G = PARAM["main_sigma_gausse_blur"]
+        Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
+
+        noisy = np.ones((*self.sizeImage, 3), np.uint8)
+        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+        Img = Img + noisy
+        Img[Img < 0] = 0
+        Img[Img > 255] = 255
+        Img = Img.astype(np.uint8)
+
+        return Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules
+
+    def SaveGeneration(self, Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save = None, startIndex = 0, suffix_name = ""):
+        if dir_save is not None:
+            # Сохранение слоя и масок
+            if not os.path.isdir(dir_save):
+                print(f"create dir_save: {dir_save}")
+                os.mkdir(dir_save)
+
+            if not os.path.isdir(os.path.join(dir_save, "original")):
+                print(f"create original: {os.path.join(dir_save, 'original')}")
+                os.mkdir(os.path.join(dir_save, "original"))
+
+            if not os.path.isdir(os.path.join(dir_save, "PSD")):
+                print(f"create PSD: {os.path.join(dir_save, 'PSD')}")
+                os.mkdir(os.path.join(dir_save, "PSD"))
+
+            if not os.path.isdir(os.path.join(dir_save, "axon")):
+                print(f"create axon: {os.path.join(dir_save, 'axon')}")
+                os.mkdir(os.path.join(dir_save, "axon"))
+
+            if not os.path.isdir(os.path.join(dir_save, "boundaries")):
+                print(f"create boundaries: {os.path.join(dir_save, 'boundaries')}")
+                os.mkdir(os.path.join(dir_save, "boundaries"))
+
+            if not os.path.isdir(os.path.join(dir_save, "mitochondria")):
+                print(f"create mitochondria: {os.path.join(dir_save, 'mitochondria')}")
+                os.mkdir(os.path.join(dir_save, "mitochondria"))
+
+            if not os.path.isdir(os.path.join(dir_save, "mitochondrial_boundaries")):
+                print(f"create mitochondrial_boundaries: {os.path.join(dir_save, 'mitochondrial_boundaries')}")
+                os.mkdir(os.path.join(dir_save, "mitochondrial_boundaries"))
+
+            if not os.path.isdir(os.path.join(dir_save, "vesicles")):
+                print(f"create vesicles: {os.path.join(dir_save, 'vesicles')}")
+                os.mkdir(os.path.join(dir_save, "vesicles"))
+
+            date = datetime.datetime.now().strftime(r'%Y_%m_%d')
+            name = str(counter + startIndex) + "_" + date
+
+            if len(suffix_name) > 0:
+                name += "_" + suffix_name
+
+            # coхранение слоя
+            cv2.imwrite(os.path.join(dir_save, "original", name + ".png"), cv2.cvtColor(Img, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "PSD", name + ".png"), cv2.cvtColor(MackPSD, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "axon", name + ".png"), cv2.cvtColor(MackAxon, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "boundaries", name + ".png"), cv2.cvtColor(MackMembrans, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "mitochondria", name + ".png"), cv2.cvtColor(MackMito, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "vesicles", name + ".png"), cv2.cvtColor(MackVesicules, cv2.COLOR_RGB2GRAY))
+            # coхранение маски
+            cv2.imwrite(os.path.join(dir_save, "mitochondrial_boundaries", name + ".png"), cv2.cvtColor(MackMitoBoarder, cv2.COLOR_RGB2GRAY))
+
+
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
         ArrLayers = []
@@ -495,122 +661,35 @@ class Form:
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
             self.backgroundСolor = (color, color, color)
-    
+
             # Рисование
             # рисование слоя и масок
-            
-
-            # рисование слоя и фона к нему
-            Img = np.zeros((*self.sizeImage, 3), np.uint8)
-            Img = self.DrawBackround(Img, self.backgroundСolor)
-
-            # рисование маски и заполнение черным
-            MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисовка в соответствующее изображение
-            for component in ListGeneration:
-                Img = component.Draw(Img)
-
-                if component.type == "PSD":
-                    MackPSD = component.DrawMask(MackPSD)
-
-                elif component.type == "Axon":
-                    MackAxon = component.DrawMask(MackAxon)
-
-                elif component.type == "Membrane":
-                    MackMembrans = component.DrawMask(MackMembrans)
-
-                elif component.type == "Mitohondrion":
-                    MackMito = component.DrawMask(MackMito)
-                    MackMitoBoarder = component.DrawMaskBoarder(MackMitoBoarder)
-
-                elif component.type ==  "Vesicles":
-                    MackVesicules = component.DrawMask(MackVesicules)
-
-                else:
-                    print(f"ERROR: no type {component.type}")
-
-            # добавление шума
-            #Img = AddGaussianNoise(Img, 40)
-
-            r = PARAM["main_radius_gausse_blur"]
-            G = PARAM["main_sigma_gausse_blur"]
-            Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
-
-            noisy = np.ones((*self.sizeImage, 3), np.uint8)
-            noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
-
-            Img = Img + noisy
-            Img[Img < 0] = 0
-            Img[Img > 255] = 255
-            Img = Img.astype(np.uint8)
+            Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = self.DrawsLayerAndMask(ListGeneration)
 
             ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
 
-            if dir_save is not None:
-                # Сохранение слоя и масок
-                if not os.path.isdir(dir_save):
-                    print(f"create dir_save: {dir_save}")
-                    os.mkdir(dir_save)
+            self.SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex)
 
-                if not os.path.isdir(os.path.join(dir_save, "original")):
-                    print(f"create original: {os.path.join(dir_save, 'original')}")
-                    os.mkdir(os.path.join(dir_save, "original"))
+        return ArrLayers
 
-                if not os.path.isdir(os.path.join(dir_save, "PSD")):
-                    print(f"create PSD: {os.path.join(dir_save, 'PSD')}")
-                    os.mkdir(os.path.join(dir_save, "PSD"))
+    def StartFake3LayerGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
+        # Цикличная генерация
+        ArrLayers = []
 
-                if not os.path.isdir(os.path.join(dir_save, "axon")):
-                    print(f"create axon: {os.path.join(dir_save, 'axon')}")
-                    os.mkdir(os.path.join(dir_save, "axon"))
+        Noise = albu.Compose(albu.GaussNoise(var_limit = (PARAM['main_min_gausse_noise_value'], PARAM['main_max_gausse_noise_value']), per_channel = False, always_apply=True))
 
-                if not os.path.isdir(os.path.join(dir_save, "boundaries")):
-                    print(f"create boundaries: {os.path.join(dir_save, 'boundaries')}")
-                    os.mkdir(os.path.join(dir_save, "boundaries"))
+        for counter in range(count_img):
+            print(f"{counter + 1} generation img for {count_img}")
 
-                if not os.path.isdir(os.path.join(dir_save, "mitochondria")):
-                    print(f"create mitochondria: {os.path.join(dir_save, 'mitochondria')}")
-                    os.mkdir(os.path.join(dir_save, "mitochondria"))
+            # создаю новый список для каждой генерации
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
 
-                if not os.path.isdir(os.path.join(dir_save, "mitochondrial_boundaries")):
-                    print(f"create mitochondrial_boundaries: {os.path.join(dir_save, 'mitochondrial_boundaries')}")
-                    os.mkdir(os.path.join(dir_save, "mitochondrial_boundaries"))
+            color = uniform_int(
+                PARAM['main_color_mean'],
+                PARAM['main_color_std'])
+            self.backgroundСolor = (color, color, color)
 
-                if not os.path.isdir(os.path.join(dir_save, "vesicles")):
-                    print(f"create vesicles: {os.path.join(dir_save, 'vesicles')}")
-                    os.mkdir(os.path.join(dir_save, "vesicles"))
-
-                date = datetime.datetime.now().strftime(r'%Y_%m_%d')
-                name = str(counter + startIndex) + "_" + date
-                # coхранение слоя
-                cv2.imwrite(os.path.join(dir_save, "original", name + ".png"), cv2.cvtColor(Img, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "PSD", name + ".png"), cv2.cvtColor(MackPSD, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "axon", name + ".png"), cv2.cvtColor(MackAxon, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "boundaries", name + ".png"), cv2.cvtColor(MackMembrans, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "mitochondria", name + ".png"), cv2.cvtColor(MackMito, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "vesicles", name + ".png"), cv2.cvtColor(MackVesicules, cv2.COLOR_RGB2GRAY))
-                # coхранение маски
-                cv2.imwrite(os.path.join(dir_save, "mitochondrial_boundaries", name + ".png"), cv2.cvtColor(MackMitoBoarder, cv2.COLOR_RGB2GRAY))
+            self.fake_3_layers(ListGeneration, counter, dir_save, startIndex, 5)
 
         return ArrLayers
