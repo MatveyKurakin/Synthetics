@@ -29,10 +29,10 @@ max_count_Axon = 1
 max_count_Vesicles = 3
 max_count_Mitohondrion = 3
 
-number_generation = 100
+number_generation = 20
 ArrLayers = forma.StartGeneration(number_generation, max_count_PSD, max_count_Axon, max_count_Vesicles, max_count_Mitohondrion,\
-                                  dir_save = "dataset/synthetic_dataset3/", startIndex = 0)
-ArrLayers = [[Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules], ...]
+                                  dir_save = "dataset/s1/", startIndex = 0)
+#ArrLayers = [[Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules], ...]
 
 #number_generation = 5
 #ArrLayers = forma.StartFake3LayerGeneration(number_generation, max_count_PSD, max_count_Axon, max_count_Vesicles, max_count_Mitohondrion,\

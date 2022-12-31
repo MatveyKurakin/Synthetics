@@ -123,7 +123,7 @@ def printTwoPlot(title, bin_edges, original, synthetic):
 bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground = calcSlice(r"G:/Data/Unet_multiclass/data/original data","training0000.png")
 printPlot('Original layer',bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground)
 
-path = r"C:/Users/Sokol-PC/Synthetics/Synthetics python/dataset/synthetic_dataset2"
+path = r"C:/Users/Sokol-PC/Synthetics/Synthetics python/dataset/synthetic_dataset3"
 g = glob.glob(path +"//original//*.png")
 
 sumvesicles = np.zeros(256)
