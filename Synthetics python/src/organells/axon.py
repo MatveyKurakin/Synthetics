@@ -216,6 +216,8 @@ class Axon:
 
         self.ChangePositionPoints()
 
+    #def SheathTear(self, size):
+
     def Draw(self, image, layer_drawing = True):
         # Основная рисующая фукция
         draw_image = image.copy()
@@ -253,6 +255,9 @@ class Axon:
              self.nowInnerBrush.FullBrush(draw_image, self.PointsWithOffset)
 
         return draw_image
+
+    def DrawLayer(self, image):
+        return self.Draw(image)
 
     def DrawMask(self, image):
         #Смена цветов для рисования маски

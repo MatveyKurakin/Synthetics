@@ -248,6 +248,9 @@ class Vesicles:
 
         return draw_image
 
+    def DrawLayer(self, image):
+        return self.Draw(image)
+
     def setDrawParam(self):
         self.nowPen.color = self.color
         self.nowBrush.brush = self.addColor

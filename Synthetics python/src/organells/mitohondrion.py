@@ -305,6 +305,9 @@ class Mitohondrion:
 
         return draw_image
 
+    def DrawLayer(self, image):
+        return self.Draw(image)
+
     def setDrawParam(self):
         self.nowPen.color = self.color
         self.nowBrush = Brush(brush = self.texture, typeFull = "texture")
@@ -346,7 +349,7 @@ class Mitohondrion:
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
 
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 4)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 5)
 
         ret_image = ret_image + draw_image
         ret_image[ret_image[:,:,:] > 255] = 255
