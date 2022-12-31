@@ -25,6 +25,9 @@ class Membrane:
         self.nowColor = None
         self.labels = None
 
+        self.sheathTearMap = None
+        self.thickeningOfMembraneShellMap = None
+
         self.typeLine = 0 # 0 -full boarder, 1 - clear center, 2 - clear point in boarder
         self.sizeInputLine = 0 # size input line
 
@@ -548,6 +551,101 @@ class Membrane:
 
         return labels
 
+    def CreareShellsMap(self, shapeImage):
+        self.sheathTearMap = np.zeros(shapeImage[:2], np.uint8)
+
+        sizeShape = shapeImage[0]
+
+        number_zone = np.random.randint(sizeShape//20, sizeShape//10+1)
+        min_r = 5
+        max_r = 50
+
+        for i in range(number_zone):
+            x = np.random.randint(shapeImage[1])
+            y = np.random.randint(shapeImage[0])
+
+            cv2.ellipse(img = self.sheathTearMap,
+                center = [x, y],
+                axes = np.random.randint(min_r, max_r + 1, 2),
+                color = 255,
+                thickness = -1,
+                angle = np.random.randint(0, 180),
+                startAngle = 0,
+                endAngle = 360)
+
+        self.thickeningOfMembraneShellMap = np.zeros(shapeImage[:2], np.uint8)
+        number_thickening_zone = np.random.randint(0, 3+1)
+        min_r_t = 30
+        max_r_t = 60
+
+        iter = 0
+        max_iteration = 100000
+        count = 0
+        while count < number_thickening_zone and iter < max_iteration:
+            temp_mask = np.zeros(shapeImage[:2], np.uint8)
+
+            x_t = np.random.randint(shapeImage[1])
+            y_t = np.random.randint(shapeImage[0])
+
+            axis_1 = np.random.randint(min_r_t, max_r_t + 1)
+
+            cv2.ellipse(img = temp_mask,
+                center = [x_t, y_t],
+                axes = (axis_1, max_r_t + min_r_t - axis_1),
+                color = 255,
+                thickness = -1,
+                angle = np.random.randint(0, 180),
+                startAngle = 0,
+                endAngle = 360)
+
+            if all(self.sheathTearMap[temp_mask[:,:] == 255] == 0):
+                self.thickeningOfMembraneShellMap += temp_mask
+                count += 1
+
+            iter += 1
+
+        if iter == max_iteration:
+            print("thickeningOfMembraneShellMap no added:", number_thickening_zone - count, "zones")
+
+    # добавляет небольшие области с расслоением мембран
+    def SheathTear(self, shape, mask):
+        if self.sheathTearMap is None:
+            self.CreareShellsMap(shape)
+
+        mask_sheath_tear = mask & self.sheathTearMap
+
+        kernel = np.array([[0, 1, 0],
+                           [1, 1, 1],
+                           [0, 1, 0]], dtype=np.uint8)
+
+        mask_sheath_tear_deleted = cv2.erode(mask_sheath_tear,kernel,iterations = 2)
+        mask_sheath_tear_add = cv2.dilate(mask_sheath_tear,kernel,iterations = 2)
+
+        return mask_sheath_tear_add, mask_sheath_tear_deleted
+
+    def ThickeningOfMembraneShell(self, shape, mask):
+        if self.thickeningOfMembraneShellMap is None:
+            self.CreareShellsMap(shape)
+
+        mask_thickening_shell = mask & self.thickeningOfMembraneShellMap
+
+        kernel = np.array([[0, 1, 0],
+                           [1, 1, 1],
+                           [0, 1, 0]], dtype=np.uint8)
+
+        mask_sheath_tear_add = cv2.dilate(mask_thickening_shell,kernel,iterations = 8)
+
+        #cv2.imshow("self.thickeningOfMembraneShellMap", self.thickeningOfMembraneShellMap)
+        #cv2.imshow("self.sheathTearMap", self.sheathTearMap)
+
+        #cv2.imshow("mask", mask)
+        #cv2.imshow("mask_thickening_shell", mask_thickening_shell)
+        #cv2.imshow("mask_sheath_tear_add", mask_sheath_tear_add)
+        #cv2.imshow("result", (mask | mask_sheath_tear_add))
+
+        #cv2.waitKey()
+
+        return mask_sheath_tear_add
 
     def Draw(self, image):
         # Основная рисующая фукция
@@ -593,7 +691,6 @@ class Membrane:
             else:
                 mask_dilate = mask_dilate - union_mask
 
-
         elif self.typeLine == 2:
             mask_erode = cv2.erode(mask_dilate, kernel, iterations = 7 - self.sizeInputLine)
             mask_dilate = mask_dilate - mask_erode
@@ -604,6 +701,12 @@ class Membrane:
             mask_erode_Axon = cv2.erode(maskAxon_dilate, kernel, iterations = 7 - self.sizeInputLine)
             maskAxon_dilate = maskAxon_dilate - mask_erode_Axon
 
+        if self.typeLine == 0:
+            mask_sheath_tear_add, mask_sheath_tear_deleted = self.SheathTear(image.shape, mask_dilate)
+            mask_dilate = (mask_dilate | mask_sheath_tear_add) - mask_sheath_tear_deleted
+
+            mask_sheath_tear_add = self.ThickeningOfMembraneShell(image.shape, mask_dilate)
+
         # Добавление к изображению (маске) основных клеточных мембран
         draw_image[mask_dilate[:,:] == 255] = self.nowColor
         # Добавление к изображению (маске) мембран от PSD
@@ -612,18 +715,39 @@ class Membrane:
         draw_image[maskAxon_dilate[:,:] == 255] = self.nowColor
         draw_image[maskAxonOreol[:,:] == 255] = self.nowColor
 
+        if self.typeLine == 0:
+            change_color = self.nowColor[0] + self.changeColorVal
+            draw_image[mask_sheath_tear_add[:,:] == 255] = (change_color, change_color, change_color)
+
         return draw_image
 
     def setDrawParam(self):
         self.nowColor = (self.color, self.color, self.color)
+        self.changeColorVal = min(np.random.randint(5, 120-self.color+1), 20)
 
     def setMaskParam(self):
         self.nowColor = (255,255,255)
+        self.changeColorVal = 0
+
+    def DrawLayer(self, image):
+        return self.Draw(image)
 
     def DrawMask(self, image):
         self.setMaskParam()
         mask = self.Draw(image)
         self.setDrawParam()
+
+        #kernel = np.array([[0, 0, 0],
+        #                   [1, 1, 0],
+        #                   [0, 1, 0]], dtype=np.uint8)
+
+        #mask = cv2.dilate(mask, kernel)
+
+        #kernel2 = np.array([[0, 1, 0],
+        #                   [0, 1, 1],
+        #                   [0, 0, 0]], dtype=np.uint8)
+
+        #mask = cv2.erode(mask, kernel2)
 
         #kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
         #mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
@@ -677,6 +801,20 @@ def testMembrane():
         cv2.imshow("img2", img2)
         cv2.imshow("tecnicalMask", tecnicalMask)
 
+        r = PARAM["main_radius_gausse_blur"]
+        G = PARAM["main_sigma_gausse_blur"]
+        Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
+
+        noisy = np.ones(img1.shape[:2], np.uint8)
+        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+        Img = Img + cv2.merge([noisy, noisy, noisy])
+        Img[Img < 0] = 0
+        Img[Img > 255] = 255
+        Img = Img.astype(np.uint8)
+
+        cv2.imshow("add noise and blur", Img)
+
         q = cv2.waitKey()
 
     print("2/3 type. Press button 'Q' or 'q' to exit")
@@ -714,6 +852,20 @@ def testMembrane():
         cv2.imshow("mask", mask)
         cv2.imshow("img2", img2)
         cv2.imshow("tecnicalMask", tecnicalMask)
+
+        r = PARAM["main_radius_gausse_blur"]
+        G = PARAM["main_sigma_gausse_blur"]
+        Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
+
+        noisy = np.ones(img1.shape[:2], np.uint8)
+        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+        Img = Img + cv2.merge([noisy, noisy, noisy])
+        Img[Img < 0] = 0
+        Img[Img > 255] = 255
+        Img = Img.astype(np.uint8)
+
+        cv2.imshow("add noise and blur", Img)
 
         q = cv2.waitKey()
 
@@ -755,6 +907,20 @@ def testMembrane():
         cv2.imshow("mask", mask)
         cv2.imshow("img2", img2)
         cv2.imshow("tecnicalMask", tecnicalMask)
+
+        r = PARAM["main_radius_gausse_blur"]
+        G = PARAM["main_sigma_gausse_blur"]
+        Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
+
+        noisy = np.ones(img1.shape[:2], np.uint8)
+        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+
+        Img = Img + cv2.merge([noisy, noisy, noisy])
+        Img[Img < 0] = 0
+        Img[Img > 255] = 255
+        Img = Img.astype(np.uint8)
+
+        cv2.imshow("add noise and blur", Img)
 
         q = cv2.waitKey()
 
