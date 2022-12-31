@@ -27,6 +27,8 @@ PARAM = {
     'vesicles_back_color_mean': 132.0,          'vesicles_back_color_std': 10.0, # Цвет внутри везикул
 
     'pearson_noise': 15, # интенсивность шума Пирсона
+
+    'spam_color_mean': 87, 'spam_color_std': 10
 }
 
 
@@ -36,7 +38,7 @@ def uniform_float(mean, std):
 
 def uniform_int(mean, std):
     return int(random.uniform(mean - std, mean + std) + 0.5)
-    
+
 #def normal_random_float(mean, std):
 #    return np.random.normal(mean, std)
 
