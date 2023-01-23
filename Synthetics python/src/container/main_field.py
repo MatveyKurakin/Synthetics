@@ -760,31 +760,32 @@ class Form:
         return RetList
 
     def fake_3_layers(self, ListGeneration, counter, dir_save, startIndex, size_overlap = 5):
+
+        # список для хранения списков компонетнов предыдущего, текущего и следующего слоёв
+        # нужен для того, чтобы 1 и тот же компонент был сдвинут по прямой
+        ListListGeneration = []
         for i in range(-1, 2):
-            print("i:", i)
-            ListGenerationCopy = []
-            if i != 0:
-                for component in ListGeneration:
-                    # создание единичного случайного вектора для смещения
-                    x = np.random.random() * 2 - 1 # to -1:1
-                    y = np.random.random() * 2 - 1 # to -1:1
-                    len_direction = math.sqrt(x**2 + y**2)
-                    direction = [x/len_direction, y/len_direction]
+            ListListGeneration.append([])
 
-                    if component.type != "Membrane":
-                        copy_component = component.copy()
-                        copy_component.NewPosition(copy_component.centerPoint[0] + int(round(i * direction[0] * size_overlap)), copy_component.centerPoint[1] + int(round(i * direction[1] * size_overlap)))
-                        ListGenerationCopy.append(copy_component)
-                    else:
-                        new_membrane = Membrane(self.sizeImage, ListGenerationCopy)
-                        new_membrane.copy_main_param(component)
-                        ListGenerationCopy.append(new_membrane)
-            else:
-                ListGenerationCopy = ListGeneration
+        for k, component in enumerate(ListGeneration):
+            # создание единичного случайного вектора для смещения
+            x = np.random.random() * 2 - 1 # to -1:1
+            y = np.random.random() * 2 - 1 # to -1:1
+            len_direction = math.sqrt(x**2 + y**2)
+            direction = [x/len_direction, y/len_direction]
 
-            print(ListGenerationCopy[0].angle)
+            for index, i in enumerate(range(-1, 2)): # 1-индексация по массиву, 2-взвешанное направление по прямой
+                if component.type != "Membrane":
+                    copy_component = component.copy()
+                    copy_component.NewPosition(component.centerPoint[0] + int(round(i * direction[0] * size_overlap)), component.centerPoint[1] + int(round(i * direction[1] * size_overlap)))
+                    ListListGeneration[index].append(copy_component)
+                else:
+                    new_membrane = Membrane(self.sizeImage, ListListGeneration[index].copy())
+                    new_membrane.copy_main_param(component)
+                    ListListGeneration[index].append(new_membrane)
 
-            fake_suffix = str(i+ 1)  # 0, 1, 2...
+        for j, ListGenerationCopy in enumerate(ListListGeneration):
+            fake_suffix = str(j)  # 0, 1, 2...
 
             draws_result = self.DrawsLayerAndMask(ListGenerationCopy)
 

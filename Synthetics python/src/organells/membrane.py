@@ -33,11 +33,17 @@ class Membrane:
 
         self.Points = []
 
+        #для копий мембран
+        self.StopList = None
+        #для того, чтобы помниит сколько первых компонентов попало в генерацию, а сколько последних нет
+        self.componentsList = compartmentsList.copy()     # список хранит только ссылки на те классы, которые используются для построения мембран
+        self.imageSize = sizeImage
+
         self.SetStartValue()
         if compartmentsList is None:
-            self.CreateWithNoneList(sizeImage)
+            self.CreateWithNoneList(self.imageSize)
         else:
-            self.Create(compartmentsList.copy(), sizeImage)
+            self.Create(self.componentsList, self.imageSize)
 
         print("Type membrane generation:", self.typeLine)
 
@@ -47,6 +53,10 @@ class Membrane:
         self.typeLine = main_membran.typeLine
         self.sizeInputLine = main_membran.sizeInputLine
         self.sizeLine = main_membran.sizeLine
+        self.StopList = main_membran.StopList
+        self.imageSize = main_membran.imageSize
+        self.Create(self.componentsList, self.imageSize)        # перестроить всё со списком остановки
+
 
     def CreateWithNoneList(self, sizeImage):
 
@@ -210,7 +220,7 @@ class Membrane:
         Work_regions = []
 
         for i in range(num_labels):
-            Work_regions.append([])
+            Work_regions.append([i,[]])
 
         for y in range(labels.shape[0]):
             for x in range(labels.shape[1]):
@@ -227,7 +237,7 @@ class Membrane:
 
                     if add_point == True:
                         #print(labels[y,x]-1, len(Work_regions))
-                        Work_regions[labels[y,x]-1].append([x,y])
+                        Work_regions[labels[y,x]-1][1].append([x,y])
 
 
         # случайный порядок выбора региона для расширения
@@ -235,28 +245,45 @@ class Membrane:
 
         Work_regions_number = []
         for i in range(num_labels):
-            Work_regions_number.append(len(Work_regions[i]))
+            Work_regions_number.append(len(Work_regions[i][1]))
 
         #print("iter 0", len(Work_points))
-        counter = 0
 
         statictic_break_procent = 0
         statictic_break_number = 0
 
         proccent_work = 0.5
 
+        # переключение в режим использования списка остановки
+        flag_use_stop_list = False
+        if not self.StopList is None:
+            flag_use_stop_list = True
+        else:
+            self.StopList = np.zeros(len(Work_regions), np.uint64)
+
+        counter = 0
         while len(Work_regions) != 0:
             Work_regions_iteration = []
 
-            for i, region in enumerate(Work_regions):
+            for i, [index_componenst, region] in enumerate(Work_regions):
 
-                # Останавливать разростание региона на случайной итерации
-                if counter > min_count_iter and np.random.random() < p_stop:
-                    for (x,y) in region:
-                        labels[y,x] = -1
-                        self.Points.append([x,y])
-                    continue
+                # не используется список остановки
+                if not flag_use_stop_list:
+                    # Останавливать разростание региона на случайной итерации
+                    if counter > min_count_iter and np.random.random() < p_stop:
+                        self.StopList[index_componenst] = counter
+                        for (x,y) in region:
+                            labels[y,x] = -1
+                            self.Points.append([x,y])
+                        continue
 
+                # используется список остановки
+                else:
+                    if counter == self.StopList[index_componenst] and self.StopList[index_componenst] > 0:
+                        for (x,y) in region:
+                            labels[y,x] = -1
+                            self.Points.append([x,y])
+                        continue
 
                 # основной алгоритм разростания
                 Work_points_iteration = []
@@ -297,7 +324,6 @@ class Membrane:
                         elif labels[y-1,x] != labels[y,x]:
                             boarder += 1
 
-
                     if y < labels.shape[0]-1:
                         if labels[y+1,x] == 0:
                             if  np.random.random() < proccent_work:
@@ -321,7 +347,7 @@ class Membrane:
                 #print(counter)
                 # продолжать развитие региона если он не перестал резко расширяться и точек больше некоторого количества
                 if Work_regions_number[i] * 0.2 < len(Work_points_iteration) and len(Work_points_iteration) > 50:
-                    Work_regions_iteration.append(Work_points_iteration)
+                    Work_regions_iteration.append([index_componenst, Work_points_iteration])
                 else:
                     if Work_regions_number[i] * 0.2 < len(Work_points_iteration):
                         statictic_break_procent += 1
@@ -338,7 +364,7 @@ class Membrane:
             Work_regions = Work_regions_iteration
             Work_regions_number = []
             for i in range(len(Work_regions)):
-                Work_regions_number.append(len(Work_regions[i]))
+                Work_regions_number.append(len(Work_regions[i][1]))
 
             counter += 1
 
