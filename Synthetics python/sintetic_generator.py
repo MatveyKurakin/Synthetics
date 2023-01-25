@@ -12,7 +12,7 @@ from src.container.main_field import Form
 
 
 #testAxon()
-testPSD()
+#testPSD()
 #testVesicles()
 #testMitohondrion()
 #testMembrane()
