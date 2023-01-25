@@ -31,14 +31,14 @@ def calcSlice(path, name):
     print('calc', path, name)
     d = readTensor(path, name)
     print(d.keys())
-    background = 255 - (d['vesicles'] + d['axon'] + d['PSD'] + d['mitochondria'] + d['mitochondrial boundaries'] + d['boundaries'])
+    background = 255 - (d['vesicles'] + d['axon'] + d['PSD'] + d['mitochondria'] + d['mitochondrial_boundaries'] + d['boundaries'])
     d['background'] = background
 
     vesicles, bin_edges = getHist('vesicles', d)
     axon, bin_edges = getHist('axon', d)
     PSD, bin_edges = getHist('PSD', d)
     mitochondria, bin_edges = getHist('mitochondria', d)
-    mitochondrial_boundaries, bin_edges = getHist('mitochondrial boundaries', d)
+    mitochondrial_boundaries, bin_edges = getHist('mitochondrial_boundaries', d)
     boundaries, bin_edges = getHist('boundaries', d)
     ground, bin_edges = getHist('background', d)
 
@@ -120,10 +120,10 @@ def printTwoPlot(title, bin_edges, original, synthetic):
     plt.legend()
     plt.show()
 
-bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground = calcSlice(r"G:/Data/Unet_multiclass/data/original data","training0000.png")
+bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground = calcSlice(r"F://Dissertation//EPFL//new","training0000.png")
 printPlot('Original layer',bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground)
 
-path = r"C:/Users/Sokol-PC/Synthetics/Synthetics python/dataset/synthetic_dataset3"
+path = r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new"
 g = glob.glob(path +"//original//*.png")
 
 sumvesicles = np.zeros(256)
@@ -159,6 +159,6 @@ printTwoPlot('vesicles', bin_edges, o_vesicles, sumvesicles)
 printTwoPlot('axon', bin_edges, o_axon, sumaxon)
 printTwoPlot('PSD', bin_edges, o_PSD, sumPSD)
 printTwoPlot('mitochondria', bin_edges, o_mitochondria, summitochondria)
-printTwoPlot('mitochondrial boundaries', bin_edges, o_mitochondrial_boundaries, summitochondrial_boundaries)
+printTwoPlot('mitochondrial_boundaries', bin_edges, o_mitochondrial_boundaries, summitochondrial_boundaries)
 printTwoPlot('boundaries', bin_edges, o_boundaries, sumboundaries)
 printTwoPlot('ground', bin_edges, o_ground, sumground)
