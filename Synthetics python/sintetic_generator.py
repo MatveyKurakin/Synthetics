@@ -21,6 +21,7 @@ from src.container.main_field import Form
 
 size_image = (256, 256)
 #size_image = (512, 512)
+#size_image = (128, 128)
 forma = Form(size_image)
 
 # количество элементов на изображении
@@ -29,11 +30,11 @@ max_count_Axon = 1
 max_count_Vesicles = 3
 max_count_Mitohondrion = 3
 
-number_generation = 20
+number_generation = 100
 ArrLayers = forma.StartGeneration(number_generation, max_count_PSD, max_count_Axon, max_count_Vesicles, max_count_Mitohondrion,\
-                                  dir_save = "dataset/s1/", startIndex = 0)
+                                  dir_save = "dataset/new/", startIndex = 0)
 #ArrLayers = [[Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules], ...]
 
 #number_generation = 5
 #ArrLayers = forma.StartFake3LayerGeneration(number_generation, max_count_PSD, max_count_Axon, max_count_Vesicles, max_count_Mitohondrion,\
-#                                  dir_save = "dataset/fake_synthetic_layer", startIndex = 0)
+#                                  dir_save = "dataset/fake_synthetic_layer2", startIndex = 0)
