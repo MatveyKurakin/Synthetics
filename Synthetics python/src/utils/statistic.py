@@ -15,12 +15,12 @@ def readTensor(path, name):
         f = f.replace('\\', '')
         d[f] = img
     return d
-        
+
 def getHist(maskname, d):
     temp = np.copy(d['original'])
     temp = temp.astype(np.int)
     if not np.any(d[maskname] > 0):
-        return np.zeros(256), np.arange(257) 
+        return np.zeros(256), np.arange(257)
     temp[d[maskname] == 0] = -1
     return np.histogram(temp.ravel(), bins=256, range=(0.0, 255.0), density=True)
 
@@ -33,7 +33,7 @@ def calcSlice(path, name):
     print(d.keys())
     background = 255 - (d['vesicles'] + d['axon'] + d['PSD'] + d['mitochondria'] + d['mitochondrial_boundaries'] + d['boundaries'])
     d['background'] = background
-    
+
     vesicles, bin_edges = getHist('vesicles', d)
     axon, bin_edges = getHist('axon', d)
     PSD, bin_edges = getHist('PSD', d)
@@ -51,9 +51,9 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
     plt.ylabel("density")
     plt.xlim([0.0, 255.0])
     plt.ylim([0.0, 0.05])
-    
+
     separate = False
-    
+
     plt.plot(bin_edges[0:-1], ground, 'g', label = 'background')
     plt.plot(bin_edges[0:-1], vesicles, 'r', label = 'vesicles')
     plt.plot(bin_edges[0:-1], axon, 'b', label = 'axon')
@@ -63,44 +63,44 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
     plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
     plt.legend()
     plt.show()
-    
+
     if separate:
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], ground, 'g', label = 'background')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], vesicles, 'r', label = 'vesicles')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], axon, 'b', label = 'axon')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], PSD, 'c', label = 'PSD')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], mitochondria, 'm', label = 'mitochondria')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], mitochondrial_boundaries, 'y', label = 'mitochondrial boundaries')
         plt.legend()
         plt.show()
-        
+
         plt.title(title)
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
@@ -114,7 +114,7 @@ def printTwoPlot(title, bin_edges, original, synthetic):
     plt.ylabel("density")
     plt.xlim([0.0, 255.0])
     plt.ylim([0.0, 0.05])
-    
+
     plt.plot(bin_edges[0:-1], original, 'g', label = 'original')
     plt.plot(bin_edges[0:-1], synthetic, 'r', label = 'synthetic')
     plt.legend()
