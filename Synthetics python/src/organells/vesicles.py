@@ -24,8 +24,8 @@ class Vesicles:
         color = uniform_int(
             PARAM['vesicles_shell_color_mean'],
             PARAM['vesicles_shell_color_std'])
-        self.color = (color, color, color) #/// подобрать цвета
-        self.nowPen = Pen(self.color, 2)
+        self.color = (color, color, color) #/// подобрать цвета          
+        self.nowPen = Pen(self.color, PARAM['vesicles_border_w'])
         backcolor = uniform_int(
             PARAM['vesicles_back_color_mean'],
             PARAM['vesicles_back_color_std'])

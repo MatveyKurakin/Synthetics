@@ -4,6 +4,7 @@ import os
 import datetime
 import math
 from settings import PARAM, uniform_int
+import skimage
 
 import albumentations as albu
 
@@ -73,10 +74,13 @@ class PointsNoise:
         ye[ye > self.sizeImage[1]] = self.sizeImage[1]
 
         #  толщина линий
-        w = np.random.randint(1, 5, count)
+        w = np.random.randint(1, PARAM['main_noise_w'], count)
 
         for i in range(0, count):    
-            c = np.random.randint(95, 140)
+            # c = np.random.randint(95, 140)
+            c = uniform_int(
+                PARAM['main_noise_color_mean'],
+                PARAM['main_noise_color_std'])
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
 
         count = np.random.randint(200, 1000+1)
@@ -87,9 +91,11 @@ class PointsNoise:
         yd = np.random.randint(-5, 5, count)
         xe = np.minimum(np.ones(count) * self.sizeImage[0], np.maximum(np.zeros(count), xs + xd)).astype(np.int)
         ye = np.minimum(np.ones(count) * self.sizeImage[1], np.maximum(np.zeros(count),ys + yd)).astype(np.int)
-        w = np.random.randint(1, 5, count)
+        w = np.random.randint(1, PARAM['main_noise_w'], count)
         for i in range(0, count):    
-            c = np.random.randint(100, 150)
+            c = uniform_int(
+                PARAM['main_noise_color_mean'],
+                PARAM['main_noise_color_std'])
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
 
         return draw_image
@@ -511,7 +517,7 @@ class Form:
 
         r = 3
         G = (2 * r + 1) / 3
-        draw_image = cv2.GaussianBlur(draw_image,(r*2+1,r*2+1), G)
+        # draw_image = cv2.GaussianBlur(draw_image,(r*2+1,r*2+1), G)
 
         return draw_image
 
@@ -935,7 +941,72 @@ class Form:
 
             # Рисование
             # рисование слоя и масок
-            Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = self.DrawsLayerAndMask(ListGeneration)
+          #  Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = self.DrawsLayerAndMask(ListGeneration)
+
+            # рисование слоя и фона к нему
+            Img = np.zeros((*self.sizeImage, 3), np.uint8)
+            Img = self.DrawBackround(Img, self.backgroundСolor)
+            
+            # рисование маски и заполнение черным
+            MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисование маски и заполнение черным
+            MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисование маски и заполнение черным
+            MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисование маски и заполнение черным
+            MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисование маски и заполнение черным
+            MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисование маски и заполнение черным
+            MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
+
+            # рисовка в соответствующее изображение
+            for component in ListGeneration:
+                Img = component.Draw(Img)
+
+                if component.type == "PSD":
+                    MackPSD = component.DrawMask(MackPSD)
+
+                elif component.type == "Axon":
+                    MackAxon = component.DrawMask(MackAxon)
+
+                elif component.type == "Membrane":
+                    MackMembrans = component.DrawMask(MackMembrans)
+
+                elif component.type == "Mitohondrion":
+                    MackMito = component.DrawMask(MackMito)
+                    MackMitoBoarder = component.DrawMaskBoarder(MackMitoBoarder)
+
+                elif component.type ==  "Vesicles":
+                    MackVesicules = component.DrawMask(MackVesicules)
+
+                else:
+                    print(f"ERROR: no type {component.type}")
+
+            # добавление шума
+            #Img = AddGaussianNoise(Img, 40)
+
+            r = PARAM["main_radius_gausse_blur"]
+            G = PARAM["main_sigma_gausse_blur"]
+            Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
+            
+            # Img = cv2.blur(Img,(3,3))
+
+            noisy = np.ones((*self.sizeImage, 3), np.uint8)
+            noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']
+            noisy = cv2.blur(noisy,(5,5))
+            noisy2 = np.random.poisson(np.ones((*self.sizeImage, 3), np.uint8))*PARAM['poisson_noise'] - PARAM['poisson_noise']
+            noisy = noisy + noisy2
+
+            Img = Img + noisy
+            Img[Img < 0] = 0
+            Img[Img > 255] = 255
+            Img = Img.astype(np.uint8)
 
             ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
 

@@ -148,8 +148,9 @@ class Membrane:
             self.typeLine = 1           # первый тип линии сильно растворяется, поэтому его вероятность появления снижена
 
         #self.typeLine = 1
-
-        self.sizeInputLine = np.random.randint(0,3)
+        
+        self.sizeInputLine = np.random.randint(0, PARAM['membrane_thickness_mean'])
+        
         self.sizeLine = uniform_int(
             PARAM['membrane_thickness_mean'],
             PARAM['membrane_thickness_std'])
@@ -171,8 +172,8 @@ class Membrane:
 
 
         checkMask = np.zeros((*sizeImg,3), np.uint8)
-
-        # Создание маски регионов и зпаолнение её
+  
+        # Создание маски регионов и заполнение её
         for compartment in compartments:
             checkMask = compartment.DrawUniqueArea(checkMask, small_mode = True)
 
@@ -285,7 +286,7 @@ class Membrane:
                             self.Points.append([x,y])
                         continue
 
-                # основной алгоритм разростания
+                # основной алгоритм разрастания
                 Work_points_iteration = []
                 for (x,y) in region:
                     boarder = 0

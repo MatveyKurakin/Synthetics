@@ -19,9 +19,15 @@ def spline_line(img, points, color, thickness_line, is_closed = True):
 
 def small_spline_line(img, points, color, thickness_line):
     work_points = points.copy()
-
+    print(work_points)
+    K = 3
+    if len(work_points) == 3:
+        K = 2
+    if len(work_points) == 2:
+        K = 1
     x, y = zip(*work_points)
-    tck,u = interpolate.splprep([x, y], s = 0, k = 2)
+    tck,u = interpolate.splprep([x, y], s = 0, k = K)
+    
     unew = np.linspace(0, 1, 100)
     out = interpolate.splev(unew, tck)
 
