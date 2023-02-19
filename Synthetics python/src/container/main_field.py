@@ -933,6 +933,7 @@ class Form:
             # создаю новый список для каждой генерации
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, spam = 5)
             #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            print(ListGeneration)
 
             color = uniform_int(
                 PARAM['main_color_mean'],
@@ -967,7 +968,7 @@ class Form:
 
             # рисовка в соответствующее изображение
             for component in ListGeneration:
-                Img = component.Draw(Img)
+                Img = component.DrawLayer(Img)
 
                 if component.type == "PSD":
                     MackPSD = component.DrawMask(MackPSD)
@@ -984,7 +985,9 @@ class Form:
 
                 elif component.type ==  "Vesicles":
                     MackVesicules = component.DrawMask(MackVesicules)
-
+                    
+                elif component.type == "SpamComponents":
+                    pass
                 else:
                     print(f"ERROR: no type {component.type}")
 

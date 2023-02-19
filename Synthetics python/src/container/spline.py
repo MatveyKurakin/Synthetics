@@ -19,7 +19,7 @@ def spline_line(img, points, color, thickness_line, is_closed = True):
 
 def small_spline_line(img, points, color, thickness_line):
     work_points = points.copy()
-    print(work_points)
+    #print(work_points)
     K = 3
     if len(work_points) == 3:
         K = 2
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     points = [[100, 100], [380, 100], [380, 380], [100, 380], [255,255]]
 
-    print(points)
+    #print(points)
 
     spline_line(img, points, (0, 255, 255), 3)
 

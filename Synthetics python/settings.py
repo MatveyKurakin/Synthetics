@@ -105,6 +105,8 @@ PARAM = {
     
     # интенсивность шума Пирсона
     'poisson_noise': 40, 
+    
+    'spam_color_mean': 87, 'spam_color_std': 10
 }
 
 

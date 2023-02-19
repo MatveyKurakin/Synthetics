@@ -24,14 +24,10 @@ class Mitohondrion:
         addColor = uniform_int(
             PARAM['mitohondrion_back_color_mean'],
             PARAM['mitohondrion_back_color_std'])
-        self.addColor = (addColor, addColor, addColor) # основной цвет текстуры
-<<<<<<< HEAD
-
-        self.nowPen = Pen(self.color, np.random.randint(3, 5+1))
-=======
+        self.addColor = (addColor, addColor, addColor) # основной цвет текстуры.
         
         self.nowPen = Pen(self.color, np.random.randint(PARAM['mitohondrion_border_w_min'], PARAM['mitohondrion_border_w_max']))    
->>>>>>> 444fc01 (second dataset parameters)
+
         self.nowBrush = None
         self.texture = None
 
@@ -255,9 +251,9 @@ class Mitohondrion:
         points_x = np.random.randint(0, inn_tex.shape[0], int(inn_tex.shape[1]/2))
         points_y = np.random.randint(0, inn_tex.shape[1], int(inn_tex.shape[1]/2))
         
-        print('len', len(points_y))
+      #  print('len', len(points_y))
         for i in zip(points_x, points_y):
-            print('centers', points_x, points_y)
+          #  print('centers', points_x, points_y)
             crista_len = np.random.randint(2, 5)
             points = self.points_generator(i[0], i[1], crista_len)
             crista_w = np.random.randint(4, 6)
@@ -329,6 +325,7 @@ class Mitohondrion:
 
         
 # Kolya
+        now_x = 10
         while now_x < image.shape[1] - 10:
             now_y = 10
             while now_y < image.shape[1] - 10:
@@ -362,7 +359,7 @@ class Mitohondrion:
             #step x
             step_x = np.random.randint(12,18)
             now_x += step_x
-        self.texture = self.fillInnerTextureSpline(self.texture)
+        self.texture = self.fillInnerTexture(self.texture)
 
         (h, w) = image.shape[:2]
         center = (int(w / 2), int(h / 2))
