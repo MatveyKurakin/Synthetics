@@ -86,7 +86,9 @@ PARAM = {
     # Цвет внутри крист
     'mitohondrion_cristae_color_mean': 170.0,   'mitohondrion_cristae_color_std': 5.0, 
     # толщина оболочки МИТОХОНДРИИ
-    'mitohondrion_border_w_min': 2.0,           'mitohondrion_border_w_max': 4.0,    
+    'mitohondrion_border_w_min': 2.0,           'mitohondrion_border_w_max': 4.0,   
+    # длина митохондрии
+    "mit_len_min": 26, "mit_len_max": 196, 
 
     # Цвет основной части PSD
     'psd_back_color_mean': 15.0,                'psd_back_color_std': 10.0,
