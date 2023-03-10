@@ -9,27 +9,23 @@ if __name__ == "__main__":
 
 from src.container.spline import *
 from src.container.subclass import *
+from src.organells.brushes import *
 from settings import PARAM, uniform_int
 
 class Mitohondrion:
     def __init__(self):
         self.type = "Mitohondrion"
 
+        # COLORS
         color = uniform_int(
             PARAM['mitohondrion_shell_color_mean'],
             PARAM['mitohondrion_shell_color_std'])
-        self.color = (color, color, color) #/// подобрать цвета, сделать заливку текстурой
-
-
-        addColor = uniform_int(
-            PARAM['mitohondrion_back_color_mean'],
-            PARAM['mitohondrion_back_color_std'])
-        self.addColor = (addColor, addColor, addColor) # основной цвет текстуры
-
-        self.nowPen = Pen(self.color, np.random.randint(3, 5+1))
+        self.color = (color, color, color)
+        self.nowPen = Pen(self.color, np.random.randint(PARAM['mitohondrion_border_w_min'], PARAM['mitohondrion_border_w_max']))    
         self.nowBrush = None
         self.texture = None
 
+        # GEOMETRY
         self.angle = 0
         self.main_len = 0
         self.numberPoints = 0
@@ -37,10 +33,10 @@ class Mitohondrion:
         self.Points = []
         self.PointsWithOffset = []
 
-        self.direction = [0,0]         # вектор смещения границы, для имитации косоро среза
+        self.direction = [0,0]         # вектор смещения границы, для имитации косого среза
         self.dopSizeLine = 0
 
-        self.addPoints = []            # точки с смещением для имитации косоро среза
+        self.addPoints = []            # точки с смещением для имитации косого среза
         self.addPointsWithOffset = []
 
         self.Create()
@@ -49,7 +45,6 @@ class Mitohondrion:
         new_mito = Mitohondrion()
 
         new_mito.color = self.color
-        new_mito.addColor = self.addColor
         new_mito.nowPen  = self.nowPen.copy()
 
         if self.texture is not None:
@@ -77,16 +72,14 @@ class Mitohondrion:
 
     def Create(self):
 
-        min_len = 26
-        max_len = 196
-
-        main_len = np.random.randint(min_len, max_len)
+        main_len = np.random.randint(PARAM["mit_len_min"], PARAM["mit_len_max"])
         self.main_len = main_len
 
         min_r = np.random.randint(5, 27)
         max_r = np.random.randint(27, 80)
 
-        self.numberPoints = 2 + 2 * np.random.randint(2, 4+1)
+        # минимум 6, максимум 10
+        self.numberPoints = 2 + 2 * np.random.randint(2, 5)
 
         tPoints = []
         # Добавление первой главной точки
@@ -94,79 +87,51 @@ class Mitohondrion:
         tPoints.append(startMPoint.copy())
 
         half_len = (self.numberPoints - 2)//2
-        step = main_len/ (half_len+1)
 
-        # во избежании создания крайне извилистой или вытянутой митохондрии вводится ограничение на изменение крутизны её извилитости
+        
+        # заполнение иксов - поделили отрезок на half_len + 2 отрезков
+        xes = np.linspace(-main_len//2, main_len//2, num = half_len + 2)[1:-1]
+        # нам нужны эти точки дважды, для верхней и для нижней половин митохондрии
+        xes = np.concatenate((xes, xes[::-1]))
+
+
+        # во избежание создания крайне извилистой или вытянутой митохондрии 
+        # вводится ограничение на изменение крутизны её извилистости
+        step = main_len / (half_len+1)
+        
+        # игреки для верхней половины митохондрии
         start_y_value = np.random.randint(min(max(step, min_r),max_r)//2 , min(max_r, main_len//2)+1)
-
-        # заполнение первой половины митохондрии
-        for i in range(half_len):
-           addPointX = startMPoint[0] + step * (i+1)
-           addPointY = start_y_value
-           #print(addPointX, addPointY)
-           tPoints.append([addPointX, addPointY])
-
-           start_y_value = min(max(start_y_value + np.random.randint(-max_r//2, max_r//2 + 1), min_r), max_r)
-
-        # Добавление второй главной точки
-        endMPoint = [main_len//2, 0]
-        tPoints.append(endMPoint.copy())
-
-        # заполнение второй половины митохондрии
+        yes = np.random.randint(-max_r//2, max_r//2 + 1, half_len)
+        cumulative_sum = np.clip(np.cumsum(yes, axis = 0) + start_y_value, min_r, max_r)
+        yes = np.array([start_y_value]) + cumulative_sum
+        
+        # игреки для нижней половины митохондрии
         start_y_value = np.random.randint(min(max(step, min_r),max_r)//2 , min(max_r, main_len//2)+1)
-        for j in range(half_len):
-           addPointX = endMPoint[0] - step * (j+1)
-           addPointY = -start_y_value
-           #print(addPointX, addPointY)
-           tPoints.append([addPointX, addPointY])
+        yes2 = np.random.randint(-max_r//2, max_r//2 + 1, half_len)
+        cumulative_sum =  np.clip(np.cumsum(yes2, axis = 0) + start_y_value, min_r, max_r)
+        yes2 = np.array([start_y_value]) + cumulative_sum
+        
+        yes = np.concatenate((yes , (-1) * yes2[::-1]))
 
-           start_y_value = min(max(start_y_value + np.random.randint(-max_r//2, max_r//2 + 1), min_r), max_r)
+
+        list1 = xes.tolist()
+        list2 = yes.tolist()
+        self.Points = [[x, y] for x, y in zip(list1, list2)]
 
         # поворот митохондрии
         self.angle = np.random.randint(0, 90)
-        #angle = self.angle * (math.pi/180)
-
-        #print(self.numberPoints, half_len, len(tPoints))
-        self.Points = tPoints
 
         #добавление доп. точек
-        if np.random.random() < 0.5: ##############################
-            self.dopSizeLine = np.random.randint(3,4+1)
+        if np.random.random() < 0.5: 
+            self.dopSizeLine = np.random.randint(3, 5)
 
-            direction = np.random.randint(-4,4+1, 2)
+            direction = np.random.randint(-4, 5, 2)
 
             len_dir = math.sqrt(direction[0]**2 + direction[1]**2)
 
             if len_dir != 0:
                 self.direction = [direction[0]/len_dir, direction[1]/len_dir]
 
-            #startMPointWithOffset = [startMPoint[0] - size_dop//2, 0]
-
-            #tAddPoints1 = [
-            #               tPoints[1],
-            #               startMPointWithOffset,
-            #               tPoints[-1],
-
-            #               tPoints[1],
-            #               [startMPoint[0] + size_dop//2, startMPoint[1]],
-            #               tPoints[-1]
-            #               ]
-
-            #endMPointWithOffset = [endMPoint[0] + size_dop//2, 0]
-
-            #tAddPoints2 = [
-            #               tPoints[half_len],
-            #               endMPointWithOffset,
-            #               tPoints[half_len+2],
-            #
-            #               tPoints[half_len],
-            #               [endMPoint[0] + size_dop//2, endMPoint[1]],
-            #               tPoints[half_len+2]
-            #               ]
-            #
-            #tAddPoints = tAddPoints1 + tAddPoints2
-
-            #self.addPoints = tAddPoints
 
         self.setRandomAngle(0, 0)
 
@@ -212,74 +177,12 @@ class Mitohondrion:
         self.Points = tPoints
         #self.addPoints = tAddPoints
         self.ChangePositionPoints()
-
-    def CreateTexture(self, image):
-
-        self.texture = np.full((*image.shape[0:2],3), self.addColor, np.uint8)
-        #self.texture[:,:] = (0,0,255)
-
-        cristae_color = uniform_int(
-            PARAM['mitohondrion_cristae_color_mean'],
-            PARAM['mitohondrion_cristae_color_std'])
-        cristae_color = (cristae_color,cristae_color,cristae_color)
-
-        forecolor = uniform_int(
-            PARAM['mitohondrion_cristae_shell_color_mean'],
-            PARAM['mitohondrion_cristae_shell_color_std'])
-        forecolor = (forecolor,forecolor,forecolor)
-
-        now_x = 10
-
-        while now_x < image.shape[1] - 10:
-            now_y = 10
-            while now_y < image.shape[1] - 10:
-                type_line = np.random.random()
-                if type_line < 0.1:
-                    len_line = 0
-                elif type_line < 0.55:
-                    len_line = np.random.randint(2, 5)
-                else:
-                    len_line = np.random.randint(5, self.main_len // 2)
-
-                start_pos = [now_x + np.random.randint(-3,4), now_y]
-                enf_pos = [now_x + np.random.randint(-3,4), now_y+len_line]
-
-                self.texture = cv2.line(self.texture, start_pos, enf_pos, forecolor, 5)
-
-                if len_line == 0: # генерация черной точки
-                    if np.random.random() < 0.5:
-                        color_black_point = (20,20,20)
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, color_black_point, 5)
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, color_black_point, 2)
-                    else:
-                        self.texture = cv2.line(self.texture, start_pos, enf_pos, (cristae_color), 2)
-                else:
-                    self.texture = cv2.line(self.texture, start_pos, enf_pos, (cristae_color), 2)
-
-                #step y
-                step_y = np.random.randint(7,20)
-                now_y = now_y + len_line + step_y
-
-            #step x
-            step_x = np.random.randint(12,18)
-            now_x += step_x
-
-        (h, w) = image.shape[:2]
-        center = (int(w / 2), int(h / 2))
-        rotation_matrix = cv2.getRotationMatrix2D(center, 90 - self.angle, 1.5)
-        self.texture = cv2.warpAffine(self.texture, rotation_matrix, (w, h))
-
-        #print(self.texture.shape)
-        self.texture[self.texture[:,:,0] == 0] = self.addColor
-
-        #cv2.imshow("texture", self.texture)
-        #cv2.waitKey()
-        self.nowBrush = Brush(brush = self.texture, typeFull = "texture")
+   
 
     def Draw(self, image, layer_drawing = True):
         # Основная рисующая фукция
         if layer_drawing:
-            self.CreateTexture(image)
+            self.texture, self.nowBrush = CreateTexture(image, self.main_len, self.angle)
 
         draw_image = image.copy()
 
@@ -340,9 +243,14 @@ class Mitohondrion:
         # Функция создающая маску с немного большим отступом для алгорима случайного размещения новых органнел без пересечения
         ret_image = image.copy()
         ret_image = ret_image.astype(int)
+        # import matplotlib.pyplot as plt
+        # plt.imshow(ret_image)
+        # plt.show()
 
         draw_image = np.zeros(image.shape, np.uint8)
         draw_image = self.DrawMask(draw_image)
+        # plt.imshow(draw_image)
+        # plt.show()
 
         if small_mode == False:
             kernel = np.array([[0, 1, 0],

@@ -27,6 +27,25 @@ def getHist(maskname, d):
 # d = readTensor(r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new","0_2022_12_15.png")
 
 
+def calcAreas(path, name):
+    print('calc', path, name)
+    d = readTensor(path, name)
+    print(d.keys())
+    background = 255 - (d['vesicles'] + d['axon'] + d['PSD'] + d['mitochondria'] + d['mitochondrial_boundaries'] + d['boundaries'])
+    d['background'] = background
+    num = background.shape[0] * background.shape[1]
+    # masks have white color 255
+    vesicles = np.sum(d['vesicles']) * 100 / (255 * num)
+    axon = np.sum(d['axon']) * 100 / (255 * num)
+    PSD = np.sum(d['PSD']) * 100 / (255 * num)
+    mitochondria = np.sum(d['mitochondria'] + d['mitochondrial_boundaries']) * 100 / (255 * num)
+    boundaries = np.sum(d['boundaries']) * 100 / (255 * num)
+    ground = np.sum(d['background']) * 100 / (255 * num)
+    
+    print(num, vesicles, axon, PSD, mitochondria, boundaries, ground)
+    
+    return vesicles, axon, PSD, mitochondria, boundaries, ground
+
 def calcSlice(path, name):
     print('calc', path, name)
     d = readTensor(path, name)
@@ -41,7 +60,7 @@ def calcSlice(path, name):
     mitochondrial_boundaries, bin_edges = getHist('mitochondrial_boundaries', d)
     boundaries, bin_edges = getHist('boundaries', d)
     ground, bin_edges = getHist('background', d)
-
+    
     return bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground
     
 def calcSliceO(path, name):
@@ -209,3 +228,60 @@ printTwoPlot('mitochondria', bin_edges, o_mitochondria, summitochondria)
 printTwoPlot('mitochondrial_boundaries', bin_edges, o_mitochondrial_boundaries, summitochondrial_boundaries)
 printTwoPlot('boundaries', bin_edges, o_boundaries, sumboundaries)
 printTwoPlot('ground', bin_edges, o_ground, sumground)
+
+
+
+sumvesicles = 0
+sumaxon = 0
+sumPSD = 0
+summitochondria = 0
+sumboundaries = 0
+sumground = 0
+
+
+path = r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new"
+g = glob.glob(path +"//original//*.png")
+
+for f in g:
+    f = f.split('\\')[-1]
+    vesicles, axon, PSD, mitochondria, boundaries, ground = calcAreas(path, f)
+    sumvesicles = sumvesicles + vesicles
+    sumaxon = sumaxon + axon
+    sumPSD = sumPSD + PSD
+    summitochondria = summitochondria + mitochondria
+    sumboundaries = sumboundaries + boundaries
+    sumground = sumground + ground
+
+sumvesicles = sumvesicles / len(g)
+sumaxon = sumaxon / len(g)
+sumPSD = sumPSD / len(g)
+summitochondria = summitochondria / len(g)
+sumboundaries = sumboundaries / len(g)
+sumground = sumground / len(g)
+
+
+labels = ['vesicles', 'axon', 'PSD', 'mitochondria', 'boundaries']
+synthetics = [sumvesicles, sumaxon, sumPSD, summitochondria, sumboundaries]
+
+vesicles, axon, PSD, mitochondria, boundaries, ground = calcAreas(r"F://Dissertation//EPFL//new","training0000.png")
+original = [vesicles, axon, PSD, mitochondria, boundaries]
+
+x = np.arange(len(labels))  # the label locations
+width = 0.35  # the width of the bars
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width/2, synthetics, width, label='synthetics')
+rects2 = ax.bar(x + width/2, original, width, label='original')
+
+# Add some text for labels, title and custom x-axis tick labels, etc.
+ax.set_ylabel('Persent')
+ax.set_title('Persent of slice area')
+ax.set_xticks(x, labels)
+ax.legend()
+
+ax.bar_label(rects1, padding=3)
+ax.bar_label(rects2, padding=3)
+
+fig.tight_layout()
+
+plt.show()
