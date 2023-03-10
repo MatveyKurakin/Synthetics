@@ -23,6 +23,8 @@ from src.organells.membrane import Membrane
 from src.container.spline import *
 from src.container.subclass import *
 
+from src.container.output import SaveGeneration
+
 from src.container.noises import PointsNoise, SpamComponents
 
 class Form:
@@ -352,7 +354,7 @@ class Form:
 
             Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = draws_result
 
-            self.SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
+            SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
 
     def DrawsLayerAndMask(self, ListComponents):
         # рисование слоя и фона к нему
@@ -419,61 +421,7 @@ class Form:
 
         return Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules
 
-    def SaveGeneration(self, Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save = None, startIndex = 0, suffix_name = ""):
-        if dir_save is not None:
-            # Сохранение слоя и масок
-            if not os.path.isdir(dir_save):
-                print(f"create dir_save: {dir_save}")
-                os.mkdir(dir_save)
-
-            if not os.path.isdir(os.path.join(dir_save, "original")):
-                print(f"create original: {os.path.join(dir_save, 'original')}")
-                os.mkdir(os.path.join(dir_save, "original"))
-
-            if not os.path.isdir(os.path.join(dir_save, "PSD")):
-                print(f"create PSD: {os.path.join(dir_save, 'PSD')}")
-                os.mkdir(os.path.join(dir_save, "PSD"))
-
-            if not os.path.isdir(os.path.join(dir_save, "axon")):
-                print(f"create axon: {os.path.join(dir_save, 'axon')}")
-                os.mkdir(os.path.join(dir_save, "axon"))
-
-            if not os.path.isdir(os.path.join(dir_save, "boundaries")):
-                print(f"create boundaries: {os.path.join(dir_save, 'boundaries')}")
-                os.mkdir(os.path.join(dir_save, "boundaries"))
-
-            if not os.path.isdir(os.path.join(dir_save, "mitochondria")):
-                print(f"create mitochondria: {os.path.join(dir_save, 'mitochondria')}")
-                os.mkdir(os.path.join(dir_save, "mitochondria"))
-
-            if not os.path.isdir(os.path.join(dir_save, "mitochondrial_boundaries")):
-                print(f"create mitochondrial_boundaries: {os.path.join(dir_save, 'mitochondrial_boundaries')}")
-                os.mkdir(os.path.join(dir_save, "mitochondrial_boundaries"))
-
-            if not os.path.isdir(os.path.join(dir_save, "vesicles")):
-                print(f"create vesicles: {os.path.join(dir_save, 'vesicles')}")
-                os.mkdir(os.path.join(dir_save, "vesicles"))
-
-            date = datetime.datetime.now().strftime(r'%Y_%m_%d')
-            name = str(counter + startIndex) + "_" + date
-
-            if len(suffix_name) > 0:
-                name += "_" + suffix_name
-
-            # coхранение слоя
-            cv2.imwrite(os.path.join(dir_save, "original", name + ".png"), cv2.cvtColor(Img, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "PSD", name + ".png"), cv2.cvtColor(MackPSD, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "axon", name + ".png"), cv2.cvtColor(MackAxon, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "boundaries", name + ".png"), cv2.cvtColor(MackMembrans, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "mitochondria", name + ".png"), cv2.cvtColor(MackMito, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "vesicles", name + ".png"), cv2.cvtColor(MackVesicules, cv2.COLOR_RGB2GRAY))
-            # coхранение маски
-            cv2.imwrite(os.path.join(dir_save, "mitochondrial_boundaries", name + ".png"), cv2.cvtColor(MackMitoBoarder, cv2.COLOR_RGB2GRAY))
+   
 
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
@@ -568,7 +516,7 @@ class Form:
 
             ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
 
-            self.SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex)
+            SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex)
 
         return ArrLayers
 
