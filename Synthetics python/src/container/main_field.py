@@ -281,174 +281,90 @@ class Form:
 
             SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
 
-    def DrawsLayerAndMask(self, ListComponents):
-        # рисование слоя и фона к нему
-        Img = np.zeros((*self.sizeImage, 3), np.uint8)
-        Img = self.DrawBackround(Img, self.backgroundСolor)
-
-        # рисование маски и заполнение черным
-        MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисование маски и заполнение черным
-        MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисование маски и заполнение черным
-        MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисование маски и заполнение черным
-        MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисование маски и заполнение черным
-        MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисование маски и заполнение черным
-        MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        # рисовка в соответствующее изображение
-        for component in ListComponents:
-            Img = component.DrawLayer(Img)
-
-            if component.type == "PSD":
-                MackPSD = component.DrawMask(MackPSD)
-
-            elif component.type == "Axon":
-                MackAxon = component.DrawMask(MackAxon)
-
-            elif component.type == "Membrane":
-                MackMembrans = component.DrawMask(MackMembrans)
-
-            elif component.type == "Mitohondrion":
-                MackMito = component.DrawMask(MackMito)
-                MackMitoBoarder = component.DrawMaskBoarder(MackMitoBoarder)
-
-            elif component.type ==  "Vesicles":
-                MackVesicules = component.DrawMask(MackVesicules)
-
-            elif component.type == "SpamComponents":
-                pass
-            else:
-                print(f"ERROR: no type {component.type}")
-
-        # добавление шума
-        #Img = AddGaussianNoise(Img, 40)
-
-        r = PARAM["main_radius_gausse_blur"]
-        G = PARAM["main_sigma_gausse_blur"]
-        Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
-
-        noisy = np.ones(self.sizeImage, np.uint8)
-        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
-
-        Img = Img + cv2.merge([noisy, noisy, noisy])
-        Img[Img < 0] = 0
-        Img[Img > 255] = 255
-        Img = Img.astype(np.uint8)
-
-        return Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules
-
-
-
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
         ArrLayers = []
-
-        Noise = albu.Compose(albu.GaussNoise(var_limit = (PARAM['main_min_gausse_noise_value'], PARAM['main_max_gausse_noise_value']), per_channel = False, always_apply=True))
 
         for counter in range(count_img):
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, spam = 5)
-            print(ListGeneration)
 
             color = uniform_int(
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
             self.backgroundСolor = (color, color, color)
 
-            # Рисование
-            # рисование слоя и масок
-          #  Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = self.DrawsLayerAndMask(ListGeneration)
-
             # рисование слоя и фона к нему
-            Img = np.zeros((*self.sizeImage, 3), np.uint8)
-            Img = self.DrawBackround(Img, self.backgroundСolor)
+            layer = np.zeros((*self.sizeImage, 3), np.uint8)
+            layer = self.DrawBackround(layer, self.backgroundСolor)
             
-            # рисование маски и заполнение черным
-            MackAxon = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackPSD = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMito = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackMembrans = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисование маски и заполнение черным
-            MackVesicules = np.zeros((*self.sizeImage, 3), np.uint8)
+            # выделяем память под маски
+            maskAxon        = np.zeros((*self.sizeImage, 3), np.uint8)
+            maskPSD         = np.zeros((*self.sizeImage, 3), np.uint8)
+            maskMito        = np.zeros((*self.sizeImage, 3), np.uint8)
+            maskMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
+            maskMembrans    = np.zeros((*self.sizeImage, 3), np.uint8)
+            maskVesicules   = np.zeros((*self.sizeImage, 3), np.uint8)
 
             # рисовка в соответствующее изображение
             for component in ListGeneration:
-                Img = component.DrawLayer(Img)
+                layer = component.DrawLayer(layer)
 
                 if component.type == "PSD":
-                    MackPSD = component.DrawMask(MackPSD)
+                    maskPSD = component.DrawMask(maskPSD)
 
                 elif component.type == "Axon":
-                    MackAxon = component.DrawMask(MackAxon)
+                    maskAxon = component.DrawMask(maskAxon)
 
                 elif component.type == "Membrane":
-                    MackMembrans = component.DrawMask(MackMembrans)
+                    maskMembrans = component.DrawMask(maskMembrans)
 
                 elif component.type == "Mitohondrion":
-                    MackMito = component.DrawMask(MackMito)
-                    MackMitoBoarder = component.DrawMaskBoarder(MackMitoBoarder)
+                    maskMito = component.DrawMask(maskMito)
+                    maskMitoBoarder = component.DrawMaskBoarder(maskMitoBoarder)
 
                 elif component.type ==  "Vesicles":
-                    MackVesicules = component.DrawMask(MackVesicules)
+                    maskVesicules = component.DrawMask(maskVesicules)
                     
                 elif component.type == "SpamComponents":
                     pass
                 else:
                     print(f"ERROR: no type {component.type}")
 
-            # добавление шума
-            #Img = AddGaussianNoise(Img, 40)
+
 
             r = PARAM["main_radius_gausse_blur"]
             G = PARAM["main_sigma_gausse_blur"]
-            Img = cv2.GaussianBlur(Img,(r*2+1,r*2+1), G)
+            layer = cv2.GaussianBlur(layer,(r*2+1,r*2+1), G)
             
-            # Img = cv2.blur(Img,(3,3))
 
             noisy = np.ones((*self.sizeImage, 3), np.uint8)
+            # apply Poisson noise to the array and scale it by the noise parameter
             noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']
+            # apply a 5x5 blur to the noisy image to smooth out high-frequency noise
             noisy = cv2.blur(noisy,(5,5))
+            # create a second array of ones with the same shape and data type as the first one
             noisy2 = np.random.poisson(np.ones((*self.sizeImage, 3), np.uint8))*PARAM['poisson_noise'] - PARAM['poisson_noise']
+            # add the two noisy arrays together
             noisy = noisy + noisy2
 
-            Img = Img + noisy
-            Img[Img < 0] = 0
-            Img[Img > 255] = 255
-            Img = Img.astype(np.uint8)
+            # add the noise to the image layer
+            layer = layer + noisy
+            layer = np.clip(layer, 0, 255)
+            layer = layer.astype(np.uint8)
 
-            ArrLayers.append([Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules])
+            ArrLayers.append([layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules])
 
-            SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex)
+            SaveGeneration(layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules, counter, dir_save, startIndex)
 
         return ArrLayers
 
     def StartFake3LayerGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
         ArrLayers = []
-
-        Noise = albu.Compose(albu.GaussNoise(var_limit = (PARAM['main_min_gausse_noise_value'], PARAM['main_max_gausse_noise_value']), per_channel = False, always_apply=True))
 
         for counter in range(count_img):
             print(f"{counter + 1} generation img for {count_img}")
