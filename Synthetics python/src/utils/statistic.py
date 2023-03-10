@@ -43,6 +43,23 @@ def calcSlice(path, name):
     ground, bin_edges = getHist('background', d)
 
     return bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground
+    
+def calcSliceO(path, name):
+    print('calc', path, name)
+    d = readTensor(path, name)
+    print(d.keys())
+    background = 255 - (d['vesicles'] + d['axon'] + d['PSD'] + d['mitochondria'] + d['mitochondrial boundaries'] + d['boundaries'])
+    d['background'] = background
+
+    vesicles, bin_edges = getHist('vesicles', d)
+    axon, bin_edges = getHist('axon', d)
+    PSD, bin_edges = getHist('PSD', d)
+    mitochondria, bin_edges = getHist('mitochondria', d)
+    mitochondrial_boundaries, bin_edges = getHist('mitochondrial boundaries', d)
+    boundaries, bin_edges = getHist('boundaries', d)
+    ground, bin_edges = getHist('background', d)
+
+    return bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground
 
 
 def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground):
@@ -120,10 +137,40 @@ def printTwoPlot(title, bin_edges, original, synthetic):
     plt.legend()
     plt.show()
 
-bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground = calcSlice(r"F://Dissertation//EPFL//new","training0000.png")
+path = r"G:\Data\Unet_multiclass\data\original data"
+go = glob.glob(path +"//original//*.png")
+
+sumvesicles = np.zeros(256)
+sumaxon = np.zeros(256)
+sumPSD = np.zeros(256)
+summitochondria = np.zeros(256)
+summitochondrial_boundaries = np.zeros(256)
+sumboundaries = np.zeros(256)
+sumground = np.zeros(256)
+
+for f in go:
+    f = f.split('\\')[-1]
+    bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground = calcSliceO(path, f)
+    sumvesicles = sumvesicles + vesicles
+    sumaxon = sumaxon + axon
+    sumPSD = sumPSD + PSD
+    summitochondria = summitochondria + mitochondria
+    summitochondrial_boundaries = summitochondrial_boundaries + mitochondrial_boundaries
+    sumboundaries = sumboundaries + boundaries
+    sumground = sumground + ground
+    
+o_vesicles = sumvesicles / len(go)
+o_axon = sumaxon / len(go)
+o_PSD = sumPSD / len(go)
+o_mitochondria = summitochondria / len(go)
+o_mitochondrial_boundaries = summitochondrial_boundaries / len(go)
+o_boundaries = sumboundaries / len(go)
+o_ground = sumground / len(go)
+
+
 printPlot('Original layer',bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground)
 
-path = r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new"
+path = r"C:\Users\Sokol-PC\Synthetics\Synthetics python\dataset\synthetic_dataset3"
 g = glob.glob(path +"//original//*.png")
 
 sumvesicles = np.zeros(256)
@@ -136,7 +183,7 @@ sumground = np.zeros(256)
 
 for f in g:
     f = f.split('\\')[-1]
-    bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground = calcSlice(path, f)
+    bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground = calcSliceO(path, f)
     sumvesicles = sumvesicles + vesicles
     sumaxon = sumaxon + axon
     sumPSD = sumPSD + PSD
