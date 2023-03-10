@@ -50,16 +50,9 @@ class Form:
             return True
         return False
 
-    def AddNewElementWithoutOverlap(self, compartmentsList, newComponent):
-
-        checkImage = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        for component in compartmentsList:
-            checkImage = component.DrawUniqueArea(checkImage)
-
+    def AddNewElementWithoutOverlapWithMask(self, technicalMackAllcompanenst, newComponent):
+        # максимальное количество попыток добавить
         max_iter = 300
-
-        checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
 
         # small items should be not near the edge
         if newComponent.type == "PSD":
@@ -67,44 +60,12 @@ class Form:
         else:
             step_from_edge = 5
 
-        newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
-        newComponent.setRandomAngle(0, 90)
-        checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
-
+        # рисование маски нового элемента (первая попытка). Выбирается позиция, угол и рисуется.
         counter = 1
-
-        while self.CheckOverlapNewElement(checkImage, checkNewImage) and counter < max_iter:
-            checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-            newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
-            newComponent.setRandomAngle(0, 90)
-            checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
-
-            counter += 1
-
-        #except Exception as ex:
-        #    print(ex)
-        #    print(newComponent.type)
-        #    print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
-
-        # Добавлено исключение чтобы элементы не накладывались друг на друга
-        if counter == max_iter:
-            raise Exception("Can't add unique position new element")
-
-    def AddNewElementWithoutOverlap_WithMask(self, technicalMackAllcompanenst, newComponent):
-        max_iter = 200
-
         checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-
-        if newComponent.type == "PSD":
-            step_from_edge = 32
-        else:
-            step_from_edge = 5
-
         newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
         newComponent.setRandomAngle(0, 90)
         checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
-
-        counter = 1
 
         while self.CheckOverlapNewElement(technicalMackAllcompanenst, checkNewImage) and counter < max_iter:
             checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
@@ -118,30 +79,30 @@ class Form:
         if counter == max_iter:
             raise Exception("Can't add unique position new element")
 
-    def addNewElementIntoImage(self, compartmentsList, newComponent):
+    def addNewElementIntoImage(self, compartmentsList, newComponent, technicalMackAllcompanenst = None):
+        # защита от дурака)
         if newComponent is not None:
+            # иключение на случай если не получилось добавить без пересечения или что-то пошло не так при попытке рисования масок
             try:
+                # если не дали тех.маску текущих компонентов, то сделаем из списка компонентов
+                if technicalMackAllcompanenst is None:
+                    checkImage = np.zeros((*self.sizeImage, 3), np.uint8)
+                    for component in compartmentsList:
+                        checkImage = component.DrawUniqueArea(checkImage)
+
+                # иначе используем тех.маску
+                else:
+                    checkImage = technicalMackAllcompanenst
+
                 # нет смысла проверять мембраны, так как они касаются PSD и будет перекрытие
                 if newComponent.type != "Membrane":
-                    self.AddNewElementWithoutOverlap(compartmentsList, newComponent);
+                    self.AddNewElementWithoutOverlapWithMask(checkImage, newComponent);
 
                 compartmentsList.append(newComponent)
+                checkImage = newComponent.DrawUniqueArea(checkImage) # рисуется новый элемент на тех.маску
                 newComponent = None
 
-            except Exception as ex:
-                print(ex)
-                #print(f"{type(ex).__name__} at line {ex.__traceback__.tb_lineno} of {__file__}: {ex}")
-
-    def addNewElementIntoImage_WithMask(self, compartmentsList, technicalMackAllcompanenst, newComponent):
-        if newComponent is not None:
-            try:
-                # нет смысла проверять мембраны, так как они касаются PSD и будет перекрытие
-                if newComponent.type != "Membrane":
-                    self.AddNewElementWithoutOverlap_WithMask(technicalMackAllcompanenst, newComponent);
-
-                compartmentsList.append(newComponent)
-                technicalMackAllcompanenst = newComponent.DrawUniqueArea(technicalMackAllcompanenst)
-                newComponent = None
+                return checkImage
 
             except Exception as ex:
                 print(ex)
@@ -212,48 +173,8 @@ class Form:
                 element_list.extend([key] * element_dict[key])
             random.shuffle(element_list)  
             return [element_list]
-            
 
-    def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0, spam = 0):
-
-        RetList = []        
-        
-        count_PSD = self.get_count(max_count_PSD)
-        count_Axon = self.get_count(max_count_Axon)
-        count_Vesicles = self.get_count(max_count_Vesicles)
-        count_Mitohondrion = self.get_count(max_count_Mitohondrion)  
-        
-        element_dict = {"Axon": count_Axon, "Mitohondrion" : count_Mitohondrion, 
-                        "Vesicles": count_Vesicles, "PSD" : count_PSD}
-        
-        element_list = self.generate_lists(element_dict)
-        
-        try:
-            for element in element_list[0]:
-                if element in self.class_constructors:
-                    newElement = self.class_constructors[element]()
-                    UnionMask = self.addNewElementIntoImage(RetList, newElement)
-                else:
-                    raise Exception("No such class exist: " + element)
-    
-            # DRAW MEMBRANES
-            UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList))
-        
-            for element in element_list[1]:
-                if element in self.class_constructors:
-                    newElement = self.class_constructors[element]()
-                    UnionMask = self.addNewElementIntoImage(RetList, newElement) 
-                else:
-                    raise Exception("No such class exist: " + element)
-        except Exception as ex:
-            print(ex)
-            
-        if spam != 0:
-            RetList.append(SpamComponents(RetList.copy(), spam))
-
-        return RetList
-
-    def createListGenerationWithMask(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+    def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
         RetList = []
         
         count_PSD = self.get_count(max_count_PSD)
@@ -266,25 +187,29 @@ class Form:
         
         element_list = self.generate_lists(element_dict)
 
+        # тех.маска уже добавленных элементов
         UnionMask = np.zeros((*self.sizeImage,3), np.uint8)
         
+        # защита на случай если несуществует класса element
         try:
+            # добавление элементов перед добавлением мембран
             for element in element_list[0]:
                if element in self.class_constructors:
                    newElement = self.class_constructors[element]()
-                   UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, newElement)
+                   UnionMask = self.addNewElementIntoImage(RetList, newElement, UnionMask)
                else:
                    raise Exception("No such class exist: " + element)
             
             #cv2.imshow("testMask", UnionMask)
             #cv2.waitKey()
             # DRAW MEMBRANES
-            UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, Membrane(self.sizeImage, RetList))
+            UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList), UnionMask)
     
+            # добавление элементов после добавления мембран для более плотного расположения
             for element in element_list[1]:
                if element in self.class_constructors:
                    newElement = self.class_constructors[element]()
-                   UnionMask = self.addNewElementIntoImage_WithMask(RetList, UnionMask, newElement)
+                   UnionMask = self.addNewElementIntoImage(RetList, newElement, UnionMask)
                else:
                    print("No such class exist: " + element)
                    raise Exception("No such class exist: " + element)
@@ -421,7 +346,7 @@ class Form:
 
         return Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules
 
-   
+
 
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
@@ -435,7 +360,6 @@ class Form:
 
             # создаю новый список для каждой генерации
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, spam = 5)
-            #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
             print(ListGeneration)
 
             color = uniform_int(
@@ -531,7 +455,6 @@ class Form:
 
             # создаю новый список для каждой генерации
             ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
-            #ListGeneration = self.createListGenerationWithStartMembrane(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
 
             color = uniform_int(
                 PARAM['main_color_mean'],
