@@ -52,37 +52,39 @@ class Form:
 
     def AddNewElementWithoutOverlapWithMask(self, technicalMackAllcompanenst, newComponent):
         # максимальное количество попыток добавить
-        max_iter = 300
+        MAX_ITER = 300
 
-        # small items should be not near the edge
-        if newComponent.type == "PSD":
-            step_from_edge = 32
-        else:
-            step_from_edge = 5
-
-        # рисование маски нового элемента (первая попытка). Выбирается позиция, угол и рисуется.
-        counter = 1
-        checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-        newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
-        newComponent.setRandomAngle(0, 90)
-        checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
-
-        while self.CheckOverlapNewElement(technicalMackAllcompanenst, checkNewImage) and counter < max_iter:
-            checkNewImage = np.zeros((*self.sizeImage, 3), np.uint8)
-            newComponent.NewPosition(np.random.randint(step_from_edge, self.sizeImage[1]-step_from_edge), np.random.randint(step_from_edge, self.sizeImage[0] - step_from_edge))
+        # small items should be not near the edge       
+        offset = 32 if newComponent.type == "PSD" else 5
+        
+        last_x_pos = self.sizeImage[1] - offset
+        last_y_pos = self.sizeImage[0] - offset
+        
+              
+        counter = 0
+        while True:
+            # рисование маски нового элемента. Выбирается позиция, угол и рисуется.  
+            newComponent.NewPosition(np.random.randint(offset, last_x_pos), np.random.randint(offset, last_y_pos))
             newComponent.setRandomAngle(0, 90)
-            checkNewImage = newComponent.DrawUniqueArea(checkNewImage)
-
+            checkNewImage = newComponent.DrawUniqueArea(np.zeros((*self.sizeImage, 3), np.uint8))
+            
             counter += 1
+            if counter >= MAX_ITER:
+                break
+            # проверка условия для продолжения цикла
+            if not self.CheckOverlapNewElement(technicalMackAllcompanenst, checkNewImage):
+                break
 
         # Добавлено исключение чтобы элементы не накладывались друг на друга
-        if counter == max_iter:
+        if counter == MAX_ITER:
             raise Exception("Can't add unique position new element")
+            
 
     def addNewElementIntoImage(self, compartmentsList, newComponent, technicalMackAllcompanenst = None):
-        # защита от дурака)
+        # на всякий случай проверяем newComponent
         if newComponent is not None:
-            # иключение на случай если не получилось добавить без пересечения или что-то пошло не так при попытке рисования масок
+            # иключение на случай если не получилось добавить без пересечения или 
+            # что-то пошло не так при попытке рисования масок
             try:
                 # если не дали тех.маску текущих компонентов, то сделаем из списка компонентов
                 if technicalMackAllcompanenst is None:
