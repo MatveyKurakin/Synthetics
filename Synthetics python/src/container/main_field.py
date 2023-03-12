@@ -112,13 +112,6 @@ class Form:
 
         return technicalMackAllcompanenst
 
-    def DrawBackround(self, img, color):
-        draw_image = np.full(img.shape, color, np.uint8)
-
-        p = PointsNoise(self.sizeImage)
-        draw_image = p.Draw(draw_image)
-
-        return draw_image
     
     def get_count(self, max_count):
         return np.random.randint(1, max_count + 1) if max_count > 0 else 0
@@ -192,7 +185,7 @@ class Form:
         # тех.маска уже добавленных элементов
         UnionMask = np.zeros((*self.sizeImage,3), np.uint8)
         
-        # защита на случай если несуществует класса element
+        # защита на случай если не существует класса element
         try:
             # добавление элементов перед добавлением мембран
             for element in element_list[0]:
@@ -204,6 +197,7 @@ class Form:
             
             #cv2.imshow("testMask", UnionMask)
             #cv2.waitKey()
+            
             # DRAW MEMBRANES
             UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList), UnionMask)
     
@@ -282,7 +276,7 @@ class Form:
             Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules = draws_result
 
             SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
-
+    
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
@@ -292,7 +286,7 @@ class Form:
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
-            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, spam = 5)
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
 
             color = uniform_int(
                 PARAM['main_color_mean'],
@@ -300,8 +294,10 @@ class Form:
             self.backgroundСolor = (color, color, color)
 
             # рисование слоя и фона к нему
-            layer = np.zeros((*self.sizeImage, 3), np.uint8)
-            layer = self.DrawBackround(layer, self.backgroundСolor)
+            layer = np.full((*self.sizeImage, 3), self.backgroundСolor, np.uint8)
+            point_noise = PointsNoise(self.sizeImage)
+            layer = point_noise.Draw(layer)
+            
             
             # выделяем память под маски
             maskAxon        = np.zeros((*self.sizeImage, 3), np.uint8)
