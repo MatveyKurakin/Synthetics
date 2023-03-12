@@ -169,7 +169,7 @@ class Form:
             random.shuffle(element_list)  
             return [element_list]
 
-    def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+    def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0, max_count_spam = 5):
         RetList = []
         
         count_PSD = self.get_count(max_count_PSD)
@@ -191,30 +191,36 @@ class Form:
             for element in element_list[0]:
                if element in self.class_constructors:
                    newElement = self.class_constructors[element]()
+                   # функция, добавляющая новый элемент без пересечения с имеющимися по общей маске (также рисует его в общую маску)
                    UnionMask = self.addNewElementIntoImage(RetList, newElement, UnionMask)
                else:
                    raise Exception("No such class exist: " + element)
             
             #cv2.imshow("testMask", UnionMask)
             #cv2.waitKey()
-            
+
             # DRAW MEMBRANES
-            UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList), UnionMask)
-    
+            # для мембран просто добавление в список и отрисовка общей маски
+            UnionMask = self.addNewElementIntoImage(RetList, Membrane(self.sizeImage, RetList.copy()), UnionMask)
+
             # добавление элементов после добавления мембран для более плотного расположения
             for element in element_list[1]:
                if element in self.class_constructors:
                    newElement = self.class_constructors[element]()
+                   # функция, добавляющая новый элемент без пересечения с имеющимися по общей маске (также рисует его в общую маску)
                    UnionMask = self.addNewElementIntoImage(RetList, newElement, UnionMask)
                else:
                    print("No such class exist: " + element)
                    raise Exception("No such class exist: " + element)
+
+            RetList.append(SpamComponents(RetList.copy(), max_count_spam))
+
         except Exception as ex:
             print(ex)
-            
+
         return RetList
 
-    def createListGenerationWithStartMembrane(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0):
+    def createListGenerationWithStartMembrane(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0, max_count_spam = 5):
         
         RetList = []
         
@@ -238,9 +244,11 @@ class Form:
                     UnionMask = self.addNewElementIntoImage(RetList, newElement)
                 else:
                     raise Exception("No such class exist: " + element)
+
+            RetList.append(SpamComponents(RetList.copy(), max_count_spam))
         except Exception as ex:
             print(ex)
-            
+
         return RetList
 
     def fake_3_layers(self, ListGeneration, counter, dir_save, startIndex, size_overlap = 5):
@@ -259,14 +267,18 @@ class Form:
             direction = [x/len_direction, y/len_direction]
 
             for index, i in enumerate(range(-1, 2)): # 1-индексация по массиву, 2-взвешанное направление по прямой
-                if component.type != "Membrane":
+                if component.type != "Membrane" and component.type != "SpamComponents":
                     copy_component = component.copy()
                     copy_component.NewPosition(component.centerPoint[0] + int(round(i * direction[0] * size_overlap)), component.centerPoint[1] + int(round(i * direction[1] * size_overlap)))
                     ListListGeneration[index].append(copy_component)
-                else:
+                elif component.type == "Membrane":
                     new_membrane = Membrane(self.sizeImage, ListListGeneration[index].copy())
                     new_membrane.copy_main_param(component)
                     ListListGeneration[index].append(new_membrane)
+                else:
+                    new_spam = SpamComponents(ListListGeneration[index].copy(), component.numberSpam)
+                    ListListGeneration[index].append(new_spam)
+
 
         for j, ListGenerationCopy in enumerate(ListListGeneration):
             fake_suffix = str(j)  # 0, 1, 2...
@@ -277,6 +289,67 @@ class Form:
 
             SaveGeneration(Img, MackPSD, MackAxon, MackMembrans, MackMito, MackMitoBoarder, MackVesicules, counter, dir_save, startIndex, fake_suffix)
     
+    def DrawsLayerAndMask(self, ListComponents):
+        # рисование слоя и фона к нему
+        layer = np.full((*self.sizeImage, 3), self.backgroundСolor, np.uint8)
+        point_noise = PointsNoise(self.sizeImage)
+        layer = point_noise.Draw(layer)
+
+        # выделяем память под маски
+        maskAxon        = np.zeros((*self.sizeImage, 3), np.uint8)
+        maskPSD         = np.zeros((*self.sizeImage, 3), np.uint8)
+        maskMito        = np.zeros((*self.sizeImage, 3), np.uint8)
+        maskMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
+        maskMembrans    = np.zeros((*self.sizeImage, 3), np.uint8)
+        maskVesicules   = np.zeros((*self.sizeImage, 3), np.uint8)
+
+        # рисовка в соответствующее изображение
+        for component in ListComponents:
+            layer = component.DrawLayer(layer)
+
+            if component.type == "PSD":
+                maskPSD = component.DrawMask(maskPSD)
+
+            elif component.type == "Axon":
+                maskAxon = component.DrawMask(maskAxon)
+
+            elif component.type == "Membrane":
+                maskMembrans = component.DrawMask(maskMembrans)
+
+            elif component.type == "Mitohondrion":
+                maskMito = component.DrawMask(maskMito)
+                maskMitoBoarder = component.DrawMaskBoarder(maskMitoBoarder)
+
+            elif component.type ==  "Vesicles":
+                maskVesicules = component.DrawMask(maskVesicules)
+
+            elif component.type == "SpamComponents":
+                pass
+            else:
+                print(f"ERROR: no type {component.type}")
+
+
+        # добавление шума
+        r = PARAM["main_radius_gausse_blur"]
+        G = PARAM["main_sigma_gausse_blur"]
+        layer = cv2.GaussianBlur(layer,(r*2+1,r*2+1), G)
+
+        noisy = np.ones((*self.sizeImage, 3), np.uint8)
+        # apply Poisson noise to the array and scale it by the noise parameter
+        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']
+        # apply a 5x5 blur to the noisy image to smooth out high-frequency noise
+        noisy = cv2.blur(noisy,(5,5))
+        # create a second array of ones with the same shape and data type as the first one
+        noisy2 = np.random.poisson(np.ones((*self.sizeImage, 3), np.uint8))*PARAM['poisson_noise'] - PARAM['poisson_noise']
+        # add the two noisy arrays together
+        noisy = noisy + noisy2
+
+        # add the noise to the image layer
+        layer = layer + noisy
+        layer = np.clip(layer, 0, 255)
+        layer = layer.astype(np.uint8)
+
+        return layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules
 
     def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
         # Цикличная генерация
@@ -286,73 +359,15 @@ class Form:
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
-            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = 5)
 
+            # выбор цвета фона
             color = uniform_int(
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
             self.backgroundСolor = (color, color, color)
 
-            # рисование слоя и фона к нему
-            layer = np.full((*self.sizeImage, 3), self.backgroundСolor, np.uint8)
-            point_noise = PointsNoise(self.sizeImage)
-            layer = point_noise.Draw(layer)
-            
-            
-            # выделяем память под маски
-            maskAxon        = np.zeros((*self.sizeImage, 3), np.uint8)
-            maskPSD         = np.zeros((*self.sizeImage, 3), np.uint8)
-            maskMito        = np.zeros((*self.sizeImage, 3), np.uint8)
-            maskMitoBoarder = np.zeros((*self.sizeImage, 3), np.uint8)
-            maskMembrans    = np.zeros((*self.sizeImage, 3), np.uint8)
-            maskVesicules   = np.zeros((*self.sizeImage, 3), np.uint8)
-
-            # рисовка в соответствующее изображение
-            for component in ListGeneration:
-                layer = component.DrawLayer(layer)
-
-                if component.type == "PSD":
-                    maskPSD = component.DrawMask(maskPSD)
-
-                elif component.type == "Axon":
-                    maskAxon = component.DrawMask(maskAxon)
-
-                elif component.type == "Membrane":
-                    maskMembrans = component.DrawMask(maskMembrans)
-
-                elif component.type == "Mitohondrion":
-                    maskMito = component.DrawMask(maskMito)
-                    maskMitoBoarder = component.DrawMaskBoarder(maskMitoBoarder)
-
-                elif component.type ==  "Vesicles":
-                    maskVesicules = component.DrawMask(maskVesicules)
-                    
-                elif component.type == "SpamComponents":
-                    pass
-                else:
-                    print(f"ERROR: no type {component.type}")
-
-
-
-            r = PARAM["main_radius_gausse_blur"]
-            G = PARAM["main_sigma_gausse_blur"]
-            layer = cv2.GaussianBlur(layer,(r*2+1,r*2+1), G)
-            
-
-            noisy = np.ones((*self.sizeImage, 3), np.uint8)
-            # apply Poisson noise to the array and scale it by the noise parameter
-            noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']
-            # apply a 5x5 blur to the noisy image to smooth out high-frequency noise
-            noisy = cv2.blur(noisy,(5,5))
-            # create a second array of ones with the same shape and data type as the first one
-            noisy2 = np.random.poisson(np.ones((*self.sizeImage, 3), np.uint8))*PARAM['poisson_noise'] - PARAM['poisson_noise']
-            # add the two noisy arrays together
-            noisy = noisy + noisy2
-
-            # add the noise to the image layer
-            layer = layer + noisy
-            layer = np.clip(layer, 0, 255)
-            layer = layer.astype(np.uint8)
+            layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules = self.DrawsLayerAndMask(ListGeneration)
 
             ArrLayers.append([layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules])
 
@@ -368,8 +383,9 @@ class Form:
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
-            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion)
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = 5)
 
+            # выбор цвета фона для 1 пачки
             color = uniform_int(
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
