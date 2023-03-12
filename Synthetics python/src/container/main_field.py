@@ -158,7 +158,7 @@ class Form:
                 element_list1.extend([key] * element_dict1[key]) 
             element_list2 = []
             for key in element_dict2:
-                element_list1.extend([key] * element_dict2[key]) 
+                element_list2.extend([key] * element_dict2[key]) 
             random.shuffle(element_list1)    
             random.shuffle(element_list2)    
             return [element_list1, element_list2]
