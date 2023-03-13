@@ -37,9 +37,10 @@ class Vesicles:
         self.Points = []
         self.PointsWithOffset = []
 
-        self.varibleInputFulling = 0
+        self.varibleInputFilling = 0
 
-        self.typeGen = 0            # 0 - norma mode, 1 - many small vesicles
+        # 0 - normal mode, 1 - many small vesicles
+        self.typeGen = 0            
 
         self.Create()
 
@@ -61,7 +62,7 @@ class Vesicles:
         new_vesic.angle = self.angle
         new_vesic.typeGen = self.typeGen
 
-        new_vesic.varibleInputFulling = self.varibleInputFulling
+        new_vesic.varibleInputFilling = self.varibleInputFilling
 
         new_vesic.setDrawParam()
         new_vesic.setRandomAngle(0,0)
@@ -74,19 +75,18 @@ class Vesicles:
 
         self.typeGen = np.random.randint(0, 2)
 
-        #self.typeForm = np.random.randint(0, 2)
-
         if self.typeGen == 0:
             mainVesiculesSize = np.random.randint(5, 7)
         else:
             mainVesiculesSize = 4
-            self.varibleInputFulling = np.random.random() * 0.1                            #не более 0.1 полностью заполненных, так как получается единое месиво
+            #не более 0.1 полностью заполненных, так как получается единое месиво
+            self.varibleInputFilling = np.random.random() * 0.1                            
 
-        self.sizeVesiculeMin = mainVesiculesSize-1
-        self.sizeVesiculeMax = mainVesiculesSize+2
+        self.sizeVesiculeMin = mainVesiculesSize - 1
+        self.sizeVesiculeMax = mainVesiculesSize + 2
 
+        # radiuses of vesicules area (ellipse)
         radius_x = np.random.randint(30, 96)
-
         radius_y = np.random.randint(30, 96)
 
         square = radius_y * radius_x
@@ -98,31 +98,30 @@ class Vesicles:
         else:
             self.numberPoints = np.random.randint(2*sqrt_int_square//9, sqrt_int_square//2+1)
 
-        max_iteration = 2000
+        MAX_ITERATION = 2000
 
         fail_counter = 0
 
         tPoints = []
 
         for i in range(self.numberPoints):
-
-            now_point = self.getNewCoordVesicules(radius_x, radius_y)
-            nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
-            counter = 1
-
-            while (self.CheckOverlap(tPoints, now_point, nowSizeCycle, 1) and counter < max_iteration):
+            counter = 0
+            while True:
                 now_point = self.getNewCoordVesicules(radius_x, radius_y)
                 nowSizeCycle = np.random.randint(self.sizeVesiculeMin, self.sizeVesiculeMax)
                 counter += 1
+                
+                if not self.CheckOverlap(tPoints, now_point, nowSizeCycle, 1):
+                    # if we found the place for new vesicula 
+                    self.listSizeVesiculs.append(nowSizeCycle)
+                    tPoints.append(now_point)
+                    break
+                
+                if counter >= MAX_ITERATION:
+                    fail_counter += 1
+                    break
 
-            if (counter == max_iteration):
-                fail_counter += 1
-
-            else:
-                self.listSizeVesiculs.append(nowSizeCycle)
-                tPoints.append(now_point)
-
-        # поворот везикул
+        # поворот области везикул
         self.angle = np.random.randint(0, 90)
 
         angle = self.angle * (math.pi/180)
@@ -131,12 +130,7 @@ class Vesicles:
         for point in tPoints:
             x = int(round(point[0] * math.cos(angle) - point[1] * math.sin(angle)))
             y = int(round(point[0] * math.sin(angle) + point[1] * math.cos(angle)))
-
-            #x = point[0]
-            #y = point[1]
-
             self.Points.append([x,y])
-
 
         if (fail_counter != 0):
             print(f"The number of vesicles that could not be generated at a unique position: {fail_counter} out of {self.numberPoints}")
@@ -202,6 +196,26 @@ class Vesicles:
         self.ChangePositionPoints()
 
     def CheckOverlap(self, Points, point, sizeVesicule, proportion):
+        '''
+        
+
+        Parameters
+        ----------
+        Points : TYPE
+            DESCRIPTION.
+        point : TYPE
+            DESCRIPTION.
+        sizeVesicule : TYPE
+            DESCRIPTION.
+        proportion : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            True if new vesicula overlap old vesicules. False otherwise.
+
+        '''
         for i in range(len(Points)):
 
             x_delt = abs(Points[i][0] - point[0])
@@ -231,7 +245,7 @@ class Vesicles:
             if self.typeGen == 0:
                 self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
             else:
-                if np.random.random() < self.varibleInputFulling:
+                if np.random.random() < self.varibleInputFilling:
                     Brush(self.nowPen.color).FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
                 else:
                     self.nowBrush.FullBrushEllipse(draw_image, self.PointsWithOffset[i], (self.listSizeVesiculs[i], self.listSizeVesiculs[i]))
@@ -339,7 +353,7 @@ def testVesicles():
 
         print(vesicles.typeGen)
         if vesicles.typeGen==1:
-           print(vesicles.varibleInputFulling)
+           print(vesicles.varibleInputFilling)
 
         cv2.imshow("img", img1)
         cv2.imshow("mask", mask)
