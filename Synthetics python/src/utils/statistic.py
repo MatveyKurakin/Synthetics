@@ -230,14 +230,13 @@ printTwoPlot('boundaries', bin_edges, o_boundaries, sumboundaries)
 printTwoPlot('ground', bin_edges, o_ground, sumground)
 
 
-
+######################################################################################################################################
 sumvesicles = 0
 sumaxon = 0
 sumPSD = 0
 summitochondria = 0
 sumboundaries = 0
 sumground = 0
-
 
 path = r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new"
 g = glob.glob(path +"//original//*.png")
