@@ -82,11 +82,17 @@ def calcSliceO(path, name):
 
 
 def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial_boundaries, boundaries, ground):
-    plt.title(title)
-    plt.xlabel("grayscale value")
+   
+    plt.rcParams['figure.figsize'] = (12, 3)
+    plt.rcParams.update({'font.size': 15})
+    plt.subplots_adjust(left=0.16, bottom=0.19, top=0.82)
+    
+    plt.text(6, 0.03, title, bbox = {'facecolor': 'white', 'edgecolor': 'black', 'boxstyle': 'round'}, fontsize=15)
+    #plt.title(title)
+    #plt.xlabel("grayscale value")
     plt.ylabel("density")
     plt.xlim([0.0, 255.0])
-    plt.ylim([0.0, 0.05])
+    plt.ylim([0.0, 0.04])
 
     separate = False
 
@@ -98,6 +104,9 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
     plt.plot(bin_edges[0:-1], mitochondrial_boundaries, 'y', label = 'mitochondrial boundaries')
     plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
     plt.legend()
+    
+    
+
     plt.show()
 
     if separate:
@@ -141,6 +150,7 @@ def printPlot(title, bin_edges, vesicles, axon, PSD, mitochondria, mitochondrial
         plt.ylim([0.0, 0.05])
         plt.plot(bin_edges[0:-1], boundaries, 'k', label = 'boundaries')
         plt.legend()
+
         plt.show()
 
 
@@ -154,6 +164,28 @@ def printTwoPlot(title, bin_edges, original, synthetic):
     plt.plot(bin_edges[0:-1], original, 'g', label = 'original')
     plt.plot(bin_edges[0:-1], synthetic, 'r', label = 'synthetic')
     plt.legend()
+    plt.show()
+    
+def printTreePlot(title, bin_edges, original, original2, synthetic):
+    plt.rcParams['figure.figsize'] = (12, 3)
+    plt.rcParams.update({'font.size': 15})
+    plt.subplots_adjust(left=0.16, bottom=0.19, top=0.82)
+
+    
+    #plt.title(title)
+    plt.text(6, 0.03, title, bbox = {'facecolor': 'white', 'edgecolor': 'black', 'boxstyle': 'round'}, fontsize=15)
+    #plt.xlabel("grayscale value")
+    plt.ylabel("density")
+    plt.xlim([0.0, 255.0])
+    plt.ylim([0.0, 0.04])
+
+    plt.plot(bin_edges[0:-1], original, 'g', label = 'originals all', linewidth = 3, alpha=0.5)
+    plt.plot(bin_edges[0:-1], original2, 'r', label = 'original 0', linewidth = 2, alpha=0.5)
+    plt.plot(bin_edges[0:-1], synthetic, 'b', label = 'synthetic', linewidth = 2, alpha=0.5)
+    plt.legend()
+    
+    plt.savefig("3 print color/"+title+".png", dpi=600)
+    
     plt.show()
 
 path = r"G:\Data\Unet_multiclass\data\original data"
@@ -187,7 +219,11 @@ o_boundaries = sumboundaries / len(go)
 o_ground = sumground / len(go)
 
 
-printPlot('Original layer',bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground)
+printPlot('Original all layers',bin_edges, o_vesicles, o_axon, o_PSD, o_mitochondria, o_mitochondrial_boundaries, o_boundaries, o_ground)
+
+bin_edges2, vesicles2, axon2, PSD2, mitochondria2, mitochondrial_boundaries2, boundaries2, ground2 = calcSliceO(path, "training0000.png")
+printPlot('Original 0 layer',bin_edges2, vesicles2, axon2, PSD2, mitochondria2, mitochondrial_boundaries2, boundaries2, ground2)
+
 
 path = r"C:\Users\Sokol-PC\Synthetics\Synthetics python\dataset\synthetic_dataset3"
 g = glob.glob(path +"//original//*.png")
@@ -199,6 +235,7 @@ summitochondria = np.zeros(256)
 summitochondrial_boundaries = np.zeros(256)
 sumboundaries = np.zeros(256)
 sumground = np.zeros(256)
+
 
 for f in g:
     f = f.split('\\')[-1]
@@ -226,10 +263,16 @@ printTwoPlot('axon', bin_edges, o_axon, sumaxon)
 printTwoPlot('PSD', bin_edges, o_PSD, sumPSD)
 printTwoPlot('mitochondria', bin_edges, o_mitochondria, summitochondria)
 printTwoPlot('mitochondrial_boundaries', bin_edges, o_mitochondrial_boundaries, summitochondrial_boundaries)
-printTwoPlot('boundaries', bin_edges, o_boundaries, sumboundaries)
+printTwoPlot('membranes', bin_edges, o_boundaries, sumboundaries)
 printTwoPlot('ground', bin_edges, o_ground, sumground)
 
-
+printTreePlot('Vesicles', bin_edges, o_vesicles, vesicles2, sumvesicles)
+printTreePlot('Axon', bin_edges, o_axon, axon2,sumaxon)
+printTreePlot('PSD', bin_edges, o_PSD, PSD2, sumPSD)
+printTreePlot('Mitochondria', bin_edges, o_mitochondria, mitochondria2, summitochondria)
+printTreePlot('Mitochondrial boundaries', bin_edges, o_mitochondrial_boundaries, mitochondrial_boundaries2, summitochondrial_boundaries)
+printTreePlot('Membranes', bin_edges, o_boundaries, boundaries2, sumboundaries)
+printTreePlot('Ground', bin_edges, o_ground, ground2, sumground)
 ######################################################################################################################################
 sumvesicles = 0
 sumaxon = 0
@@ -238,7 +281,7 @@ summitochondria = 0
 sumboundaries = 0
 sumground = 0
 
-path = r"F://Dissertation//Synthetic//Synthetics//Synthetics python//dataset//new"
+path = r"C:\Users\Sokol-PC\Synthetics\Synthetics python\dataset\synthetic_dataset3"
 g = glob.glob(path +"//original//*.png")
 
 for f in g:
