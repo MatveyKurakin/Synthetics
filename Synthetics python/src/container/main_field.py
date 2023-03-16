@@ -13,7 +13,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')
 
-
+from src.organells.location import *
 from src.organells.axon import Axon
 from src.organells.PSD import PSD
 from src.organells.vesicles import Vesicles

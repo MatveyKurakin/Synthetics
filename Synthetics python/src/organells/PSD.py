@@ -7,13 +7,15 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')
 
+from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 from settings import PARAM, uniform_float, uniform_int
 
 
-class PSD:
+class PSD(Location):
     def __init__(self, TreePoints = None):
+        super().__init__()
         self.type = "PSD"
 
         """
@@ -57,16 +59,8 @@ class PSD:
         # заливка для затемненоой области
         self.nowBrush = Brush(self.addColor)
 
-
-        self.centerPoint = [0, 0]
-
-        self.Points = []
-        self.PointsWithOffset = []
-
         self.lenPSD = 0
-
         self.typeGen = 0       # 0 - with line, 1 - full fill PSD
-        self.angle = 0
 
         if TreePoints is None:
             self.Create()
@@ -98,14 +92,17 @@ class PSD:
         new_psd.color = self.color
         new_psd.addColor = self.addColor
         new_psd.centerline_color = self.centerline_color
-        new_psd.centerPoint = self.centerPoint.copy()
-        new_psd.Points = self.Points.copy()
         new_psd.lenPSD = self.lenPSD
         new_psd.typeGen = self.typeGen
-        new_psd.angle = self.angle
         new_psd.mainUpSizeLinePSD   = self.mainUpSizeLinePSD
         new_psd.inputSizeLinePSD    = self.inputSizeLinePSD
         new_psd.mainDownSizeLinePSD = self.mainDownSizeLinePSD
+
+        # copy location data
+        new_psd.centerPoint = self.centerPoint.copy()
+        new_psd.Points = self.Points.copy()
+        new_psd.angle = self.angle
+        new_psd.numberPoints = self.numberPoints
 
         new_psd.setDrawParam()
         new_psd.setRandomAngle(0,0)
@@ -200,39 +197,9 @@ class PSD:
         self.Points.append([self.Points[7][0], int(self.Points[7][1] + sizeOffset)])
         self.Points.append([self.Points[6][0] , int(self.Points[6][1] + sizeOffset2)])
 
+        self.numberPoints = len(self.Points)
+
         self.setAngle(self.angle)
-
-    def ChangePositionPoints(self):
-        self.PointsWithOffset = []
-
-        for point in self.Points:
-            self.PointsWithOffset.append([self.centerPoint[0]+point[0], self.centerPoint[1]+point[1]])
-
-    def setAngle(self, change_angle):
-        change_angle = math.radians(change_angle)
-
-        tPoints = []
-        for point in self.Points:
-            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
-            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
-            tPoints.append([x,y])
-
-        self.Points = tPoints
-        self.ChangePositionPoints()
-
-    def setRandomAngle(self, min_angle = 0, max_angle = 90, is_singned_change = True):
-
-        if np.random.random() < 0.5 and is_singned_change:
-            sign = -1
-        else:
-            sign = 1
-
-        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-        change_angle = (new_angle - self.angle)
-        self.angle = new_angle
-
-        self.setAngle(change_angle)
-
 
     def setDrawParam(self):
         self.nowPen.color = self.color
@@ -243,12 +210,6 @@ class PSD:
         self.nowPen.color = (255,255,255)
         self.nowAddPen.color = (255,255,255)
         self.nowBrush.brush = (255,255,255)
-
-    def NewPosition(self, x, y):
-        self.centerPoint[0] = x
-        self.centerPoint[1] = y
-
-        self.ChangePositionPoints()
 
     def AddedBlur(self, draw_image, rangeList):
         arr = np.asarray(rangeList)

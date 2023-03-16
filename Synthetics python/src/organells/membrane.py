@@ -57,7 +57,6 @@ class Membrane:
         self.imageSize = main_membran.imageSize
         self.Create(self.componentsList, self.imageSize)        # перестроить всё со списком остановки
 
-
     def CreateWithNoneList(self, sizeImage):
 
         number_region = np.random.randint(3, 7)
@@ -250,7 +249,9 @@ class Membrane:
 
         #print("iter 0", len(Work_points))
 
+        # количество прекращений разростания в случае если он резко перестал расширяться в отношении к прошлой итерации (для закругления углов)
         statictic_break_procent = 0
+        # аналогично предыдущему, но завершается если расширяющихся точек в регионе меньше порогового значения (чтобы не было, например, тонких линий в одну сторону)
         statictic_break_number = 0
 
         proccent_work = 0.5
