@@ -10,7 +10,7 @@ if __name__ == "__main__":
 from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
-from settings import PARAM, uniform_float, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
 
 
 class PSD(Location):

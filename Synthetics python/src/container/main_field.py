@@ -3,7 +3,7 @@ import cv2
 import os
 import datetime
 import math
-from settings import PARAM, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_int
 import skimage
 import random
 

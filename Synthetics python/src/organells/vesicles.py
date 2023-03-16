@@ -10,7 +10,7 @@ if __name__ == "__main__":
 from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
-from settings import PARAM, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_int
 
 class Vesicles(Location):
     def __init__(self):
@@ -129,8 +129,9 @@ class Vesicles(Location):
             y = int(round(point[0] * math.sin(angle) + point[1] * math.cos(angle)))
             self.Points.append([x,y])
 
-        if (fail_counter != 0):
-            print(f"The number of vesicles that could not be generated at a unique position: {fail_counter} out of {self.numberPoints}")
+        if DEBUG_MODE:
+            if (fail_counter != 0):
+                print(f"The number of vesicles that could not be generated at a unique position: {fail_counter} out of {self.numberPoints}")
 
         self.numberPoints = len(self.Points)
 

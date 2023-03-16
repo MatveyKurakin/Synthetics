@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from settings import PARAM, uniform_float, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
 import math
 
 if __name__ == "__main__":
@@ -45,7 +45,8 @@ class Membrane:
         else:
             self.Create(self.componentsList, self.imageSize)
 
-        print("Type membrane generation:", self.typeLine)
+        if DEBUG_MODE:
+            print("Type membrane generation:", self.typeLine)
 
     def copy_main_param(self, main_membran):
         self.color = main_membran.color
@@ -61,11 +62,12 @@ class Membrane:
 
         number_region = np.random.randint(3, 7)
 
-        print("number_region", number_region)
 
         number_of_associations = np.random.randint(0, number_region//2)
 
-        print("number of associations", number_of_associations)
+        if DEBUG_MODE:
+            print("number_region", number_region)
+            print("number of associations", number_of_associations)
         list_center_region = []
 
         union_radius = 40
@@ -370,10 +372,11 @@ class Membrane:
 
             counter += 1
 
-        print(f"Number region iteration: {counter}")
+        if DEBUG_MODE:
+            print(f"Number region iteration: {counter}")
 
-        print(f"Number break expansion for procent: {statictic_break_procent}")
-        print(f"Number break expansion for number: {statictic_break_number}")
+            print(f"Number break expansion for procent: {statictic_break_procent}")
+            print(f"Number break expansion for number: {statictic_break_number}")
 
         return labels
 
@@ -632,8 +635,9 @@ class Membrane:
 
             iter += 1
 
-        if iter == max_iteration:
-            print("thickeningOfMembraneShellMap no added:", number_thickening_zone - count, "zones")
+        if DEBUG_MODE:
+            if iter == max_iteration:
+                print("thickeningOfMembraneShellMap no added:", number_thickening_zone - count, "zones")
 
     # добавляет небольшие области с расслоением мембран
     def SheathTear(self, shape, mask):
