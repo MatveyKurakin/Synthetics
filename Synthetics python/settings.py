@@ -4,6 +4,8 @@ import json
 with open('EPFL.json', 'r', encoding='utf-8') as f:
     PARAM = json.load(f)
 
+DEBUG_MODE = False
+
 '''
 # было первым
 PARAM = {

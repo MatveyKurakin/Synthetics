@@ -11,7 +11,7 @@ from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 from src.organells.brushes import *
-from settings import PARAM, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_int
 
 class Mitohondrion(Location):
     def __init__(self):
