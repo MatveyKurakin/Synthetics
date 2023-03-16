@@ -7,13 +7,15 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')
 
+from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 from src.organells.brushes import *
 from settings import PARAM, uniform_int
 
-class Mitohondrion:
+class Mitohondrion(Location):
     def __init__(self):
+        super().__init__()
         self.type = "Mitohondrion"
 
         # COLORS
@@ -26,12 +28,7 @@ class Mitohondrion:
         self.texture = None
 
         # GEOMETRY
-        self.angle = 0
         self.main_len = 0
-        self.numberPoints = 0
-        self.centerPoint = [0, 0]
-        self.Points = []
-        self.PointsWithOffset = []
 
         self.direction = [0,0]         # вектор смещения границы, для имитации косого среза
         self.dopSizeLine = 0
@@ -51,16 +48,18 @@ class Mitohondrion:
             new_mito.nowBrush  = self.nowBrush.copy()
             new_mito.texture  = self.texture.copy()
 
-        new_mito.angle = self.angle
         new_mito.main_len = self.main_len
-        new_mito.numberPoints = self.numberPoints
-        new_mito.centerPoint = self.centerPoint.copy()
-        new_mito.Points = self.Points.copy()
 
         new_mito.direction  = self.direction.copy()
         new_mito.addPoints  = self.addPoints.copy()
 
         new_mito.dopSizeLine = self.dopSizeLine
+
+        # copy location data
+        new_mito.centerPoint = self.centerPoint.copy()
+        new_mito.Points = self.Points.copy()
+        new_mito.angle = self.angle
+        new_mito.numberPoints = self.numberPoints
 
         new_mito.setDrawParam()
         new_mito.setRandomAngle(0,0)
@@ -134,50 +133,6 @@ class Mitohondrion:
 
 
         self.setRandomAngle(0, 0)
-
-    def ChangePositionPoints(self):
-        self.PointsWithOffset = []
-        #self.addPointsWithOffset = []
-
-        for point in self.Points:
-            self.PointsWithOffset.append([self.centerPoint[0]+point[0], self.centerPoint[1]+point[1]])
-
-        #for point2 in self.addPoints:
-        #    self.addPointsWithOffset.append([self.centerPoint[0]+point2[0], self.centerPoint[1]+point2[1]])
-
-    def NewPosition(self, x, y):
-        self.centerPoint[0] = x
-        self.centerPoint[1] = y
-
-        self.ChangePositionPoints()
-
-    def setRandomAngle(self, min_angle = 0, max_angle = 90, is_singned_change = True):
-
-        if np.random.random() < 0.5 and is_singned_change:
-            sign = -1
-        else:
-            sign = 1
-
-        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-        change_angle = (new_angle - self.angle) * (math.pi/180)
-        self.angle = new_angle
-
-        tPoints = []
-        for point in self.Points:
-            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
-            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
-            tPoints.append([x,y])
-
-        #tAddPoints = []
-        #for point2 in self.addPoints:
-        #    x = int(round(point2[0] * math.cos(change_angle) - point2[1] * math.sin(change_angle)))
-        #    y = int(round(point2[0] * math.sin(change_angle) + point2[1] * math.cos(change_angle)))
-        #    tAddPoints.append([x,y])
-
-        self.Points = tPoints
-        #self.addPoints = tAddPoints
-        self.ChangePositionPoints()
-   
 
     def Draw(self, image, layer_drawing = True):
         # Основная рисующая фукция

@@ -6,13 +6,15 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')
 
+from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 
 from settings import PARAM, uniform_int
 
-class Axon:
+class Axon(Location):
     def __init__(self):
+        super().__init__()
         self.type = "Axon"
 
         self.nowInnerBrush = None
@@ -28,14 +30,8 @@ class Axon:
         self.sizePen = np.random.randint(14, 18)
         self.sizeAddPen = np.random.randint(self.sizePen, 20)
 
-        self.centerPoint = [0,0]
         self.input_radius = None
-        self.angle = 0
         self.sublistNumber = 0
-
-        self.pointNumber = 0
-        self.Points = []
-        self.PointsWithOffset = []
 
         self.typeGen = 0 # 0 - only output boarder, 1 - with input boarder
 
@@ -55,16 +51,18 @@ class Axon:
         new_axon.shell_color = self.shell_color
         new_axon.sizePen = self.sizePen
         self.sizeAddPen = self.sizeAddPen
-        new_axon.centerPoint = self.centerPoint.copy()
         new_axon.input_radius = self.input_radius
-        new_axon.angle = self.angle
         new_axon.sublistNumber = self.sublistNumber
-        new_axon.pointNumber = self.pointNumber
-        new_axon.Points = self.Points.copy()
         new_axon.typeGen = self.typeGen
 
         new_axon.nowPen = self.nowPen.copy()
         new_axon.nowAddPen = self.nowAddPen.copy()
+        
+        # copy location data
+        new_axon.centerPoint = self.centerPoint.copy()
+        new_axon.Points = self.Points.copy()
+        new_axon.angle = self.angle
+        new_axon.numberPoints = self.numberPoints
 
         new_axon.setDrawParam()
         new_axon.setRandomAngle(0,0)
@@ -82,7 +80,7 @@ class Axon:
 
         self.Points = []
 
-        self.pointNumber = np.random.randint(7, 15)
+        self.numberPoints = np.random.randint(7, 15)
 
         if self.typeGen == 0:
             if (min_r == 0):
@@ -102,9 +100,9 @@ class Axon:
 
         # 2 типа генерации, если маленький просто оболочка, если большой, то с внутренней частью
 
-        step_angle = 2.0 * math.pi / self.pointNumber
+        step_angle = 2.0 * math.pi / self.numberPoints
 
-        for i in range(self.pointNumber):
+        for i in range(self.numberPoints):
             now_angle = step_angle * i
             r = min_r + np.random.randint(1, max_increase_len)
 
@@ -182,39 +180,6 @@ class Axon:
 
         self.nowInnerBrush = Brush(self.innerTexture, typeFull = "texture")
         self.nowBubbleBrush = Brush(self.bubbleTexture, typeFull = "texture")
-
-
-    def setRandomAngle(self, min_angle = 0, max_angle = 45, is_singned_change = True):
-
-        if np.random.random() < 0.5 and is_singned_change:
-            sign = -1
-        else:
-            sign = 1
-
-        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-        change_angle = (new_angle - self.angle) * (math.pi/180)
-        self.angle = new_angle
-
-        tPoints = []
-        for point in self.Points:
-            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
-            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
-            tPoints.append([x,y])
-
-        self.Points = tPoints
-        self.ChangePositionPoints()
-
-    def ChangePositionPoints(self):
-        self.PointsWithOffset = []
-
-        for point in self.Points:
-            self.PointsWithOffset.append([self.centerPoint[0]+point[0], self.centerPoint[1]+point[1]])
-
-    def NewPosition(self, x, y):
-        self.centerPoint[0] = x
-        self.centerPoint[1] = y
-
-        self.ChangePositionPoints()
 
     #def SheathTear(self, size):
 

@@ -1,7 +1,7 @@
 import random
 import json
 
-with open('setting.json', 'r', encoding='utf-8') as f:
+with open('EPFL.json', 'r', encoding='utf-8') as f:
     PARAM = json.load(f)
 
 '''

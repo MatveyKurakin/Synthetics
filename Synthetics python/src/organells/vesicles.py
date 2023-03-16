@@ -7,18 +7,19 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')
 
+from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 from settings import PARAM, uniform_int
 
-class Vesicles:
+class Vesicles(Location):
     def __init__(self):
+        super().__init__()
         self.type = "Vesicles"
 
         self.sizeVesiculeMin = 5
         self.sizeVesiculeMax = 7
 
-        self.numberPoints = 0
         self.listSizeVesiculs = []
 
         color = uniform_int(
@@ -33,10 +34,6 @@ class Vesicles:
 
         self.nowBrush = Brush(self.addColor)
 
-        self.centerPoint = [0, 0]
-        self.Points = []
-        self.PointsWithOffset = []
-
         self.varibleInputFilling = 0
 
         # 0 - normal mode, 1 - many small vesicles
@@ -49,20 +46,20 @@ class Vesicles:
 
         new_vesic.sizeVesiculeMin = self.sizeVesiculeMin
         new_vesic.sizeVesiculeMax = self.sizeVesiculeMax
-        new_vesic.numberPoints = self.numberPoints
         new_vesic.listSizeVesiculs = self.listSizeVesiculs
 
         new_vesic.color = self.color
         new_vesic.nowPen  = self.nowPen.copy()
         new_vesic.addColor = self.addColor
 
+        new_vesic.typeGen = self.typeGen
+        new_vesic.varibleInputFilling = self.varibleInputFilling
+
+        # copy location data
         new_vesic.centerPoint = self.centerPoint.copy()
         new_vesic.Points = self.Points.copy()
-
         new_vesic.angle = self.angle
-        new_vesic.typeGen = self.typeGen
-
-        new_vesic.varibleInputFilling = self.varibleInputFilling
+        new_vesic.numberPoints = self.numberPoints
 
         new_vesic.setDrawParam()
         new_vesic.setRandomAngle(0,0)
@@ -139,25 +136,6 @@ class Vesicles:
 
         self.ChangePositionPoints()
 
-    def setRandomAngle(self, min_angle = 0, max_angle = 90, is_singned_change = True):
-
-        if np.random.random() < 0.5 and is_singned_change:
-            sign = -1
-        else:
-            sign = 1
-
-        new_angle = (self.angle + np.random.randint(min_angle, max_angle+1) * sign) %360
-        change_angle = (new_angle - self.angle) * (math.pi/180)
-        self.angle = new_angle
-
-        tPoints = []
-        for point in self.Points:
-            x = int(round(point[0] * math.cos(change_angle) - point[1] * math.sin(change_angle)))
-            y = int(round(point[0] * math.sin(change_angle) + point[1] * math.cos(change_angle)))
-            tPoints.append([x,y])
-
-        self.Points = tPoints
-        self.ChangePositionPoints()
 
     def getNewCoordVesicules(self, radius_x, radius_y):
 
@@ -182,18 +160,6 @@ class Vesicles:
 
 
         return now_point
-
-    def ChangePositionPoints(self):
-        self.PointsWithOffset = []
-
-        for point in self.Points:
-            self.PointsWithOffset.append([self.centerPoint[0]+point[0], self.centerPoint[1]+point[1]])
-
-    def NewPosition(self, x, y):
-        self.centerPoint[0] = x
-        self.centerPoint[1] = y
-
-        self.ChangePositionPoints()
 
     def CheckOverlap(self, Points, point, sizeVesicule, proportion):
         '''
