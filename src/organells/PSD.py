@@ -12,60 +12,62 @@ from src.container.spline import *
 from src.container.subclass import *
 from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
 
+WHITE = (255,255,255)
 
 class PSD(Location):
-    def __init__(self, TreePoints = None):
+    
+    def __init__(self, ThreePoints = None):
         super().__init__()
         self.type = "PSD"
 
         """
-
-        генерация PSD в 3 линии
-
+        Генерация PSD в 3 линии
         u - верхняя
         i - внутрення
         d - нижняя
 
-        форма по слоям:
-         uuuuu
-        u     u
-
-         iiiii
-        i     i
-
-         ddddd
-        d     d
+        Форма по слоям:
+            uid
+           uid
+           uid
+           uid
+           uid
+            uid
         """
 
         color = uniform_int(
-            PARAM['psd_back_color_mean'],
+            PARAM['psd_back_color_mean'], 
             PARAM['psd_back_color_std'])
-        self.color = (color, color, color)
-
+        
         addcolor = uniform_int(
-            PARAM['psd_addcolor_mean'],
+            PARAM['psd_addcolor_mean'], 
             PARAM['psd_addcolor_std'])
-        self.addColor = (addcolor, addcolor, addcolor)
-
+        
         centerline_color = uniform_int(
-            PARAM['psd_centerline_color_mean'],
+            PARAM['psd_centerline_color_mean'], 
             PARAM['psd_centerline_color_std'])
-        self.centerline_color = (centerline_color, centerline_color, centerline_color)
-
-        # карандаш для темной линии PSD
-        self.nowPen = Pen(self.color)
-        # карандаш для центральной линии
-        self.nowAddPen = Pen(self.centerline_color)
-        # заливка для затемненоой области
-        self.nowBrush = Brush(self.addColor)
+        
+        self.colors = {'sandwich' : color, 'center line' : centerline_color, 'pallium': addcolor}
+        
+        self.pens = {
+                     'sandwich' : Pen(self.colors['sandwich']),    # карандаш для темной линии PSD
+                     'center'   : Pen(self.colors['center line']), # карандаш для центральной линии
+                     'brush'    : Brush(self.colors['pallium'])    # кисть для заливки затемненной области (паллиума)
+                     }
 
         self.lenPSD = 0
-        self.typeGen = 0       # 0 - with line, 1 - full fill PSD
+        self.typeGen = 0       # 0 - with center line, 1 - full fill PSD
+        
+        if np.random.randint(0,10) == 0:
+            self.typeGen = 1
+            self.colors['pallium'] = self.colors['sandwich']
+            self.pens['center'].color = self.colors['pallium']
 
-        if TreePoints is None:
+        if ThreePoints is None:
             self.Create()
         else:
-            self.CreateTreePoints(TreePoints)
+            self.CreateThreePoints(ThreePoints)
+        
 
     def Create(self):
 
@@ -73,7 +75,6 @@ class PSD(Location):
         max_len_05 = 30
 
         lenPSD_05 = np.random.randint(min_len_05, max_len_05 + 1)
-        lenPSD = 2 * lenPSD_05
         normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * min_len_05//2
 
         # Coздание первой основной точки
@@ -83,21 +84,18 @@ class PSD(Location):
         # Coздание третьей основной точки
         point2 = [lenPSD_05,0]
 
-        self.CreateTreePoints([point1, normal, point2])
+        self.CreateThreePoints([point1, normal, point2])
 
         self.setRandomAngle(0,360)
 
     def __copy__(self):
         new_psd = PSD()
-        new_psd.color = self.color
-        new_psd.addColor = self.addColor
-        new_psd.centerline_color = self.centerline_color
+        new_psd.colors = self.colors.copy()
+        new_psd.lineSize = self.lineSize.copy()
+       
         new_psd.lenPSD = self.lenPSD
         new_psd.typeGen = self.typeGen
-        new_psd.mainUpSizeLinePSD   = self.mainUpSizeLinePSD
-        new_psd.inputSizeLinePSD    = self.inputSizeLinePSD
-        new_psd.mainDownSizeLinePSD = self.mainDownSizeLinePSD
-
+        
         # copy location data
         new_psd.centerPoint = self.centerPoint.copy()
         new_psd.Points = self.Points.copy()
@@ -111,37 +109,29 @@ class PSD(Location):
     def copy(self):
         return self.__copy__()
 
-    def CreateTreePoints(self, TreePoints):
+    def CreateThreePoints(self, ThreePoints):
         # в 1 из 10 случаев полностью черная, в 9/10 с полосой внутри
-        if np.random.randint(0,10) == 0:
-            self.typeGen = 1
-            self.centerline_color = self.color
-            self.nowAddPen.color = self.centerline_color
-
-
-            self.mainUpSizeLinePSD = 2
-            self.inputSizeLinePSD = np.random.randint(2, 3+1)
-            self.mainDownSizeLinePSD = 2
+        
+        if self.typeGen == 1:
+            self.lineSize = {'top': 2, 'center': np.random.randint(2, 3+1), 'bottom': 2}
         else:
-            self.typeGen = 0
-
-            self.mainUpSizeLinePSD = np.random.randint(2, 4+1)
-            self.inputSizeLinePSD = np.random.randint(1, 2+1)
-            self.mainDownSizeLinePSD = 2
-
-        point1 = TreePoints[0]
-        normal = TreePoints[1]
-        point2 = TreePoints[2]
+            self.lineSize = {'top': np.random.randint(2, 4+1), 'center': np.random.randint(1, 2+1), 'bottom': 2}
+            
+        point1 = ThreePoints[0]
+        normal = ThreePoints[1]
+        point2 = ThreePoints[2]
 
         # приведение входных точек в горизонтальный вид и в начало координат, с запоминанием исходного местоположения
 
         # центр - точка между краями
-        self.centerPoint = [(point1[0] + point2[0])//2, (point1[1] + point2[1])//2]
-
-        self.lenPSD = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-
-        vec = [point2[0] - self.centerPoint[0], point2[1] - self.centerPoint[1]]
-        vec = [2*vec[0]/self.lenPSD, 2*vec[1]/self.lenPSD]
+        centerPoint = [(point1[0] + point2[0])//2, (point1[1] + point2[1])//2]
+        lenPSD = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+        
+        self.centerPoint = centerPoint
+        self.lenPSD = lenPSD
+        
+        vec = [point2[0] - centerPoint[0], point2[1] - centerPoint[1]]
+        vec = [2*vec[0]/lenPSD, 2*vec[1]/lenPSD]
 
         if vec[0] != 0:
             #print("\t\ttype 1")
@@ -150,9 +140,9 @@ class PSD(Location):
             #print("\t\ttype 2")
             self.angle = math.degrees(math.pi/2 - math.atan(vec[0]/vec[1]))
 
-        normal_y = math.sqrt((self.centerPoint[0] - normal[0])**2 + (self.centerPoint[1] - normal[1])**2)
+        normal_y = math.sqrt((centerPoint[0] - normal[0])**2 + (centerPoint[1] - normal[1])**2)
 
-        ########### 0-2 main-line (цвет PSD или цвет межкеточный)
+        ########### 0-2 main-line (цвет PSD или цвет межклеточный)
         # Добавление первой основной точки
         self.Points.append([-self.lenPSD//2,0])
         # Добавление точки на нормали
@@ -162,9 +152,9 @@ class PSD(Location):
         ############
 
 
-        ########### 3-7 PSD-line (цвет PSD под выпоклустью)
+        ########### 3-7 PSD-line (цвет PSD под выпуклостью)
         # смещение 1 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
-        sizeOffsetY_1 = - (self.mainDownSizeLinePSD + self.inputSizeLinePSD)+1
+        sizeOffsetY_1 = - (self.lineSize['bottom'] + self.lineSize['center'])+1
         #главная темная линия PSD
         p1_1 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_1+1)]
         c_1  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_1)]
@@ -175,9 +165,9 @@ class PSD(Location):
         self.Points.append(p2_1)
         #############
 
-        ########### 8-12 PSD-line (цвет PSD над выпоклустью)
+        ########### 8-12 PSD-line (цвет PSD над выпуклостью)
         # смещение 2 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
-        sizeOffsetY_2 = (self.mainUpSizeLinePSD + self.inputSizeLinePSD)
+        sizeOffsetY_2 = (self.lineSize['top'] + self.lineSize['center'])
         #главная темная линия PSD
         p1_2 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_2-1)]
         c_2  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_2)]
@@ -202,16 +192,12 @@ class PSD(Location):
         self.setAngle(self.angle)
 
     def setDrawParam(self):
-        self.nowPen.color = self.color
-        self.nowAddPen.color = self.centerline_color
-        self.nowBrush.brush = self.addColor
+        self.pens = {'sandwich' : Pen(self.colors['sandwich']), 'center' : Pen(self.colors['center line']), 'brush' : Brush(self.colors['pallium'])}
 
     def setMaskParam(self):
-        self.nowPen.color = (255,255,255)
-        self.nowAddPen.color = (255,255,255)
-        self.nowBrush.brush = (255,255,255)
+        self.pens = {'sandwich': Pen(WHITE), 'center' : Pen(WHITE), 'brush' : Brush(WHITE) }
 
-    def AddedBlur(self, draw_image, rangeList):
+    def addedBlur(self, draw_image, rangeList):
         arr = np.asarray(rangeList)
         offset = 20
         minxy = np.amin(arr, axis=0)
@@ -224,10 +210,10 @@ class PSD(Location):
         patch = cv2.GaussianBlur(draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]],(r*2+1,r*2+1), G)
         original = draw_image[minxy[1]:maxxy[1], minxy[0]:maxxy[0]]
 
-        self.nowBrush.brush = (255,255,255)
+        self.pens['brush'].color = WHITE
         mask = np.zeros(draw_image.shape)
-        self.nowBrush.FullBrush(mask, rangeList)
-        self.nowBrush.brush = self.addColor
+        self.pens['brush'].FullBrush(mask, rangeList)
+        self.pens['brush'].brush = self.colors['pallium']
         mask = mask[minxy[1]:maxxy[1], minxy[0]:maxxy[0],0]
 
         kernel = np.ones((r, r), np.uint8)
@@ -242,25 +228,24 @@ class PSD(Location):
         draw_image = image.copy()
 
         # основной алгоритм - нарисовать пятно, нарисовать линии PSD (над и под), нарисовать внутреннюю линию
-
+        
         # пятно
         rangeList = self.PointsWithOffset[9:9+6]
-        self.nowBrush.FullBrush(draw_image, rangeList)
+        self.pens['brush'].FullBrush(draw_image, rangeList)
 
         #if draw_layer:
-        self.AddedBlur(draw_image, rangeList)
-
+        self.addedBlur(draw_image, rangeList)
+        
         # рисование нижней линии 
         rangeList_up = self.PointsWithOffset[3: 3+3]
-        small_spline_line(draw_image, rangeList_up, self.nowPen.color, self.mainDownSizeLinePSD)
+        small_spline_line(draw_image, rangeList_up, self.pens['sandwich'].color, self.lineSize['bottom'])
         # рисование верхней линии
         rangeList_down = self.PointsWithOffset[6: 6+3]
-        small_spline_line(draw_image, rangeList_down, self.nowPen.color, self.mainUpSizeLinePSD)
-
+        small_spline_line(draw_image, rangeList_down, self.pens['sandwich'].color, self.lineSize['top'])
         # рисование внутренней линии
         rangeList_input = self.PointsWithOffset[0: 0+3]
-        small_spline_line(draw_image, rangeList_input, self.nowAddPen.color, self.inputSizeLinePSD)
-
+        small_spline_line(draw_image, rangeList_input, self.pens['center'].color, self.lineSize['center'])
+        
         return draw_image
 
     def DrawLayer(self, image):
@@ -301,7 +286,6 @@ class PSD(Location):
         #Смена цветов для рисования маски
         self.setMaskParam()
         mask = self.Draw(image)
-
         mask[mask < 192] = 0
         mask[mask > 192] = 255
 
@@ -359,7 +343,7 @@ def testPSD():
         Img[Img > 255] = 255
         Img = Img.astype(np.uint8)
 
-        cv2.imshow("add noise and blur", Img)
+        cv2.imshow("pallium noise and blur", Img)
 
         q = cv2.waitKey()
 
@@ -375,10 +359,10 @@ def testPSD():
         for i in range(0, 512, 32):
             img[i:i+15,:,:] += 30
 
-        tree_gen_temp = [np.random.randint(128,384,2) for i in range(2)]
-        center = [(tree_gen_temp[0][0] + tree_gen_temp[1][0])//2, (tree_gen_temp[0][1] + tree_gen_temp[1][1])//2]
+        Three_gen_temp = [np.random.randint(128,384,2) for i in range(2)]
+        center = [(Three_gen_temp[0][0] + Three_gen_temp[1][0])//2, (Three_gen_temp[0][1] + Three_gen_temp[1][1])//2]
 
-        dir = (tree_gen_temp[0][0] - center[0], tree_gen_temp[0][1] - center[1])
+        dir = (Three_gen_temp[0][0] - center[0], Three_gen_temp[0][1] - center[1])
 
         if (dir[0] == 0):
             normal_x = 1
@@ -395,10 +379,10 @@ def testPSD():
         size_change = np.random.randint(0,128)
         norm_point = [int(round(center[0] + normal_x * size_change)), int(round(center[1] + normal_y * size_change))]
 
-        tree_gen = [tree_gen_temp[0], norm_point, tree_gen_temp[1]]
+        Three_gen = [Three_gen_temp[0], norm_point, Three_gen_temp[1]]
 
-        print(tree_gen)
-        psd = PSD(tree_gen)
+        print(Three_gen)
+        psd = PSD(Three_gen)
 
         print("centerPoint", psd.centerPoint)
         print("Points", psd.Points)
@@ -409,7 +393,7 @@ def testPSD():
 
         img1 = psd.DrawLayer(img)
 
-        for point in tree_gen:
+        for point in Three_gen:
             cv2.circle(img1, point, 3, (0, 0, 255), 2)
 
         cv2.circle(img1, center, 3, (0, 255, 0), 2)
