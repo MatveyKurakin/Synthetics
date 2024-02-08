@@ -3,7 +3,7 @@ import cv2
 import os
 import datetime
 import math
-from settings import PARAM, DEBUG_MODE, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_int, normal_randint
 import skimage
 import random
 
@@ -19,18 +19,19 @@ from src.organells.PSD import PSD
 from src.organells.vesicles import Vesicles
 from src.organells.mitohondrion import Mitohondrion
 from src.organells.membrane import Membrane
+from src.organells.union_organels import Vesicles_and_PSD
 
 from src.container.spline import *
 from src.container.subclass import *
 
 from src.container.output import SaveGeneration
 
-from src.container.noises import PointsNoise, SpamComponents
+from src.container.noises import PointsNoise, SpamComponents, CreateNoise
 
 class Form:
     def __init__(self, size = (512, 512)):
 
-        color = uniform_int(
+        color = normal_randint(
             PARAM['main_color_mean'],
             PARAM['main_color_std'])
         self.backgroundСolor = (color, color, color) # выбор цвета фона
@@ -50,21 +51,47 @@ class Form:
             return True
         return False
 
+    def GetNewPosition(self, x_limit, y_limit, indexes_choise = None):
+        start_x, end_x = x_limit
+        start_y, end_y = y_limit
+
+        if indexes_choise is None:
+            x = np.random.randint(start_x, end_x)
+            y = np.random.randint(start_y, end_y)
+
+        else:
+            index_сhoise = random.choice(range(len(indexes_choise[0])))
+            x, y = indexes_choise[1][index_сhoise], indexes_choise[0][index_сhoise]
+
+        return x, y 
+
     def AddNewElementWithoutOverlapWithMask(self, technicalMackAllcompanenst, newComponent):
         # максимальное количество попыток добавить
-        MAX_ITER = 300
+        MAX_ITER = 150
 
         # small items should be not near the edge       
-        offset = 32 if newComponent.type == "PSD" else 5
+        offset = 32 if newComponent.type == "PSD" or newComponent.type == "Vesicles_and_PSD" else 5
+
+        lim_x_pos = self.sizeImage[1] - offset
+        lim_y_pos = self.sizeImage[0] - offset
         
-        last_x_pos = self.sizeImage[1] - offset
-        last_y_pos = self.sizeImage[0] - offset
-        
-              
+        # если возможно, то пытаемся брать незанятые области с отступом от маски
+        mask_overlap = 16
+        choise_pixel = np.full(technicalMackAllcompanenst.shape, 255, np.uint8) - technicalMackAllcompanenst
+        choise_pixel[:offset,:] = 0
+        choise_pixel[lim_y_pos:,:] = 0
+        choise_pixel[:,:offset] = 0
+        choise_pixel[:,lim_x_pos:] = 0
+
+        kernel = np.ones((3, 3), 'uint8')
+        choise_pixel = cv2.erode(choise_pixel,kernel,iterations = mask_overlap)
+        indexes_choise = np.where(choise_pixel==255)
+
         counter = 0
         while True:
-            # рисование маски нового элемента. Выбирается позиция, угол и рисуется.  
-            newComponent.NewPosition(np.random.randint(offset, last_x_pos), np.random.randint(offset, last_y_pos))
+            # рисование маски нового элемента. Выбирается позиция, угол и рисуется.
+            x, y = self.GetNewPosition((offset, lim_x_pos), (offset, lim_y_pos), indexes_choise)
+            newComponent.NewPosition(x, y)
             newComponent.setRandomAngle(0, 90)
             checkNewImage = newComponent.DrawUniqueArea(np.zeros((*self.sizeImage, 3), np.uint8))
             
@@ -78,7 +105,6 @@ class Form:
         # Добавлено исключение чтобы элементы не накладывались друг на друга
         if counter == MAX_ITER:
             raise Exception("Can't add unique position new element")
-            
 
     def addNewElementIntoImage(self, compartmentsList, newComponent, technicalMackAllcompanenst = None):
         # на всякий случай проверяем newComponent
@@ -101,6 +127,7 @@ class Form:
                     self.AddNewElementWithoutOverlapWithMask(checkImage, newComponent);
 
                 compartmentsList.append(newComponent)
+
                 checkImage = newComponent.DrawUniqueArea(checkImage) # рисуется новый элемент на тех.маску
                 newComponent = None
 
@@ -112,17 +139,17 @@ class Form:
 
         return technicalMackAllcompanenst
 
-    
     def get_count(self, max_count):
         return np.random.randint(1, max_count + 1) if max_count > 0 else 0
-    
+
     class_constructors = {
         "Axon": Axon,
         "Mitohondrion": Mitohondrion,
         "Vesicles": Vesicles,
         "PSD": PSD,
+        "Vesicles_and_PSD": Vesicles_and_PSD
     }
-    
+
     def generate_lists(self, element_dict, split = True):
         '''
         Generate list or lists of compartment which will be used as order to adding 
@@ -142,17 +169,28 @@ class Form:
             List of lists of compartment order.
             For example: [["PSD","Axon", "PSD", "Mitohondrion", "Vesicles"], ["Mitohondrion", "Vesicles"]]
             "PSD" can be only in the first list
-
         '''
+
         if split:
             element_dict1 = {}
             element_dict2 = {}
             for key in element_dict:
                 if key != "PSD":
+                    # добавить PSD и рядом с везикулой
+                    if key == "Vesicles" and element_dict["Vesicles"] > 0 and element_dict["PSD"] > 0:
+                        num_union_elements = np.random.randint(min(element_dict["Vesicles"], element_dict["PSD"])//2, min(element_dict["Vesicles"], element_dict["PSD"])+1)
+                        
+                        element_dict["Vesicles"] -= num_union_elements
+                        element_dict["PSD"] -= num_union_elements
+                        
+                        element_dict1["Vesicles_and_PSD"] = num_union_elements
+                        
+
                     element_dict1[key] = np.random.randint(0, element_dict[key] + 1)
                     element_dict2[key] = element_dict[key] - element_dict1[key]
+                    
             element_dict1["PSD"] = element_dict["PSD"]
-             
+
             element_list1 = []
             for key in element_dict1:
                 element_list1.extend([key] * element_dict1[key]) 
@@ -171,7 +209,7 @@ class Form:
 
     def createListGeneration(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0, max_count_spam = 5):
         RetList = []
-        
+
         count_PSD = self.get_count(max_count_PSD)
         count_Axon = self.get_count(max_count_Axon)
         count_Vesicles = self.get_count(max_count_Vesicles)
@@ -179,12 +217,12 @@ class Form:
 
         element_dict = {"Axon": count_Axon, "Mitohondrion" : count_Mitohondrion, 
                         "Vesicles": count_Vesicles, "PSD" : count_PSD}
-        
+
         element_list = self.generate_lists(element_dict)
 
         # тех.маска уже добавленных элементов
         UnionMask = np.zeros((*self.sizeImage,3), np.uint8)
-        
+
         # защита на случай если не существует класса element
         try:
             # добавление элементов перед добавлением мембран
@@ -195,7 +233,7 @@ class Form:
                    UnionMask = self.addNewElementIntoImage(RetList, newElement, UnionMask)
                else:
                    raise Exception("No such class exist: " + element)
-            
+
             #cv2.imshow("testMask", UnionMask)
             #cv2.waitKey()
 
@@ -216,14 +254,26 @@ class Form:
             RetList.append(SpamComponents(RetList.copy(), max_count_spam))
 
         except Exception as ex:
+            import traceback
             print(ex)
+            print(f"{type(ex).__name__}\nat line {ex.__traceback__.tb_lineno}\nof {__file__}:\n{ex}")
+            print(''.join(traceback.TracebackException.from_exception(ex).format()))
 
-        return RetList
+        
+        RetListWithoutUnionClasses = []
+        for companent in RetList:
+            if companent.type == "Vesicles_and_PSD":
+                RetListWithoutUnionClasses.append(companent.PSD)
+                RetListWithoutUnionClasses.append(companent.vesicles)
+            else:
+                RetListWithoutUnionClasses.append(companent)
+
+        return RetListWithoutUnionClasses
 
     def createListGenerationWithStartMembrane(self, max_count_PSD = 0, max_count_Axon = 0, max_count_Vesicles = 0, max_count_Mitohondrion = 0, max_count_spam = 5):
-        
+
         RetList = []
-        
+
         count_PSD = self.get_count(max_count_PSD)
         count_Axon = self.get_count(max_count_Axon)
         count_Vesicles = self.get_count(max_count_Vesicles)
@@ -231,7 +281,7 @@ class Form:
 
         element_dict = {"Axon": count_Axon, "Mitohondrion" : count_Mitohondrion, 
                          "Vesicles": count_Vesicles, "PSD" : count_PSD}
-         
+
         element_list = self.generate_lists(element_dict, False)
 
         # DRAW MEMBRANES
@@ -251,10 +301,153 @@ class Form:
 
         return RetList
 
-    def fake_3_layers(self, ListGeneration, counter, dir_save, startIndex, size_overlap = 5):
+    def createBackground(self, size_image, backgroundСolor):
+        layer = np.full((*size_image, 3), backgroundСolor, np.uint8)
+        point_noise = PointsNoise(size_image)
+        layer = point_noise.Draw(layer)
+        return layer
 
+    @staticmethod
+    def GaussianBlurWithOutMask(layer, list_masks):
+        r = PARAM["background_radius_gausse_blur"]
+        G = PARAM["background_sigma_gausse_blur"]
+        kernel = (r*2+1,r*2+1)
+        maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules = list_masks
+        all_masks = maskPSD|maskAxon|maskMembrans|maskMito|maskMitoBoarder|maskVesicules
+
+        # размытия
+        blur_main_layer = cv2.GaussianBlur(layer, kernel, G)
+        blur_main_layer[all_masks==255] = layer[all_masks==255]
+        return blur_main_layer
+
+    @staticmethod
+    def GaussianBlurOneCompanent(layer, component):
+        # индивидуальное размытие внутренности, границы и области вокгуг каждой компоненты 
+        boarder_mask = None
+
+        ############################################## добавить рандому на значения ###########################################
+        input_r = PARAM["main_input_radius_gausse_blur"] + np.random.randint(-1, 1+1)
+        input_G = PARAM["main_input_sigma_gausse_blur"] + random.uniform(-1, 1.00000001)
+
+        output_r = PARAM["main_output_radius_gausse_blur"] + np.random.randint(-1, 1+1)
+        output_G = PARAM["main_output_sigma_gausse_blur"] + random.uniform(-1, 1.00000001)
+
+        big_output_r = PARAM["main_big_output_radius_gausse_blur"] + np.random.randint(-1, 1+1)
+        big_output_G = PARAM["main_big_output_sigma_gausse_blur"] + random.uniform(-1, 1.00000001)
+
+        boarder_r = 2 # возможно лучше не рандомить
+        boarder_G = 1 # возможно лучше не рандомить
+
+        ######################################### возможно внести в параметры ################################
+        center_boarder_overlap = np.random.randint(1,2+1)
+        output_add_zone = np.random.randint(2,4+1)
+        big_output_add_zone = output_add_zone + np.random.randint(1,3+1)
+
+        if component.type == "Axon":
+            boarder_thickness = np.random.randint(2,3+1)
+
+        #сильнее размыть вокруг PSD
+        elif component.type == "PSD":
+            boarder_thickness = np.random.randint(2,3+1)
+            output_add_zone += np.random.randint(1,3+1)
+            big_output_add_zone += np.random.randint(2,4+1)
+
+            output_G += random.uniform(0.75, 1.25)
+            big_output_G += random.uniform(0.75, 1.75)
+
+            output_r += np.random.randint(1,2+1)
+            big_output_r += np.random.randint(3,5+1)
+            
+
+        elif component.type == "Membrane":
+            boarder_thickness = np.random.randint(0,2+1)
+
+            if random.random() < 0.05:
+                output_G += random.uniform(0, 1)
+                big_output_G += random.uniform(0, 2)
+                boarder_G += random.uniform(0, 1)
+                input_G += random.uniform(0, 2)
+            else:
+                output_G -= random.uniform(0, 1.00000001)
+                big_output_G -= random.uniform(0, 1.00000001)
+                boarder_G -= random.uniform(0, 0.5)
+                input_G -= random.uniform(0, 1.00000001)          
+
+        elif component.type=="Vesicles":
+            #сильнее размыть везикулы
+            boarder_thickness = np.random.randint(1,2+1)
+            output_add_zone += np.random.randint(1,3+1)
+            big_output_add_zone += np.random.randint(2,4+1)
+            center_boarder_overlap = np.random.randint(1,6+1)
+
+            output_G += random.uniform(0.5, 1.0)
+            big_output_G += random.uniform(0.75, 1.75)
+            input_G += random.uniform(-0.5, 0.2)
+
+            output_r += np.random.randint(1,2+1)
+            big_output_r += np.random.randint(3,5+1)
+
+        elif component.type == "Mitohondrion":
+            center_boarder_overlap = 10 # off mask
+            input_G += random.uniform(0, 1.5)
+            boarder_G += random.uniform(-0.3, 0.1)
+
+            boarder_mask = component.DrawMaskBoarder(np.zeros((*(layer.shape[:2]),3), np.uint8))
+
+        elif component.type == "SpamComponents":
+            return layer, None
+        else:
+            print(f"ERROR: no type {component.type}")
+
+        # check
+        input_G = max(input_G, 0.5)
+        boarder_G = max(boarder_G, 0.5)        
+        output_G = max(output_G, 0.5)
+        big_output_G = max(big_output_G, 0.5)
+
+        # размытие
+        input_kernel = (input_r*2+1,input_r*2+1)
+        output_kernel = (output_r*2+1,output_r*2+1)
+        big_output_kernel = (big_output_r*2+1,big_output_r*2+1)
+        boarder_kernel = (boarder_r*2+1,boarder_r*2+1) 
+
+        input_blur_layer = cv2.GaussianBlur(layer, input_kernel, input_G)
+        output_blur_layer = cv2.GaussianBlur(layer, output_kernel, output_G)             # сглаживание по интенсивности преграничной области
+        big_output_blur_layer = cv2.GaussianBlur(layer, big_output_kernel, big_output_G) # сильное сглаживание по интенсивности около компоненты
+        boarder_blur_layer = cv2.GaussianBlur(layer, boarder_kernel, boarder_G)
+
+        # маски
+        input_mask_kernel = np.array([[0, 1, 0],
+                                      [1, 1, 1],
+                                      [0, 1, 0]], dtype=np.uint8)
+        mask = component.DrawMask(np.zeros((*(layer.shape[:2]),3), np.uint8))
+        
+        if boarder_mask is None:
+            input_mask = cv2.erode(mask, input_mask_kernel, iterations=boarder_thickness)
+            boarder_mask = mask - input_mask
+        else:
+            input_mask = mask - boarder_mask
+
+        center_boundaries = cv2.erode(boarder_mask, input_mask_kernel, iterations = center_boarder_overlap)
+
+        output_mask_with_component = cv2.dilate(mask, input_mask_kernel, iterations = output_add_zone) 
+        output_mask = output_mask_with_component - mask
+        big_output_mask = cv2.dilate(output_mask_with_component, input_mask_kernel, iterations = big_output_add_zone) - output_mask_with_component
+
+        # paint
+        result_layer = layer.copy()
+        result_layer[input_mask==255]         = input_blur_layer     [input_mask==255]
+        result_layer[output_mask==255]        = output_blur_layer    [output_mask==255]
+        result_layer[big_output_mask==255]    = big_output_blur_layer[big_output_mask==255]
+        result_layer[boarder_mask==255]       = boarder_blur_layer   [boarder_mask==255]
+        result_layer[center_boundaries==255]  = layer                [center_boundaries==255]
+        return result_layer, mask
+
+
+    def fake_3_layers(self, ListGeneration, counter, dir_save, startIndex, size_overlap = 5):
         # список для хранения списков компонетнов предыдущего, текущего и следующего слоёв
         # нужен для того, чтобы 1 и тот же компонент был сдвинут по прямой
+
         ListListGeneration = []
         for i in range(-1, 2):
             ListListGeneration.append([])
@@ -291,9 +484,7 @@ class Form:
     
     def DrawsLayerAndMask(self, ListComponents):
         # рисование слоя и фона к нему
-        layer = np.full((*self.sizeImage, 3), self.backgroundСolor, np.uint8)
-        point_noise = PointsNoise(self.sizeImage)
-        layer = point_noise.Draw(layer)
+        layer = self.createBackground(self.sizeImage, self.backgroundСolor)
 
         # выделяем память под маски
         maskAxon        = np.zeros((*self.sizeImage, 3), np.uint8)
@@ -304,6 +495,7 @@ class Form:
         maskVesicules   = np.zeros((*self.sizeImage, 3), np.uint8)
 
         # рисовка в соответствующее изображение
+        '''
         for component in ListComponents:
             layer = component.DrawLayer(layer)
 
@@ -327,23 +519,39 @@ class Form:
                 pass
             else:
                 print(f"ERROR: no type {component.type}")
+        '''
+        
+        for component in ListComponents:
+            layer = component.DrawLayer(layer)
+            layer, mask_component = self.GaussianBlurOneCompanent(layer, component)
 
+            if component.type == "PSD":
+                maskPSD = maskPSD|mask_component
+            elif component.type == "Axon":
+                maskAxon = maskAxon|mask_component
+            elif component.type == "Membrane":
+                maskMembrans = maskMembrans|mask_component
+            elif component.type == "Mitohondrion":
+                maskMito = maskMito|mask_component
+                maskMitoBoarder = component.DrawMaskBoarder(maskMitoBoarder)
+            elif component.type ==  "Vesicles":
+                maskVesicules = maskVesicules|mask_component
+            elif component.type == "SpamComponents":
+                pass
+            else:
+                print(f"ERROR: no type {component.type}")
 
+        # добавление общего размытия        
+        layer = self.GaussianBlurWithOutMask(layer = layer,
+                                             list_masks = [maskPSD,
+                                                           maskAxon,
+                                                           maskMembrans,
+                                                           maskMito,
+                                                           maskMitoBoarder,
+                                                           maskVesicules]
+                                             )
         # добавление шума
-        r = PARAM["main_radius_gausse_blur"]
-        G = PARAM["main_sigma_gausse_blur"]
-        layer = cv2.GaussianBlur(layer,(r*2+1,r*2+1), G)
-
-        noisy = np.ones((*self.sizeImage, 3), np.uint8)
-        # apply Poisson noise to the array and scale it by the noise parameter
-        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']
-        # apply a 5x5 blur to the noisy image to smooth out high-frequency noise
-        noisy = cv2.blur(noisy,(5,5))
-        # create a second array of ones with the same shape and data type as the first one
-        noisy2 = np.random.poisson(np.ones((*self.sizeImage, 3), np.uint8))*PARAM['poisson_noise'] - PARAM['poisson_noise']
-        # add the two noisy arrays together
-        noisy = noisy + noisy2
-
+        noisy = CreateNoise(self.sizeImage, PARAM['poisson_noise'])
         # add the noise to the image layer
         layer = layer + noisy
         layer = np.clip(layer, 0, 255)
@@ -351,7 +559,7 @@ class Form:
 
         return layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules
 
-    def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
+    def StartGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0, max_count_spam = 5):
         # Цикличная генерация
         ArrLayers = []
 
@@ -359,23 +567,23 @@ class Form:
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
-            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = 5)
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = max_count_spam)
 
             # выбор цвета фона
-            color = uniform_int(
+            color = normal_randint(
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
             self.backgroundСolor = (color, color, color)
 
             layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules = self.DrawsLayerAndMask(ListGeneration)
 
-            ArrLayers.append([layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules])
+            #ArrLayers.append([layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules])
 
             SaveGeneration(layer, maskPSD, maskAxon, maskMembrans, maskMito, maskMitoBoarder, maskVesicules, counter, dir_save, startIndex)
 
         return ArrLayers
 
-    def StartFake3LayerGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0):
+    def StartFake3LayerGeneration(self, count_img = 100, count_PSD = 3, count_Axon = 1, count_Vesicles = 3, count_Mitohondrion = 3, dir_save = None, startIndex=0, max_count_spam = 5):
         # Цикличная генерация
         ArrLayers = []
 
@@ -383,10 +591,10 @@ class Form:
             print(f"{counter + 1} generation img for {count_img}")
 
             # создаю новый список для каждой генерации
-            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = 5)
+            ListGeneration = self.createListGeneration(count_PSD, count_Axon, count_Vesicles, count_Mitohondrion, max_count_spam = max_count_spam)
 
             # выбор цвета фона для 1 пачки
-            color = uniform_int(
+            color = normal_randint(
                 PARAM['main_color_mean'],
                 PARAM['main_color_std'])
             self.backgroundСolor = (color, color, color)

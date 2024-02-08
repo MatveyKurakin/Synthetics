@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int, normal_randint
 import math
 
 if __name__ == "__main__":
@@ -28,7 +28,7 @@ class Membrane:
         self.sheathTearMap = None
         self.thickeningOfMembraneShellMap = None
 
-        self.typeLine = 0 # 0 -full boarder, 1 - clear center, 2 - clear point in boarder
+        self.typeLine = 0 # 0 -full boarder, 1 - clear center, 2 - clear point in boarder   # 1 type отключен, так как выглядит не естественно 
         self.sizeInputLine = 0 # size input line
 
         self.Points = []
@@ -36,7 +36,7 @@ class Membrane:
         #для копий мембран
         self.StopList = None
         #для того, чтобы помниит сколько первых компонентов попало в генерацию, а сколько последних нет
-        self.componentsList = compartmentsList.copy()     # список хранит только ссылки на те классы, которые используются для построения мембран
+        self.componentsList = compartmentsList     # список хранит только ссылки на те классы, которые используются для построения мембран
         self.imageSize = sizeImage
 
         self.SetStartValue()
@@ -146,8 +146,8 @@ class Membrane:
         elif choice < 8:
             self.typeLine = 2
         else:
-            self.typeLine = 1           # первый тип линии сильно растворяется, поэтому его вероятность появления снижена
-
+            #self.typeLine = 1           # первый тип линии сильно растворяется, поэтому его вероятность появления снижена
+            self.typeLine = 2           # отключен, так как выглядит не естественно 
         #self.typeLine = 1
         
         self.sizeInputLine = np.random.randint(0, PARAM['membrane_thickness_mean'])
@@ -156,13 +156,11 @@ class Membrane:
             PARAM['membrane_thickness_mean'],
             PARAM['membrane_thickness_std'])
 
-
-        self.color = uniform_int(PARAM['membrane_color_mean'],
-                                 PARAM['membrane_color_std'])
+        self.color = normal_randint(PARAM['membrane_color_mean'],
+                                    PARAM['membrane_color_std'])
 
         if self.typeLine == 1:
             self.sizeInputLine = self.sizeInputLine + 1
-            self.color -= 15
 
         if self.typeLine == 2:
             self.sizeLine -= np.random.randint(0,2)
@@ -384,7 +382,10 @@ class Membrane:
         labels = input_labels.copy()
 
         for compartment in compartments:
-            if compartment.type == "PSD":
+            if compartment.type == "PSD" or compartment.type == "Vesicles_and_PSD":
+                if compartment.type == "Vesicles_and_PSD":
+                    compartment = compartment.PSD
+
                 center = compartment.centerPoint
                 startPoint = compartment.PointsWithOffset[0]
                 normalPoint = compartment.PointsWithOffset[1]
@@ -567,9 +568,9 @@ class Membrane:
 
                 Brush((255,255,255)).FullBrush(mask_axon, Points)
 
-                kernel = np.array([[1, 1, 1],
+                kernel = np.array([[0, 1, 0],
                                    [1, 1, 1],
-                                   [1, 1, 1]], dtype=np.uint8)
+                                   [0, 1, 0]], dtype=np.uint8)
 
                 mask_axon_with_membrane = cv2.dilate(mask_axon,kernel,iterations = 2)
 
@@ -640,9 +641,9 @@ class Membrane:
                 print("thickeningOfMembraneShellMap no added:", number_thickening_zone - count, "zones")
 
     # добавляет небольшие области с расслоением мембран
-    def SheathTear(self, shape, mask):
+    def SheathTear(self, mask):
         if self.sheathTearMap is None:
-            self.CreareShellsMap(shape)
+            self.CreareShellsMap(mask.shape)
 
         mask_sheath_tear = mask & self.sheathTearMap
 
@@ -652,12 +653,13 @@ class Membrane:
 
         mask_sheath_tear_deleted = cv2.erode(mask_sheath_tear,kernel,iterations = 2)
         mask_sheath_tear_add = cv2.dilate(mask_sheath_tear,kernel,iterations = 2)
+        return (mask | mask_sheath_tear_add) - mask_sheath_tear_deleted
+        
+        
 
-        return mask_sheath_tear_add, mask_sheath_tear_deleted
-
-    def ThickeningOfMembraneShell(self, shape, mask):
+    def ThickeningOfMembraneShell(self, mask):
         if self.thickeningOfMembraneShellMap is None:
-            self.CreareShellsMap(shape)
+            self.CreareShellsMap(mask.shape)
 
         mask_thickening_shell = mask & self.thickeningOfMembraneShellMap
 
@@ -665,7 +667,7 @@ class Membrane:
                            [1, 1, 1],
                            [0, 1, 0]], dtype=np.uint8)
 
-        mask_sheath_tear_add = cv2.dilate(mask_thickening_shell,kernel,iterations = 8)
+        self.mask_sheath_tear_add = cv2.dilate(mask_thickening_shell,kernel,iterations = np.random.randint(5, 7+1))
 
         #cv2.imshow("self.thickeningOfMembraneShellMap", self.thickeningOfMembraneShellMap)
         #cv2.imshow("self.sheathTearMap", self.sheathTearMap)
@@ -677,9 +679,9 @@ class Membrane:
 
         #cv2.waitKey()
 
-        return mask_sheath_tear_add
+        return self.mask_sheath_tear_add
 
-    def Draw(self, image):
+    def Draw(self, image, use_rand_color = False):
         # Основная рисующая фукция
 
         draw_image = image.copy()
@@ -733,11 +735,9 @@ class Membrane:
             mask_erode_Axon = cv2.erode(maskAxon_dilate, kernel, iterations = 7 - self.sizeInputLine)
             maskAxon_dilate = maskAxon_dilate - mask_erode_Axon
 
-        if self.typeLine == 0:
-            mask_sheath_tear_add, mask_sheath_tear_deleted = self.SheathTear(image.shape, mask_dilate)
-            mask_dilate = (mask_dilate | mask_sheath_tear_add) - mask_sheath_tear_deleted
-
-            mask_sheath_tear_add = self.ThickeningOfMembraneShell(image.shape, mask_dilate)
+        elif self.typeLine == 0:
+            mask_dilate = self.SheathTear(mask_dilate)
+            self.ThickeningOfMembraneShell(mask_dilate)
 
         # Добавление к изображению (маске) основных клеточных мембран
         draw_image[mask_dilate[:,:] == 255] = self.nowColor
@@ -747,27 +747,73 @@ class Membrane:
         draw_image[maskAxon_dilate[:,:] == 255] = self.nowColor
         draw_image[maskAxonOreol[:,:] == 255] = self.nowColor
 
+        if use_rand_color:
+            mask_membrane = mask_dilate|maskPSD_dilate
+            if self.typeLine == 0:
+                mask_membrane = mask_membrane
+
+            for i in range(500):
+                temp_mask = np.zeros(draw_image.shape[0:2], np.uint8)
+                rx = 2 * np.random.randint(0, 10) + 1
+                ry = 2 * np.random.randint(0, 10) + 1
+                y = np.random.randint(draw_image.shape[0])
+                x = np.random.randint(draw_image.shape[1])
+
+                cv2.ellipse(img = temp_mask,
+                            center = [x, y],
+                            axes = (rx, ry),
+                            color = 255,
+                            thickness = -1,
+                            angle = np.random.randint(0, 180),
+                            startAngle = 0,
+                            endAngle = 360)
+
+                change_color_mask = temp_mask&mask_membrane
+
+                #cv2.imshow("mask", change_color_mask)
+                #cv2.waitKey()
+
+                min_color = PARAM['membrane_color_mean'] - PARAM['membrane_color_std']
+                max_color = PARAM['membrane_color_mean'] + PARAM['membrane_color_std']
+
+                # чтобы не было границ пятнами нужно ограничение от базового цвета
+                change_color_val_max = 15
+                change_color = min(max(self.nowColor[0] + int(random.gauss(0, change_color_val_max/3)), min_color), max_color)
+
+                draw_image[change_color_mask==255]= (change_color, change_color, change_color)
+
+        # в конце добавлять размазанные регионы
         if self.typeLine == 0:
-            change_color = self.nowColor[0] + self.changeColorVal
-            draw_image[mask_sheath_tear_add[:,:] == 255] = (change_color, change_color, change_color)
+            change_color = self.nowColor[0]+self.changeColorVal
+            if use_rand_color:
+                # расширение размазать, а маску немного подправить
+                mask_sheath_tear_add_read = cv2.erode(self.mask_sheath_tear_add, kernel, iterations=2)
+                draw_image[mask_sheath_tear_add_read==255] = (change_color, change_color, change_color)
+                r = np.random.randint(3 ,4+1)*2+1
+                blur_image = cv2.GaussianBlur(draw_image, (r,r), random.uniform(4, 6.5))
+                
+                draw_image[self.mask_sheath_tear_add==255] = blur_image[self.mask_sheath_tear_add==255]
+            else:
+                mark_mask_sheath_tear_add = cv2.erode(self.mask_sheath_tear_add, kernel, iterations=2)
+                draw_image[mark_mask_sheath_tear_add==255] = (change_color, change_color, change_color)
 
         return draw_image
 
     def setDrawParam(self):
         self.nowColor = (self.color, self.color, self.color)
-        self.changeColorVal = min(np.random.randint(5, 120-self.color+1), 20)
+        self.changeColorVal = np.random.randint(-10, 20+1)
 
     def setMaskParam(self):
         self.nowColor = (255,255,255)
         self.changeColorVal = 0
 
     def DrawLayer(self, image):
-        return self.Draw(image)
+        self.setDrawParam()
+        return self.Draw(image, use_rand_color=True)
 
     def DrawMask(self, image):
         self.setMaskParam()
         mask = self.Draw(image)
-        self.setDrawParam()
 
         #kernel = np.array([[0, 0, 0],
         #                   [1, 1, 0],
@@ -800,6 +846,7 @@ class Membrane:
                            [0, 1, 0]], dtype=np.uint8)
 
         draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+        draw_image = cv2.erode(draw_image,kernel,iterations = 2)
 
         return draw_image
 

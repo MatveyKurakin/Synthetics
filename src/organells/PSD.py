@@ -10,12 +10,11 @@ if __name__ == "__main__":
 from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
-from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int, normal_randint
 
 WHITE = (255,255,255)
 
 class PSD(Location):
-    
     def __init__(self, ThreePoints = None):
         super().__init__()
         self.type = "PSD"
@@ -35,31 +34,33 @@ class PSD(Location):
             uid
         """
 
-        color = uniform_int(
-            PARAM['psd_back_color_mean'], 
+        color = normal_randint(
+            PARAM['psd_back_color_mean'],
             PARAM['psd_back_color_std'])
-        
-        addcolor = uniform_int(
-            PARAM['psd_addcolor_mean'], 
+
+        addcolor = normal_randint(
+            PARAM['psd_addcolor_mean'],
             PARAM['psd_addcolor_std'])
-        
-        centerline_color = uniform_int(
-            PARAM['psd_centerline_color_mean'], 
+
+        centerline_color = normal_randint(
+            PARAM['psd_centerline_color_mean'],
             PARAM['psd_centerline_color_std'])
-        
-        self.colors = {'sandwich' : color, 'center line' : centerline_color, 'pallium': addcolor}
-        
+
+        self.colors = {'sandwich' : (color, color, color),
+                       'center line' : (centerline_color, centerline_color, centerline_color),
+                       'pallium': (addcolor, addcolor, addcolor)}
+
         self.pens = {
                      'sandwich' : Pen(self.colors['sandwich']),    # карандаш для темной линии PSD
                      'center'   : Pen(self.colors['center line']), # карандаш для центральной линии
                      'brush'    : Brush(self.colors['pallium'])    # кисть для заливки затемненной области (паллиума)
                      }
-        
-        self.length = {'hmin': 15, 'hmax': 30}
+
+        self.length = {'hmin': 15, 'hmax': 40}
 
         self.lenPSD = 0
         self.typeGen = 0       # 0 - with center line, 1 - full fill PSD
-        
+
         if np.random.randint(0,10) == 0:
             self.typeGen = 1
             self.colors['pallium'] = self.colors['sandwich']
@@ -69,10 +70,8 @@ class PSD(Location):
             self.Create()
         else:
             self.CreateThreePoints(ThreePoints)
-        
 
     def Create(self):
-
         lenPSD_05 = np.random.randint(self.length['hmin'], self.length['hmax'] + 1)
         normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * self.length['hmin']//2
 
@@ -91,10 +90,10 @@ class PSD(Location):
         new_psd = PSD()
         new_psd.colors = self.colors.copy()
         new_psd.lineSize = self.lineSize.copy()
-       
+
         new_psd.lenPSD = self.lenPSD
         new_psd.typeGen = self.typeGen
-        
+
         # copy location data
         new_psd.centerPoint = self.centerPoint.copy()
         new_psd.Points = self.Points.copy()
@@ -110,12 +109,11 @@ class PSD(Location):
 
     def CreateThreePoints(self, ThreePoints):
         # в 1 из 10 случаев полностью черная, в 9/10 с полосой внутри
-        
         if self.typeGen == 1:
             self.lineSize = {'top': 2, 'center': np.random.randint(2, 3+1), 'bottom': 2}
         else:
             self.lineSize = {'top': np.random.randint(2, 4+1), 'center': np.random.randint(1, 2+1), 'bottom': 2}
-            
+
         point1 = np.array(ThreePoints[0])
         normal = np.array(ThreePoints[1])
         point2 = np.array(ThreePoints[2])
@@ -125,10 +123,10 @@ class PSD(Location):
         # центр - точка между краями
         centerPoint = (point1 + point2)//2
         lenPSD = np.linalg.norm(point1 - point2)
-        
+
         self.centerPoint = centerPoint
         self.lenPSD = lenPSD
-        
+
         vec = point2 - centerPoint
         vec = 2 * vec / lenPSD
 
@@ -155,20 +153,19 @@ class PSD(Location):
         # смещение 1 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
         sizeOffsetY_1 = - (self.lineSize['bottom'] + self.lineSize['center']) + 1
         #главная темная линия PSD
-        p1_1 = point1 + (0, sizeOffsetY_1 + 1) 
+        p1_1 = point1 + (0, sizeOffsetY_1 + 1)
         c_1  = normal + (0, sizeOffsetY_1)
-        p2_1 = point2 + (0, sizeOffsetY_1 + 1) 
+        p2_1 = point2 + (0, sizeOffsetY_1 + 1)
 
         self.Points = self.Points + [p1_1.tolist(), c_1.tolist(), p2_1.tolist()]
-        
 
         ########### 8-12 PSD-line (цвет PSD над выпуклостью)
         # смещение 2 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
         sizeOffsetY_2 = (self.lineSize['top'] + self.lineSize['center'])
         #главная темная линия PSD
-        p1_2 = point1 + (0, sizeOffsetY_2 - 1) 
-        c_2  = normal + (0, sizeOffsetY_2) 
-        p2_2 = point2 + (0, sizeOffsetY_2 - 1) 
+        p1_2 = point1 + (0, sizeOffsetY_2 - 1)
+        c_2  = normal + (0, sizeOffsetY_2)
+        p2_2 = point2 + (0, sizeOffsetY_2 - 1)
 
         self.Points = self.Points + [p1_2.tolist(), c_2.tolist(), p2_2.tolist()]
 
@@ -194,9 +191,9 @@ class PSD(Location):
         arr = np.asarray(rangeList)
         offset = 20
         minxy = np.amin(arr, axis=0)
-        minxy = np.maximum(np.zeros(2), minxy - offset).astype(np.int)
+        minxy = np.maximum(np.zeros(2), minxy - offset).astype(int)
         maxxy = np.amax(arr, axis=0)
-        maxxy = np.minimum(np.asarray([draw_image.shape[0], draw_image.shape[1]]),maxxy + offset).astype(np.int)
+        maxxy = np.minimum(np.asarray([draw_image.shape[0], draw_image.shape[1]]),maxxy + offset).astype(int)
         add = np.random.randint(2,3)
         r = PARAM["main_radius_gausse_blur"] + add
         G = PARAM["main_sigma_gausse_blur"] + add + 0.5
@@ -221,14 +218,14 @@ class PSD(Location):
         draw_image = image.copy()
 
         # основной алгоритм - нарисовать пятно, нарисовать линии PSD (над и под), нарисовать внутреннюю линию
-        
+
         # пятно
         rangeList = self.PointsWithOffset[9:9+6]
         self.pens['brush'].FullBrush(draw_image, rangeList)
 
         #if draw_layer:
         self.addedBlur(draw_image, rangeList)
-        
+
         # рисование нижней линии 
         rangeList_up = self.PointsWithOffset[3: 3+3]
         small_spline_line(draw_image, rangeList_up, self.pens['sandwich'].color, self.lineSize['bottom'])
@@ -238,7 +235,7 @@ class PSD(Location):
         # рисование внутренней линии
         rangeList_input = self.PointsWithOffset[0: 0+3]
         small_spline_line(draw_image, rangeList_input, self.pens['center'].color, self.lineSize['center'])
-        
+
         return draw_image
 
     def DrawLayer(self, image):
@@ -259,12 +256,12 @@ class PSD(Location):
             kernel = np.array([[0, 1, 0],
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 5)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 30)
         else:
             kernel = np.array([[0, 1, 0],
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 15)
 
             #cv2.imshow("sdad", draw_image)
             #cv2.waitKey()
@@ -303,20 +300,22 @@ def testPSD():
 
         psd.NewPosition(256,256)
 
+        #psd.setAngle(-psd.angle)
+
         print("centerPoint", psd.centerPoint)
         print("Points", psd.Points)
         print("PointsWithOffset", psd.PointsWithOffset)
 
         print("typeGen", psd.typeGen)
 
-        img1 = psd.Draw(img)
+        img1 = psd.DrawLayer(img)
 
         mask = np.zeros((512,512,3), np.uint8)
 
         tecnicalMask = np.zeros((512,512,3), np.uint8)
 
         mask = psd.DrawMask(mask)
-        img2 = psd.Draw(img)
+        img2 = psd.DrawLayer(img)
         tecnicalMask = psd.DrawUniqueArea(tecnicalMask)
 
         cv2.imshow("img", img1)
@@ -329,7 +328,7 @@ def testPSD():
         Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
 
         noisy = np.ones(img1.shape[:2], np.uint8)
-        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']/2
 
         Img = Img + cv2.merge([noisy, noisy, noisy])
         Img[Img < 0] = 0
@@ -411,7 +410,7 @@ def testPSD():
         Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
 
         noisy = np.ones(img1.shape[:2], np.uint8)
-        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']/2
 
         Img = Img + cv2.merge([noisy, noisy, noisy])
         Img[Img < 0] = 0

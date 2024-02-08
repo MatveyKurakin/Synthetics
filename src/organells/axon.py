@@ -10,7 +10,7 @@ from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
 
-from settings import PARAM, DEBUG_MODE, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_int, normal_randint
 
 class Axon(Location):
     def __init__(self):
@@ -22,7 +22,7 @@ class Axon(Location):
         self.innerTexture = None
         self.bubbleTexture = None
 
-        color = uniform_int(
+        color = normal_randint(
             PARAM['axon_shell_color_mean'],
             PARAM['axon_shell_color_std'])
         self.shell_color = (color, color, color)
@@ -80,7 +80,7 @@ class Axon(Location):
 
         self.Points = []
 
-        self.numberPoints = np.random.randint(7, 15)
+        self.numberPoints = np.random.randint(7, 14+1)
 
         if self.typeGen == 0:
             if (min_r == 0):
@@ -119,7 +119,7 @@ class Axon(Location):
     def CreateNewTexture(self, image):
         self.innerTexture = image
 
-        color = uniform_int(
+        color = normal_randint(
             PARAM['main_color_mean'],
             PARAM['main_color_std'])
         # backgroundСolor = (color, color, color) # выбор цвета фона
@@ -142,7 +142,7 @@ class Axon(Location):
         G = (2 * r + 1) / 3
         self.bubbleTexture = cv2.GaussianBlur(self.bubbleTexture,(r*2+1,r*2+1), G)
 
-        t = uniform_int(
+        t = normal_randint(
             PARAM['axon_back_color_diff_mean'],
             PARAM['axon_back_color_diff_std'])
 
@@ -245,9 +245,16 @@ class Axon(Location):
         sublist = self.PointsWithOffset[1: self.sublistNumber+1+1]
         spline_line(draw_image, sublist, (255,255,255), self.nowAddPen.sizePen, is_closed = False)
 
-        if small_mode == False:
-            kernel = np.ones((5, 5), 'uint8')
+        kernel = np.array([[0, 1, 1, 1, 0],
+                           [1, 1, 1, 1, 1],
+                           [1, 1, 1, 1, 1],
+                           [1, 1, 1, 1, 1],
+                           [0, 1, 1, 1, 0]], dtype=np.uint8)
+
+        if small_mode:
             draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+        else:
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 4)
 
         ret_image = ret_image + draw_image
         ret_image[ret_image[:,:,:] > 255] = 255
