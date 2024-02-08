@@ -54,6 +54,8 @@ class PSD(Location):
                      'center'   : Pen(self.colors['center line']), # карандаш для центральной линии
                      'brush'    : Brush(self.colors['pallium'])    # кисть для заливки затемненной области (паллиума)
                      }
+        
+        self.length = {'hmin': 15, 'hmax': 30}
 
         self.lenPSD = 0
         self.typeGen = 0       # 0 - with center line, 1 - full fill PSD
@@ -71,11 +73,8 @@ class PSD(Location):
 
     def Create(self):
 
-        min_len_05 = 15
-        max_len_05 = 30
-
-        lenPSD_05 = np.random.randint(min_len_05, max_len_05 + 1)
-        normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * min_len_05//2
+        lenPSD_05 = np.random.randint(self.length['hmin'], self.length['hmax'] + 1)
+        normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * self.length['hmin']//2
 
         # Coздание первой основной точки
         point1 = [-lenPSD_05,0]
@@ -117,21 +116,21 @@ class PSD(Location):
         else:
             self.lineSize = {'top': np.random.randint(2, 4+1), 'center': np.random.randint(1, 2+1), 'bottom': 2}
             
-        point1 = ThreePoints[0]
-        normal = ThreePoints[1]
-        point2 = ThreePoints[2]
+        point1 = np.array(ThreePoints[0])
+        normal = np.array(ThreePoints[1])
+        point2 = np.array(ThreePoints[2])
 
         # приведение входных точек в горизонтальный вид и в начало координат, с запоминанием исходного местоположения
 
         # центр - точка между краями
-        centerPoint = [(point1[0] + point2[0])//2, (point1[1] + point2[1])//2]
-        lenPSD = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+        centerPoint = (point1 + point2)//2
+        lenPSD = np.linalg.norm(point1 - point2)
         
         self.centerPoint = centerPoint
         self.lenPSD = lenPSD
         
-        vec = [point2[0] - centerPoint[0], point2[1] - centerPoint[1]]
-        vec = [2*vec[0]/lenPSD, 2*vec[1]/lenPSD]
+        vec = point2 - centerPoint
+        vec = 2 * vec / lenPSD
 
         if vec[0] != 0:
             #print("\t\ttype 1")
@@ -140,7 +139,7 @@ class PSD(Location):
             #print("\t\ttype 2")
             self.angle = math.degrees(math.pi/2 - math.atan(vec[0]/vec[1]))
 
-        normal_y = math.sqrt((centerPoint[0] - normal[0])**2 + (centerPoint[1] - normal[1])**2)
+        normal_y = np.linalg.norm(centerPoint - normal)
 
         ########### 0-2 main-line (цвет PSD или цвет межклеточный)
         # Добавление первой основной точки
@@ -154,38 +153,32 @@ class PSD(Location):
 
         ########### 3-7 PSD-line (цвет PSD под выпуклостью)
         # смещение 1 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
-        sizeOffsetY_1 = - (self.lineSize['bottom'] + self.lineSize['center'])+1
+        sizeOffsetY_1 = - (self.lineSize['bottom'] + self.lineSize['center']) + 1
         #главная темная линия PSD
-        p1_1 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_1+1)]
-        c_1  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_1)]
-        p2_1 = [self.Points[2][0], int(self.Points[2][1] + sizeOffsetY_1+1)]
+        p1_1 = point1 + (0, sizeOffsetY_1 + 1) 
+        c_1  = normal + (0, sizeOffsetY_1)
+        p2_1 = point2 + (0, sizeOffsetY_1 + 1) 
 
-        self.Points.append(p1_1)
-        self.Points.append(c_1)
-        self.Points.append(p2_1)
-        #############
+        self.Points = self.Points + [p1_1.tolist(), c_1.tolist(), p2_1.tolist()]
+        
 
         ########### 8-12 PSD-line (цвет PSD над выпуклостью)
         # смещение 2 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
         sizeOffsetY_2 = (self.lineSize['top'] + self.lineSize['center'])
         #главная темная линия PSD
-        p1_2 = [self.Points[0][0], int(self.Points[0][1] + sizeOffsetY_2-1)]
-        c_2  = [self.Points[1][0], int(self.Points[1][1] + sizeOffsetY_2)]
-        p2_2 = [self.Points[2][0], int(self.Points[2][1] + sizeOffsetY_2-1)]
+        p1_2 = point1 + (0, sizeOffsetY_2 - 1) 
+        c_2  = normal + (0, sizeOffsetY_2) 
+        p2_2 = point2 + (0, sizeOffsetY_2 - 1) 
 
-        self.Points.append(p1_2)
-        self.Points.append(c_2)
-        self.Points.append(p2_2)
+        self.Points = self.Points + [p1_2.tolist(), c_2.tolist(), p2_2.tolist()]
 
         # Отрисовка замкнутой области для затемнения
         sizeOffset = 10
         sizeOffset2 = 5
-        self.Points.append(self.Points[3])
-        self.Points.append(self.Points[4])
-        self.Points.append(self.Points[5])
-        self.Points.append([self.Points[8][0], int(self.Points[8][1] + sizeOffset2)])
-        self.Points.append([self.Points[7][0], int(self.Points[7][1] + sizeOffset)])
-        self.Points.append([self.Points[6][0] , int(self.Points[6][1] + sizeOffset2)])
+        self.Points = self.Points + [self.Points[3], self.Points[4], self.Points[5]]
+        self.Points.append((p2_2 + (0, sizeOffset2)).tolist())
+        self.Points.append(( c_2 + (0, sizeOffset )).tolist())
+        self.Points.append((p1_2 + (0, sizeOffset2)).tolist())
 
         self.numberPoints = len(self.Points)
 
