@@ -6,7 +6,7 @@ Created on Thu Mar  9 00:55:41 2023
 """
 import numpy as np
 import cv2
-from settings import PARAM, uniform_int
+from settings import PARAM, uniform_int, normal_randint
 import math
 
 class PointsNoise:
@@ -18,9 +18,9 @@ class PointsNoise:
     def Draw(self, image):
         draw_image = image.copy()
         # число линий
-        count = np.random.randint(100, 400+1)
+        count = np.random.randint(200, 500+1)
         # максимальная длина линий
-        maxdist = np.random.randint(4, 40, 4)
+        maxdist = np.random.randint(5, 45, 4)
 
         #  разбиваем область на 4 части в каждой будет свое направление линий
         xs = np.random.randint(0, self.sizeImage[0]/2, count)
@@ -65,12 +65,12 @@ class PointsNoise:
 
         for i in range(0, count):    
             # c = np.random.randint(95, 140)
-            c = uniform_int(
+            c = normal_randint(
                 PARAM['main_noise_color_mean'],
                 PARAM['main_noise_color_std'])
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
 
-        count = np.random.randint(200, 1000+1)
+        count = np.random.randint(300, 1000+1)
         # максимальная длина линий
         xs = np.random.randint(0, self.sizeImage[0], count)
         ys = np.random.randint(0, self.sizeImage[1], count)
@@ -80,7 +80,7 @@ class PointsNoise:
         ye = np.minimum(np.ones(count) * self.sizeImage[1], np.maximum(np.zeros(count),ys + yd)).astype(np.int)
         w = np.random.randint(1, PARAM['main_noise_w'], count)
         for i in range(0, count):    
-            c = uniform_int(
+            c = normal_randint(
                 PARAM['main_noise_color_mean'],
                 PARAM['main_noise_color_std'])
             draw_image = cv2.line(draw_image, [xs[i], ys[i]], [xe[i], ye[i]], (c,c,c) , w[i])
@@ -124,6 +124,8 @@ class SpamComponents:
         self.sizeOverlap = 1
         self.numberSpam = numberSpam
         self.compartmentsList = compartmentsList
+        
+        self.mask_spam = None
 
     def CreateLine(self, len_line, max_y = 10, len_segment_min = 10, len_segment_max = 20):
         now_pos = -len_line//2
@@ -163,7 +165,7 @@ class SpamComponents:
 
         angle = np.random.randint(0, 180)
 
-        radius = np.random.randint(7, 20, 2)
+        radius = np.random.randint(7, 22, 2)
 
         cv2.ellipse(img = image,
                     center = (x, y),
@@ -178,7 +180,7 @@ class SpamComponents:
                     center = (x, y),
                     axes = radius,
                     color = (255, 255,255),
-                    thickness = 2+1,
+                    thickness = size_line,
                     angle = angle,
                     startAngle = 0,
                     endAngle = 360)
@@ -199,7 +201,7 @@ class SpamComponents:
         y = np.random.randint(45, image.shape[0] - 45)
 
         # длина линии
-        len_line = np.random.randint(20, 90 + 1)
+        len_line = np.random.randint(20, 180 + 1)
 
         max_y = 10
 
@@ -208,7 +210,7 @@ class SpamComponents:
 
         work_points = self.CreateLine(len_line, max_y, len_segment_min, len_segment_max)
 
-        height_line = np.random.randint(3, 10+1)
+        height_line = np.random.randint(2, 10+1)
 
         # смещение в центр паттерна
         out_list = np.array([[int(round(work_points[i][0] + x)), int(round(work_points[i][1] + y))] for i in range(len(work_points))])
@@ -219,10 +221,10 @@ class SpamComponents:
         mask[mask[:,:,0] > 0] = (255,255,255)
         image[mask[:,:,0] == 255] = (color, color, color)
 
-        kernel = np.array([[0, 1, 0],
-                           [1, 1, 1],
-                           [0, 1, 0]], dtype=np.uint8)
-        mask = cv2.dilate(mask, kernel, iterations = 3)
+        #kernel = np.array([[0, 1, 0],
+        #                  [1, 1, 1],
+        #                   [0, 1, 0]], dtype=np.uint8)
+        #mask = cv2.dilate(mask, kernel, iteration)
         return mask
 
     def DrawType3(self, image, mask):
@@ -280,10 +282,10 @@ class SpamComponents:
         mask[mask[:,:,0] > 0] = (255,255,255)
         image[mask[:,:,0] == 255] = (color, color, color)
 
-        kernel = np.array([[0, 1, 0],
-                           [1, 1, 1],
-                           [0, 1, 0]], dtype=np.uint8)
-        mask = cv2.dilate(mask, kernel, iterations = 3)
+        #kernel = np.array([[0, 1, 0],
+        #                   [1, 1, 1],
+        #                   [0, 1, 0]], dtype=np.uint8)
+        #mask = cv2.dilate(mask, kernel, iterations = size_line+1)
 
         return mask
 
@@ -294,11 +296,11 @@ class SpamComponents:
         random_val = np.random.randint(0, 25)
         # наиболее частые - это небольшие кружочки и полые полосочки
         # темные кружочки и линии - очень редкие
-        if random_val < 10:
+        if random_val < 5:
             type_pattern = 1    # type1 - small ellipse
-        elif random_val < 20:
+        elif random_val < 22:
             type_pattern = 2    # type2 - line
-        elif random_val == 20:
+        elif random_val == 22:
             type_pattern = 3    # type3 - black point
         else:
             type_pattern = 4    # type4 - black line
@@ -339,7 +341,7 @@ class SpamComponents:
             elif component.type == "Vesicles" or component.type == "PSD":
                 masks_classes_temp = np.zeros(image.shape, np.uint8)
                 masks_classes_temp = component.DrawUniqueArea(masks_classes_temp) # не рисовать рядом (small_mode = False)
-                masks_classes_temp = cv2.dilate(masks_classes_temp, kernel, iterations = 25) # вообще даже близко не рисовать
+                masks_classes_temp = cv2.dilate(masks_classes_temp, kernel, iterations = 30) # вообще даже близко к ним не рисовать
                 masks_classes = masks_classes | masks_classes_temp
 
             elif component.type == "Axon":
@@ -355,18 +357,22 @@ class SpamComponents:
         iter = 0
         max_iter = 10000
         count = 0
+        
+        self.mask_spam = np.zeros(image.shape, np.uint8)
 
         while count < self.numberSpam and iter < max_iter:
             image_clone = image.copy()
 
-            drawColor = uniform_int(PARAM['spam_color_mean'],
-                                    PARAM['spam_color_std'])
+            drawColor = normal_randint(PARAM['spam_color_mean'],
+                                       PARAM['spam_color_std'])
 
             temp_image, temp_mask = self.DrawAny(image_clone, drawColor, sizeLine)
 
             if all(masks_classes[temp_mask[:,:,0] == 255, 0] == 0):
-                masks_classes = masks_classes | temp_mask
+                # добавляем расширенную маску в общую
+                masks_classes = masks_classes | cv2.dilate(temp_mask, kernel, iterations = 3)
                 image = temp_image
+                self.mask_spam = self.mask_spam|temp_mask
                 count += 1
 
             iter += 1
@@ -374,4 +380,26 @@ class SpamComponents:
         if iter == max_iter:
             print("I can't create spam : only", count, "is",  self.numberSpam)
 
+        #cv2.imshow("spam_mask", self.mask_spam)
+        #cv2.imshow("image", image)
+        #cv2.waitKey()
+
         return image
+        
+    def DrawMask(self, image):
+        if self.mask_spam:
+            return self.mask_spam
+        else:
+            return
+        
+def CreateNoise(size_image, poisson_noise):
+    noisy = np.ones((*size_image, 3), np.uint8)
+    # apply Poisson noise to the array and scale it by the noise parameter
+    noisy = np.random.poisson(noisy)*poisson_noise - poisson_noise
+    # apply a 5x5 blur to the noisy image to smooth out high-frequency noise
+    noisy = cv2.blur(noisy,(5,5))
+    # create a second array of ones with the same shape and data type as the first one
+    noisy2 = np.random.poisson(np.ones((*size_image, 3), np.uint8))*poisson_noise - poisson_noise
+    # add the two noisy arrays together
+    noisy = noisy + noisy2
+    return noisy

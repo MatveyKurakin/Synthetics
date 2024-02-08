@@ -138,6 +138,13 @@ def uniform_float(mean, std):
 def uniform_int(mean, std):
     return int(random.uniform(mean - std, mean + std) + 0.5)
 
+
+def normal_randint(mean, std):
+    vals = int(random.gauss(mean, std/3)+0.495)
+    return 0 if vals < 0 else 255 if vals > 255 else vals
+
+
+
 #def normal_random_float(mean, std):
 #    return np.random.normal(mean, std)
 

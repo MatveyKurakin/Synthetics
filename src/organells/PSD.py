@@ -10,7 +10,7 @@ if __name__ == "__main__":
 from src.organells.location import *
 from src.container.spline import *
 from src.container.subclass import *
-from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int
+from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int, normal_randint
 
 
 class PSD(Location):
@@ -37,17 +37,17 @@ class PSD(Location):
         d     d
         """
 
-        color = uniform_int(
+        color = normal_randint(
             PARAM['psd_back_color_mean'],
             PARAM['psd_back_color_std'])
         self.color = (color, color, color)
 
-        addcolor = uniform_int(
+        addcolor = normal_randint(
             PARAM['psd_addcolor_mean'],
             PARAM['psd_addcolor_std'])
         self.addColor = (addcolor, addcolor, addcolor)
 
-        centerline_color = uniform_int(
+        centerline_color = normal_randint(
             PARAM['psd_centerline_color_mean'],
             PARAM['psd_centerline_color_std'])
         self.centerline_color = (centerline_color, centerline_color, centerline_color)
@@ -70,7 +70,7 @@ class PSD(Location):
     def Create(self):
 
         min_len_05 = 15
-        max_len_05 = 30
+        max_len_05 = 40
 
         lenPSD_05 = np.random.randint(min_len_05, max_len_05 + 1)
         lenPSD = 2 * lenPSD_05
@@ -281,12 +281,12 @@ class PSD(Location):
             kernel = np.array([[0, 1, 0],
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 5)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 30)
         else:
             kernel = np.array([[0, 1, 0],
                                [1, 1, 1],
                                [0, 1, 0]], dtype=np.uint8)
-            draw_image = cv2.dilate(draw_image,kernel,iterations = 2)
+            draw_image = cv2.dilate(draw_image,kernel,iterations = 15)
 
             #cv2.imshow("sdad", draw_image)
             #cv2.waitKey()
@@ -326,20 +326,22 @@ def testPSD():
 
         psd.NewPosition(256,256)
 
+        #psd.setAngle(-psd.angle)
+
         print("centerPoint", psd.centerPoint)
         print("Points", psd.Points)
         print("PointsWithOffset", psd.PointsWithOffset)
 
         print("typeGen", psd.typeGen)
 
-        img1 = psd.Draw(img)
+        img1 = psd.DrawLayer(img)
 
         mask = np.zeros((512,512,3), np.uint8)
 
         tecnicalMask = np.zeros((512,512,3), np.uint8)
 
         mask = psd.DrawMask(mask)
-        img2 = psd.Draw(img)
+        img2 = psd.DrawLayer(img)
         tecnicalMask = psd.DrawUniqueArea(tecnicalMask)
 
         cv2.imshow("img", img1)
@@ -352,7 +354,7 @@ def testPSD():
         Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
 
         noisy = np.ones(img1.shape[:2], np.uint8)
-        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']/2
 
         Img = Img + cv2.merge([noisy, noisy, noisy])
         Img[Img < 0] = 0
@@ -434,7 +436,7 @@ def testPSD():
         Img = cv2.GaussianBlur(img1,(r*2+1,r*2+1), G)
 
         noisy = np.ones(img1.shape[:2], np.uint8)
-        noisy = np.random.poisson(noisy)*PARAM['pearson_noise'] - PARAM['pearson_noise']/2
+        noisy = np.random.poisson(noisy)*PARAM['poisson_noise'] - PARAM['poisson_noise']/2
 
         Img = Img + cv2.merge([noisy, noisy, noisy])
         Img[Img < 0] = 0

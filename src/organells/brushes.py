@@ -10,7 +10,7 @@ import math
 
 from src.container.spline import *
 from src.container.subclass import *
-from settings import PARAM, uniform_int
+from settings import PARAM, uniform_int, normal_randint
 
 def points_generator(centre_x, centre_y, points_num):
     _points = list()
@@ -36,12 +36,12 @@ def points_generator(centre_x, centre_y, points_num):
 
 
 def fillInnerTextureSpline(inn_tex):
-    cristae_color = uniform_int(
+    cristae_color = normal_randint(
             PARAM['mitohondrion_cristae_color_mean'],
             PARAM['mitohondrion_cristae_color_std'])
     cristae_color = (cristae_color,cristae_color,cristae_color)
         
-    forecolor = uniform_int(
+    forecolor = normal_randint(
             PARAM['mitohondrion_cristae_shell_color_mean'],
             PARAM['mitohondrion_cristae_shell_color_std'])        
     forecolor = (forecolor,forecolor,forecolor)
@@ -65,12 +65,12 @@ def fillInnerTextureSpline(inn_tex):
 
         
 def fillInnerTexture(inn_tex, mit_len):
-    cristae_color = uniform_int(
+    cristae_color = normal_randint(
             PARAM['mitohondrion_cristae_color_mean'],
             PARAM['mitohondrion_cristae_color_std'])
     cristae_color = (cristae_color,cristae_color,cristae_color)
         
-    forecolor = uniform_int(
+    forecolor = normal_randint(
             PARAM['mitohondrion_cristae_shell_color_mean'],
             PARAM['mitohondrion_cristae_shell_color_std'])        
     forecolor = (forecolor,forecolor,forecolor)
@@ -106,7 +106,7 @@ def fillInnerTexture(inn_tex, mit_len):
         return inn_tex
 
         
-def CreateTexture(image, mit_len, angle):
+def CreateTexture(image, mit_len, angle, indenting = 1.0): #indenting - величина отступов между кристами
 
     addColor = uniform_int(
             PARAM['mitohondrion_back_color_mean'],
@@ -117,51 +117,69 @@ def CreateTexture(image, mit_len, angle):
     texture = np.full((*image.shape[0:2],3), addColor, np.uint8)
         #self.texture[:,:] = (0,0,255)
 
-    cristae_color = uniform_int(
+    cristae_color = normal_randint(
             PARAM['mitohondrion_cristae_color_mean'],
             PARAM['mitohondrion_cristae_color_std'])
     cristae_color = (cristae_color,cristae_color,cristae_color)
 
-    forecolor = uniform_int(
+    forecolor = normal_randint(
             PARAM['mitohondrion_cristae_shell_color_mean'],
             PARAM['mitohondrion_cristae_shell_color_std'])
     forecolor = (forecolor,forecolor,forecolor)
 
         
 # Kolya
-    now_x = 10
-    while now_x < image.shape[1] - 10:
-        now_y = 10
-        while now_y < image.shape[1] - 10:
+    now_x = int(8 * indenting)
+    while now_x < image.shape[1] - 8:
+        now_y = int(8 * indenting)
+        while now_y < image.shape[1] - 8:
             type_line = np.random.random()
             if type_line < 0.1:
                 len_line = 0
             elif type_line < 0.55:
-                len_line = np.random.randint(2, 5)
+                len_line = np.random.randint(1, 5)
             else:
-                len_line = np.random.randint(5, mit_len // 2)
+                len_line = np.random.randint(5, mit_len // 3)
 
             start_pos = [now_x + np.random.randint(-3,4), now_y]
             enf_pos = [now_x + np.random.randint(-3,4), now_y+len_line]
 
-            texture = cv2.line(texture, start_pos, enf_pos, forecolor, 5)
+            size_cristae_boarder_thickness = np.random.randint(4,6+1)
 
-            if len_line == 0: # генерация черной точки
-                if np.random.random() < 0.5:
+            # точка или кружочек
+            if len_line == 0: 
+                if np.random.random() < 0.25:    # генерация черной точки
                     color_black_point = (20,20,20)
-                    texture = cv2.line(texture, start_pos, enf_pos, color_black_point, 5)
-                    texture = cv2.line(texture, start_pos, enf_pos, color_black_point, 2)
+                    use_cristae_color = color_black_point
+                    size_cristae_input_thickness = np.random.randint(2,5+1)
                 else:
-                    texture = cv2.line(texture, start_pos, enf_pos, (cristae_color), 2)
+                    use_cristae_color = cristae_color
+                    size_cristae_input_thickness = np.random.randint(size_cristae_boarder_thickness-3, size_cristae_boarder_thickness)
+ 
+            # толстый кружочек
+            elif len_line < 3:
+                size_cristae_input_thickness = np.random.randint(size_cristae_boarder_thickness-3, size_cristae_boarder_thickness)
+                use_cristae_color = cristae_color
+                if np.random.random() < 0.2:
+                    size_cristae_boarder_thickness += 1
+                    size_cristae_input_thickness += 1
+
+            # палочка
             else:
-                texture = cv2.line(texture, start_pos, enf_pos, (cristae_color), 2)
+                use_cristae_color = cristae_color
+                size_cristae_input_thickness = np.random.randint(1, size_cristae_boarder_thickness//2+1)
+
+            # граница
+            texture = cv2.line(texture, start_pos, enf_pos, forecolor, size_cristae_boarder_thickness)
+            # поверх границы с меньшей толщиной
+            texture = cv2.line(texture, start_pos, enf_pos, use_cristae_color, size_cristae_input_thickness)
 
                 #step y
-            step_y = np.random.randint(7,20)
+            step_y = np.random.randint(int(6*indenting), int(17*indenting)+1)
             now_y = now_y + len_line + step_y
 
             #step x
-        step_x = np.random.randint(12,18)
+        step_x = np.random.randint(int(9*indenting), int(14*indenting)+1)
         now_x += step_x
     texture = fillInnerTexture(texture, mit_len)
 
