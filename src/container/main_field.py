@@ -7,8 +7,6 @@ from settings import PARAM, DEBUG_MODE, uniform_int, normal_randint
 import skimage
 import random
 
-import albumentations as albu
-
 if __name__ == "__main__":
     import sys
     sys.path.append('.')
