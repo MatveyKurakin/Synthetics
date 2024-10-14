@@ -131,8 +131,8 @@ class Axon(Location):
         ys = np.random.randint(0, image.shape[1], count)
         xd = np.random.randint(-5, 5, count)
         yd = np.random.randint(-5, 5, count)
-        xe = np.minimum(np.ones(count) * image.shape[0], np.maximum(np.zeros(count), xs + xd)).astype(np.int)
-        ye = np.minimum(np.ones(count) * image.shape[1], np.maximum(np.zeros(count), ys + yd)).astype(np.int)
+        xe = np.minimum(np.ones(count) * image.shape[0], np.maximum(np.zeros(count), xs + xd)).astype(int)
+        ye = np.minimum(np.ones(count) * image.shape[1], np.maximum(np.zeros(count), ys + yd)).astype(int)
         w = np.random.randint(1, 5, count)
         for i in range(0, count):
             c = np.random.randint(100, 150)
