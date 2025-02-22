@@ -15,10 +15,10 @@ from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int, normal_randi
 WHITE = (255,255,255)
 
 class PSD(Location):
-    def __init__(self, ThreePoints = None):
+    def __init__(self, ThreePoints = None, isVesiclesAndPSD = False):
         super().__init__()
         self.type = "PSD"
-
+        self.isVesiclesAndPSD = isVesiclesAndPSD
         """
         Генерация PSD в 3 линии
         u - верхняя
@@ -73,7 +73,10 @@ class PSD(Location):
 
     def Create(self):
         lenPSD_05 = np.random.randint(self.length['hmin'], self.length['hmax'] + 1)
-        normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * self.length['hmin']//2
+        if (self.isVesiclesAndPSD):
+            normal_y = abs(np.random.normal(loc=0.0, scale=0.2)) * self.length['hmin'] // 2
+        else:
+            normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * self.length['hmin'] // 2
 
         # Coздание первой основной точки
         point1 = [-lenPSD_05,0]
@@ -149,7 +152,7 @@ class PSD(Location):
         ############
 
 
-        ########### 3-7 PSD-line (цвет PSD под выпуклостью)
+        ########### 3-5 PSD-line (цвет PSD под выпуклостью)
         # смещение 1 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
         sizeOffsetY_1 = - (self.lineSize['bottom'] + self.lineSize['center']) + 1
         #главная темная линия PSD
@@ -159,7 +162,7 @@ class PSD(Location):
 
         self.Points = self.Points + [p1_1.tolist(), c_1.tolist(), p2_1.tolist()]
 
-        ########### 8-12 PSD-line (цвет PSD над выпуклостью)
+        ########### 6-8 PSD-line (цвет PSD над выпуклостью)
         # смещение 2 дополнительной полосы в выпуклую(внешнюю) сторону (+ значение) и в внутренюю сторону (- значение)
         sizeOffsetY_2 = (self.lineSize['top'] + self.lineSize['center'])
         #главная темная линия PSD

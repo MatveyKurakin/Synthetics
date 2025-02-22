@@ -384,7 +384,10 @@ class Membrane:
         for compartment in compartments:
             if compartment.type == "PSD" or compartment.type == "Vesicles_and_PSD":
                 if compartment.type == "Vesicles_and_PSD":
+                    vesiclesCmp = compartment.vesicles
                     compartment = compartment.PSD
+                else:
+                    vesiclesCmp = None
 
                 center = compartment.centerPoint
                 startPoint = compartment.PointsWithOffset[0]
@@ -419,17 +422,19 @@ class Membrane:
                 offset_start_normal = 0
 
                 self.AddingDirection(labels, [normalPoint[0] + offset_main_normal * addedX, normalPoint[1] + offset_main_normal * addedY],
-                                                [startPoint[0] + addedX * offset_start_normal, startPoint[1] + addedY * offset_start_normal], input_dir_membr = normalPoint)
+                                     [startPoint[0] + addedX * offset_start_normal, startPoint[1] + addedY * offset_start_normal],
+                                     vesiclesCmp=vesiclesCmp, input_dir_membr=normalPoint)
 
                 self.AddingDirection(labels, [normalPoint[0] + offset_main_normal * addedX, normalPoint[1] + offset_main_normal * addedY],
-                                                [endPoint[0] + addedX * offset_start_normal, endPoint[1] + addedY * offset_start_normal], input_dir_membr = normalPoint)
+                                     [endPoint[0] + addedX * offset_start_normal, endPoint[1] + addedY * offset_start_normal],
+                                     vesiclesCmp=vesiclesCmp, input_dir_membr=normalPoint)
 
         return labels
 
     def CreateMembranePSD(self, compartments):
         self.labels = self.ExpansionPSD(self.labels, compartments)
 
-    def AddingDirection(self, labels, antiDir, startPoint, labelPrint = -2, input_dir_membr = None):
+    def AddingDirection(self, labels, antiDir, startPoint, vesiclesCmp = None, labelPrint = -2, input_dir_membr = None):
         #основная идея расширяться в направлении конца до тех пор, пока не упрёмся в границу или выйдем за поле
 
         # если край за полем видимости, то выходим
@@ -461,6 +466,7 @@ class Membrane:
         directionY_work = directionY
 
         rotate_coef = 4
+        sign = 0
 
         if input_dir_membr is not None:
             normal_dir_x = input_dir_membr[0] - antiDir[0]
@@ -474,9 +480,10 @@ class Membrane:
             sign = -math.copysign(1, normal_dir_x*directionY - normal_dir_y*directionX)
 
 
-            rotate = (-1+ (-1+sign)/10 * rotate_coef, 1 + (1+sign)/10 * rotate_coef)
+            rotate_base = (-1+ (-1+sign)/10 * rotate_coef, 1 + (1+sign)/10 * rotate_coef)
         else:
-            rotate = (-rotate_coef, rotate_coef)
+            rotate_base = (-rotate_coef, rotate_coef)
+        rotate = rotate_base
 
         last_Pos = nowPos.copy()
         float_Pos = nowPos.copy()
@@ -509,7 +516,7 @@ class Membrane:
                         flag_fing_boarder += 1
 
                 # предыдущее значение не считается
-                if flag_fing_boarder < 3:
+                if flag_fing_boarder < 2:
                     # Добавление граничного пикселя
                     labels[nowPos[1], nowPos[0]] = labelPrint
                     self.Points.append(nowPos.copy())
@@ -517,6 +524,24 @@ class Membrane:
                     # вычисление следующего шага
                     float_Pos = [float_Pos[0]+directionX_work, float_Pos[1]+directionY_work]
                     nowPos = [int(round(float_Pos[0])), int(round(float_Pos[1]))]
+
+                    if (vesiclesCmp):
+                        vesCenter = vesiclesCmp.centerPoint
+                        vesAngle = vesiclesCmp.angle * math.pi / 180
+                        vesWidth = vesiclesCmp.width
+                        vesHeight = vesiclesCmp.height
+
+                        float_Pos_offset = [float_Pos[0] - vesCenter[0], float_Pos[1] - vesCenter[1]]
+                        float_Pos_rot_X = float_Pos_offset[0] * math.cos(vesAngle) + float_Pos_offset[1] * math.sin(vesAngle)
+                        float_Pos_rot_Y = float_Pos_offset[1] * math.cos(vesAngle) - float_Pos_offset[0] * math.sin(vesAngle)
+
+                        if((float_Pos_rot_X / vesWidth)**2 + (float_Pos_rot_Y / vesHeight)**2 <= 1):
+                            if(sign > 0):
+                                rotate = [-1.8,-1]
+                            elif(sign < 0):
+                                rotate = [1, 1.8]
+                        else:
+                            rotate = rotate_base
 
                     counter += 1
 

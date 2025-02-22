@@ -89,6 +89,9 @@ class Vesicles(Location):
         radius_x = np.random.randint(30, 96)
         radius_y = np.random.randint(30, 96)
 
+        self.width = radius_x
+        self.height = radius_y
+
         square = radius_y * radius_x
 
         sqrt_int_square = int(round(square / mainVesiculesSize**2))
