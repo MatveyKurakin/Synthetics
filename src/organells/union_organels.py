@@ -15,9 +15,9 @@ class Vesicles_and_PSD():
         self.centerPoint = [0, 0]
         self.angle = 0
 
-        self.PSD = PSD(isVesiclesAndPSD=True)
         self.vesicles = Vesicles()
-        
+        self.PSD = PSD(isVesiclesAndPSD=True, ratio=(self.vesicles.height / self.vesicles.width))
+
         # координаты относительно centerPoint
         self.PSD_pos = None
         self.vesicles_pos = None
@@ -30,20 +30,15 @@ class Vesicles_and_PSD():
         self.PSD.setAngle(-self.PSD.angle + 180)
         self.PSD.angle = 0
         
-        change_90 = np.random.randint(0, 2)
-        self.vesicles.setAngle(-self.vesicles.angle + 90 * change_90)
-        self.vesicles.angle = 90 * change_90
+        self.vesicles.setAngle(-self.vesicles.angle)
+        self.vesicles.angle = 0
         
         ##################################################################################### переделать чтобы и полоска размытия PSD генерировалась в сторону от везикул и чтобы генерация мембран от PSD не пересекала везикулы.
         # полоска с размытием находится снизу
         self.PSD_pos = [0, -5]
         self.vesicles_pos = [0, 5]
 
-        distance = np.random.randint(0, 10)
-        if(change_90 == 1):
-            distance += self.vesicles.width
-        else:
-            distance += self.vesicles.height
+        distance = np.random.randint(0, 10) + self.vesicles.height
 
         # раздвигать пока не будет пересечения
         while True:

@@ -15,10 +15,11 @@ from settings import PARAM, DEBUG_MODE, uniform_float, uniform_int, normal_randi
 WHITE = (255,255,255)
 
 class PSD(Location):
-    def __init__(self, ThreePoints = None, isVesiclesAndPSD = False):
+    def __init__(self, ThreePoints = None, isVesiclesAndPSD = False, ratio = 0.0):
         super().__init__()
         self.type = "PSD"
         self.isVesiclesAndPSD = isVesiclesAndPSD
+        self.ratio = ratio
         """
         Генерация PSD в 3 линии
         u - верхняя
@@ -74,7 +75,7 @@ class PSD(Location):
     def Create(self):
         lenPSD_05 = np.random.randint(self.length['hmin'], self.length['hmax'] + 1)
         if (self.isVesiclesAndPSD):
-            normal_y = abs(np.random.normal(loc=0.0, scale=0.2)) * self.length['hmin'] // 2
+            normal_y = abs(np.random.normal(loc=0.0, scale=0.2 * self.ratio)) * self.length['hmin'] // 2
         else:
             normal_y = abs(np.random.normal(loc=0.0, scale=0.5)) * self.length['hmin'] // 2
 
