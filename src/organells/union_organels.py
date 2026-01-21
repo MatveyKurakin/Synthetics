@@ -4,6 +4,7 @@ if __name__ == "__main__":
 
 from src.organells.PSD import *
 from src.organells.vesicles import *
+from src.organells.membrane import *
 
 
 class Vesicles_and_PSD():
@@ -14,28 +15,30 @@ class Vesicles_and_PSD():
         self.centerPoint = [0, 0]
         self.angle = 0
 
-        self.PSD = PSD()
         self.vesicles = Vesicles()
-        
+        self.PSD = PSD(isVesiclesAndPSD=True, ratio=(self.vesicles.height / self.vesicles.width))
+
         # координаты относительно centerPoint
         self.PSD_pos = None
         self.vesicles_pos = None
         
         self.SetPosition()
 
-    def SetPosition(self):
+    def SetPosition(self, turnPSD=False):
         # вернуть в горизонтальное положение, так как угол генерируется случайно
-        self.PSD.setAngle(-self.PSD.angle)
+        # и повернуть на 180, чтобы след был в противоположной стороне от везикул
+        self.PSD.setAngle(-self.PSD.angle + 180)
         self.PSD.angle = 0
         
-        change_90 = np.random.randint(0, 2)
-        self.vesicles.setAngle(-self.vesicles.angle + 90 * change_90)
-        self.vesicles.angle = 90 * change_90
+        self.vesicles.setAngle(-self.vesicles.angle)
+        self.vesicles.angle = 0
         
         ##################################################################################### переделать чтобы и полоска размытия PSD генерировалась в сторону от везикул и чтобы генерация мембран от PSD не пересекала везикулы.
         # полоска с размытием находится снизу
         self.PSD_pos = [0, -5]
         self.vesicles_pos = [0, 5]
+
+        distance = np.random.randint(0, 10) + self.vesicles.height
 
         # раздвигать пока не будет пересечения
         while True:
@@ -48,7 +51,7 @@ class Vesicles_and_PSD():
             mask_psd = self.PSD.DrawMask(mask_psd)
             mask_vesicles = self.vesicles.DrawMask(mask_vesicles)
             
-            if (mask_psd&mask_vesicles).sum() == 0:
+            if ((mask_psd&mask_vesicles).sum() == 0 and math.dist(self.PSD.PointsWithOffset[1], self.vesicles.centerPoint) >= distance):
                 break
             else:
                 self.PSD_pos[1] -= 1
@@ -78,6 +81,7 @@ class Vesicles_and_PSD():
     def DrawUniqueArea(self, image, small_mode = False):
         image = self.PSD.DrawUniqueArea(image, small_mode)
         image = self.vesicles.DrawUniqueArea(image, small_mode)
+        cv2.line(image, self.PSD.PointsWithOffset[1], self.vesicles.centerPoint, (255, 255, 255), 1)
         return image
         
     def DrawMask(self, image):
@@ -126,7 +130,7 @@ class Vesicles_and_PSD():
         self.ChangePositionPoints()
         
 
-def testUnion_PSD_ves():
+def testUnion_PSD_ves(imgMembrane = False, imgVesEllipse = False):
     q = None
 
     print("1/2 Press button 'Q' or 'q' to exit")
@@ -153,6 +157,9 @@ def testUnion_PSD_ves():
         print("anglePSD", union.PSD.angle)
         print("angleVesicles", union.vesicles.angle)
 
+        print("widthVesicle", union.vesicles.width)
+        print("heightVesicle", union.vesicles.height)
+
         img1 = union.DrawLayer(img)
 
         mask = np.zeros((512,512,3), np.uint8)
@@ -167,6 +174,39 @@ def testUnion_PSD_ves():
         cv2.imshow("mask", mask)
         cv2.imshow("img2", img2)
         cv2.imshow("tecnicalMask", tecnicalMask)
+
+        if(imgVesEllipse):
+            imgWithEllipse = np.copy(img1)
+            psdCenter = union.PSD.centerPoint
+            vesCenter = union.vesicles.centerPoint
+            dir = [0, 0]
+            dir[0] = psdCenter[0] - vesCenter[0]
+            dir[1] = psdCenter[1] - vesCenter[1]
+            dirNormal = math.sqrt(dir[0] * dir[0] + dir[1] * dir[1])
+            dir[0] /= dirNormal
+            dir[1] /= dirNormal
+            a = union.vesicles.width
+            b = union.vesicles.height
+            vesAngle = (union.vesicles.angle) * math.pi / 180
+
+            for theta in np.linspace(0, 2 * math.pi, 400):
+                x = a * math.cos(theta)
+                y = b * math.sin(theta)
+
+                x_rot = x * math.sin(vesAngle) - y * math.cos(vesAngle)
+                y_rot = y * math.sin(vesAngle) + x * math.cos(vesAngle)
+                imgWithEllipse[int(round(x_rot + vesCenter[1])), int(round(y_rot + vesCenter[0]))] = 255
+
+            cv2.imshow("imgWithEllipse", imgWithEllipse)
+
+        if(imgMembrane):
+            if(imgVesEllipse):
+                imgWithMembrane = np.copy(imgWithEllipse)
+            else:
+                imgWithMembrane = np.copy(img1)
+            membrane = Membrane((512, 512), [union])
+            imgWithMembrane = membrane.Draw(imgWithMembrane)
+            cv2.imshow("imgWithMembrane", imgWithMembrane)
 
         r = PARAM["main_radius_gausse_blur"]
         G = PARAM["main_sigma_gausse_blur"]
