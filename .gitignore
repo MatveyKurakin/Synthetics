@@ -6,6 +6,8 @@
 
 dataset/
 
+test_gen*
+
 # Object files
 *.o
 *.ko
